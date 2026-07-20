@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { logout } from '../actions';
+import { getProfile } from '@/lib/supabase/user';
 
 import { Navbar } from '@/components/Navbar';
 
@@ -30,17 +31,10 @@ const statusStyle: Record<string, { bg: string; color: string; label: string }> 
 };
 
 const DuesPage = async () => {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const profile = await getProfile();
+  if (!profile) redirect('/login');
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, full_name, role')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || ['pending', 'rejected'].includes(profile.role)) {
+  if (['pending', 'rejected'].includes(profile.role)) {
     redirect('/dashboard');
   }
 
@@ -49,11 +43,13 @@ const DuesPage = async () => {
     redirect('/admin/finances');
   }
 
+  const supabase = await createClient();
+
   // Members: see only their own dues
   const { data: dues, error } = await supabase
     .from('member_dues')
     .select('id, amount, due_date, paid_date, status, notes, period_label')
-    .or(`user_id.eq.${user.id},member_id.eq.${user.id}`)
+    .or(`user_id.eq.${profile.id},member_id.eq.${profile.id}`)
     .order('due_date', { ascending: false });
 
   const totalOwed = (dues ?? [])

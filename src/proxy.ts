@@ -1,6 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { createAdminClient } from './lib/supabase/admin';
 
 export const proxy = async (request: NextRequest) => {
   let supabaseResponse = NextResponse.next({
@@ -64,15 +63,27 @@ export const proxy = async (request: NextRequest) => {
     return supabaseResponse;
   }
 
-  // 2. Fetch profile role using admin client (bypasses RLS to avoid middleware auth context issues)
-  const adminClient = createAdminClient();
-  const { data: profile } = await adminClient
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  // 2. Read role from JWT app_metadata (synced automatically by DB trigger)
+  const role = (user.app_metadata?.role as string) ?? 'pending';
 
-  const role = profile?.role ?? 'pending';
+  // Inject custom request headers to propagate user identity and role to layouts/pages
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-user-id', user.id);
+  requestHeaders.set('x-user-email', user.email || '');
+  requestHeaders.set('x-user-role', role);
+  requestHeaders.set('x-user-name', user.user_metadata?.full_name || '');
+
+  const originalResponse = supabaseResponse;
+  supabaseResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+  
+  // Preserve any cookies set during the Supabase client instantiation/refresh
+  originalResponse.cookies.getAll().forEach((c) => {
+    supabaseResponse.cookies.set(c.name, c.value);
+  });
 
   // If logged in and attempting to access login/signup/join, redirect to home
   if (isPublicPage) {

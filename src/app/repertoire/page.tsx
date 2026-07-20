@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getProfile } from '@/lib/supabase/user';
 import { RepertoireClient } from './RepertoireClient';
 
 export const dynamic = 'force-dynamic';
@@ -13,18 +14,11 @@ const RepertoirePage = async ({ searchParams }: PageProps) => {
   const { q } = await searchParams;
   const query = q?.trim() ?? '';
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
+  const currentProfile = await getProfile();
   if (!currentProfile) redirect('/login');
   if (['pending', 'rejected'].includes(currentProfile.role)) redirect('/dashboard');
+
+  const supabase = await createClient();
 
   let songsQuery = supabase
     .from('songs')

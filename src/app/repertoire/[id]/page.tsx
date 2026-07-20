@@ -1,6 +1,7 @@
 import React from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { notFound, redirect } from 'next/navigation';
+import { getProfile } from '@/lib/supabase/user';
 import SongViewerClient from './SongViewerClient';
 
 export const dynamic = 'force-dynamic';
@@ -11,21 +12,12 @@ interface PageProps {
 
 const SongDetailPage = async ({ params }: PageProps) => {
   const { id } = await params;
-  const supabase = await createClient();
-
-  // 1. Authenticate user
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-
-  // 2. Load profiles role
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
+  
+  const currentProfile = await getProfile();
   if (!currentProfile) redirect('/login');
   if (['pending', 'rejected'].includes(currentProfile.role)) redirect('/dashboard');
+
+  const supabase = await createClient();
 
   // 3. Fetch specific non-archived song
   const { data: song, error } = await supabase

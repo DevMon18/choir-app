@@ -1,25 +1,18 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getProfile } from '@/lib/supabase/user';
 import { SongsManagerClient } from './SongsManagerClient';
 
 export const dynamic = 'force-dynamic';
 
 const AdminSongsPage = async () => {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
+  const currentProfile = await getProfile();
   if (!currentProfile) redirect('/login');
 
   const isAuthorized = ['super_admin', 'director', 'secretary'].includes(currentProfile.role);
   if (!isAuthorized) redirect('/dashboard');
+
+  const supabase = await createClient();
 
   const { data: songs, error } = await supabase
     .from('songs')

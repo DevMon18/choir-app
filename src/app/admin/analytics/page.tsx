@@ -1,30 +1,15 @@
 import React from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getProfile } from '@/lib/supabase/user';
 import AnalyticsClient from './AnalyticsClient';
 
 export const dynamic = 'force-dynamic';
 
 const AdminAnalyticsPage = async () => {
-  const supabase = await createClient();
+  const currentProfile = await getProfile();
 
-  // 1. Get authenticated user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect('/login');
-  }
-
-  // 2. Fetch current user profile to verify auth
-  const { data: currentProfile, error: profileErr } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  if (profileErr || !currentProfile) {
+  if (!currentProfile) {
     redirect('/login');
   }
 
@@ -32,6 +17,8 @@ const AdminAnalyticsPage = async () => {
   if (!isAuthorized) {
     redirect('/dashboard');
   }
+
+  const supabase = await createClient();
 
   // 3. Fetch active profiles count grouped by role
   const { data: profiles, error: profilesErr } = await supabase

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getProfile } from '@/lib/supabase/user';
 import { DirectoryClient } from './DirectoryClient';
 
 export const dynamic = 'force-dynamic';
@@ -10,19 +11,14 @@ export const metadata = {
 };
 
 const DirectoryPage = async () => {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const profile = await getProfile();
+  if (!profile) redirect('/login');
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, full_name, role')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || ['pending', 'rejected'].includes(profile.role)) {
+  if (['pending', 'rejected'].includes(profile.role)) {
     redirect('/dashboard');
   }
+
+  const supabase = await createClient();
 
   // Use the server-masked public_directory view — never raw profiles
   const { data: members } = await supabase

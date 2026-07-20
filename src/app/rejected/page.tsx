@@ -1,12 +1,9 @@
-import { createClient } from '@/lib/supabase/server';
 import { logout } from '../actions';
+import { getCachedUser } from '@/lib/supabase/user';
 import React from 'react';
 
 const RejectedPage = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   return (
     <main className="auth-page">

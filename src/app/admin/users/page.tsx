@@ -1,28 +1,15 @@
 import React from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getProfile } from '@/lib/supabase/user';
 import { UsersManagerClient } from './UsersManagerClient';
 
 export const dynamic = 'force-dynamic';
 
 const AdminUsersPage = async () => {
-  const supabase = await createClient();
-  
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const currentProfile = await getProfile();
 
-  if (!user) {
-    redirect('/login');
-  }
-
-  const { data: currentProfile, error: profileErr } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  if (profileErr || !currentProfile) {
+  if (!currentProfile) {
     redirect('/login');
   }
 
@@ -30,6 +17,8 @@ const AdminUsersPage = async () => {
   if (!isAuthorized) {
     redirect('/dashboard');
   }
+
+  const supabase = await createClient();
 
   // 1. Fetch pending direct signups
   const { data: pendingUsers, error: pendingErr } = await supabase.rpc('admin_list_pending_users');

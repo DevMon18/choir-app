@@ -1,34 +1,33 @@
 import React from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getProfile } from '@/lib/supabase/user';
 import ProfileClient from './ProfileClient';
 
 export const dynamic = 'force-dynamic';
 
 const ProfilePage = async () => {
-  const supabase = await createClient();
+  const currentProfile = await getProfile();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!currentProfile) {
     redirect('/login');
   }
+
+  const isAuthorized = ['super_admin', 'director', 'secretary', 'treasurer', 'member'].includes(currentProfile.role);
+  if (!isAuthorized) {
+    redirect('/pending-approval');
+  }
+
+  const supabase = await createClient();
 
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', user.id)
+    .eq('id', currentProfile.id)
     .single();
 
   if (error || !profile) {
     redirect('/login');
-  }
-
-  const isAuthorized = ['super_admin', 'director', 'secretary', 'treasurer', 'member'].includes(profile.role);
-  if (!isAuthorized) {
-    redirect('/pending-approval');
   }
 
   return (

@@ -1,28 +1,14 @@
 import React from 'react';
-import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getProfile } from '@/lib/supabase/user';
 import DashboardClient from './DashboardClient';
 
 export const dynamic = 'force-dynamic';
 
 const DashboardPage = async () => {
-  const supabase = await createClient();
+  const profile = await getProfile();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect('/login');
-  }
-
-  const { data: profile, error: profileErr } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  if (profileErr || !profile) {
+  if (!profile) {
     redirect('/login');
   }
 

@@ -1,23 +1,17 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getProfile } from '@/lib/supabase/user';
 import { SequenceManagerClient } from './SequenceManagerClient';
 
 export const dynamic = 'force-dynamic';
 
 const AdminSequencesPage = async () => {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, full_name, role')
-    .eq('id', user.id)
-    .single();
-
+  const profile = await getProfile();
   if (!profile || !['super_admin', 'director', 'secretary'].includes(profile.role)) {
     redirect('/dashboard');
   }
+
+  const supabase = await createClient();
 
   // Fetch sequences with their items and songs
   const { data: sequences } = await supabase
