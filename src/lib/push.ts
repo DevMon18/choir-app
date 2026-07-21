@@ -107,7 +107,12 @@ export const sendPushToAll = async (payload: PushPayload) => {
             priority: 'high',
           }),
         });
-        console.log('FCM native broadcast response status:', res.status);
+        const status = res.status;
+        const responseText = await res.text();
+        console.log('FCM native broadcast response status:', status);
+        if (status !== 200) {
+          console.warn('FCM broadcast details:', responseText);
+        }
       } catch (err) {
         console.error('Error broadcasting native FCM alerts:', err);
       }

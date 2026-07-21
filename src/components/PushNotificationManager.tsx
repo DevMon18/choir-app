@@ -80,17 +80,19 @@ export const PushNotificationManager = () => {
     checkAndRequestNativePermissions();
 
     // 2. Initialize native Android Notification channels if available via Capacitor
-    try {
-      LocalNotifications.createChannel({
-        id: 'choir_alerts',
-        name: 'Choir Collective Alerts',
-        description: 'Urgent announcements and rehearsal notifications',
-        importance: 5,
-        visibility: 1,
-        vibration: true,
-      }).catch((e) => console.log('LocalNotifications channel init:', e));
-    } catch (e) {
-      // Ignore if not running in native app
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+      try {
+        LocalNotifications.createChannel({
+          id: 'choir_alerts',
+          name: 'Choir Collective Alerts',
+          description: 'Urgent announcements and rehearsal notifications',
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+        }).catch((e) => console.log('LocalNotifications channel init:', e));
+      } catch (e) {
+        // Ignore if not running in native app
+      }
     }
 
     // 2. Register Web Service Worker if browser supports PushManager
