@@ -67,24 +67,27 @@ export async function saveFCMTokenAction(token: string) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
+      console.warn('saveFCMTokenAction: User not authenticated');
       return { error: 'Not authenticated' };
     }
 
-    const { error } = await supabase.from('fcm_tokens').upsert(
+    const { data, error } = await supabase.from('fcm_tokens').upsert(
       {
         user_id: user.id,
         token: token,
       },
       { onConflict: 'token' }
-    );
+    ).select();
 
     if (error) {
-      console.error('Failed to save FCM token:', error);
+      console.error('Failed to save FCM token to database:', error);
       return { error: error.message };
     }
 
-    return { success: true };
+    console.log('FCM Token saved successfully in database for user:', user.id);
+    return { success: true, data };
   } catch (err: any) {
+    console.error('Exception in saveFCMTokenAction:', err);
     return { error: err.message || 'Failed to save FCM token' };
   }
 }

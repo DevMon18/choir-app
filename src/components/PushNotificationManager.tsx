@@ -35,16 +35,13 @@ export const PushNotificationManager = () => {
             await LocalNotifications.requestPermissions();
           }
 
-          // Register for native Push Notifications via FCM
-          const pushStatus = await PushNotifications.requestPermissions();
-          if (pushStatus.receive === 'granted') {
-            await PushNotifications.register();
-          }
+          // Listeners for native push notifications (MUST be registered before register() is called)
+          await PushNotifications.removeAllListeners();
 
-          // Listeners for native push notifications
           await PushNotifications.addListener('registration', async (token) => {
             console.log('FCM registration token acquired:', token.value);
-            await saveFCMTokenAction(token.value);
+            const res = await saveFCMTokenAction(token.value);
+            console.log('Save FCM token result:', res);
           });
 
           await PushNotifications.addListener('registrationError', (err) => {
@@ -72,6 +69,12 @@ export const PushNotificationManager = () => {
               console.error('Failed to schedule local notification from push:', e);
             }
           });
+
+          // Register for native Push Notifications via FCM AFTER listeners are attached
+          const pushStatus = await PushNotifications.requestPermissions();
+          if (pushStatus.receive === 'granted') {
+            await PushNotifications.register();
+          }
         } catch (e) {
           console.error('Error requesting native notifications permission:', e);
         }
