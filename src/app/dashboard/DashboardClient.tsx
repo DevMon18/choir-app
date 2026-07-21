@@ -312,7 +312,7 @@ const DashboardClient = ({ profile, isAdmin, announcements = [] }: DashboardClie
                           📌 Pinned
                         </span>
                       )}
-                      <span style={{ fontSize: '0.78rem', color: 'var(--muted)', marginLeft: 'auto', marginRight: '32px' }}>
+                      <span suppressHydrationWarning style={{ fontSize: '0.78rem', color: 'var(--muted)', marginLeft: 'auto', marginRight: '32px' }}>
                         {new Date(ann.created_at).toLocaleDateString()}
                       </span>
                     </div>
