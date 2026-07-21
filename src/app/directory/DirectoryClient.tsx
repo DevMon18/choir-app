@@ -6,6 +6,8 @@ import { logout } from '../actions';
 import { Navbar } from '@/components/Navbar';
 import gsap from 'gsap';
 
+import { useDebounce } from '@/hooks/useDebounce';
+
 interface DirectoryMember {
   id: string;
   full_name: string;
@@ -42,6 +44,8 @@ export const DirectoryClient = ({ profile, members }: Props) => {
   const [search, setSearch] = useState('');
   const [voiceFilter, setVoiceFilter] = useState('');
 
+  const debouncedSearch = useDebounce(search, 250);
+
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
@@ -52,7 +56,7 @@ export const DirectoryClient = ({ profile, members }: Props) => {
   }, []);
 
   const filtered = members.filter(m => {
-    const q = search.toLowerCase();
+    const q = debouncedSearch.toLowerCase();
     const matchSearch = !q || m.full_name.toLowerCase().includes(q) || (m.voice_part ?? '').toLowerCase().includes(q);
     const matchVoice = !voiceFilter || m.voice_part === voiceFilter;
     return matchSearch && matchVoice;

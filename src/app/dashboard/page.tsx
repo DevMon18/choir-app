@@ -1,8 +1,10 @@
+import dynamicImport from 'next/dynamic';
 import React from 'react';
 import { redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
 import { getActiveAnnouncements } from '@/app/admin/announcements/actions';
-import DashboardClient from './DashboardClient';
+
+const DashboardClient = dynamicImport(() => import('./DashboardClient'), { ssr: true });
 
 export const dynamic = 'force-dynamic';
 
