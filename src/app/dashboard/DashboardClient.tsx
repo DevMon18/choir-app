@@ -6,6 +6,20 @@ import { logout } from '../actions';
 import { Navbar } from '@/components/Navbar';
 import gsap from 'gsap';
 
+import { PushNotificationManager } from '@/components/PushNotificationManager';
+
+interface AnnouncementItem {
+  id: string;
+  title: string;
+  body: string;
+  priority: 'normal' | 'urgent';
+  is_pinned: boolean;
+  starts_at: string;
+  ends_at: string | null;
+  created_at: string;
+  profiles?: { full_name: string } | null;
+}
+
 interface Profile {
   id: string;
   full_name: string;
@@ -17,6 +31,7 @@ interface Profile {
 interface DashboardClientProps {
   profile: Profile;
   isAdmin: boolean;
+  announcements?: AnnouncementItem[];
 }
 
 interface CardItem {
@@ -29,8 +44,38 @@ interface CardItem {
   roles: string[];
 }
 
-const DashboardClient = ({ profile, isAdmin }: DashboardClientProps) => {
+const DashboardClient = ({ profile, isAdmin, announcements = [] }: DashboardClientProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('dismissed_announcements');
+        if (stored) {
+          setDismissedIds(JSON.parse(stored));
+        }
+      } catch (err) {
+        console.error('Error reading dismissed announcements:', err);
+      }
+    }
+  }, []);
+
+  const handleDismissAnnouncement = (id: string) => {
+    const next = [...dismissedIds, id];
+    setDismissedIds(next);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('dismissed_announcements', JSON.stringify(next));
+      } catch (err) {
+        console.error('Error saving dismissed announcements:', err);
+      }
+    }
+  };
+
+  const activeVisibleAnnouncements = useMemo(() => {
+    return announcements.filter((a) => !dismissedIds.includes(a.id));
+  }, [announcements, dismissedIds]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -207,14 +252,89 @@ const DashboardClient = ({ profile, isAdmin }: DashboardClientProps) => {
 
       <Navbar profile={profile} />
 
-      <main style={{ flex: 1, padding: '60px 20px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-          
+      <main style={{ flex: 1, padding: '40px 20px 120px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+          {/* Web Push Prompt */}
+          <PushNotificationManager />
+
+          {/* Active Announcements Banner Stack (Rendered ABOVE Welcome Card) */}
+          {activeVisibleAnnouncements.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {activeVisibleAnnouncements.map((ann) => {
+                const isUrgent = ann.priority === 'urgent';
+                return (
+                  <div
+                    key={ann.id}
+                    className="glass-container anim-header"
+                    style={{
+                      position: 'relative',
+                      padding: '24px',
+                      borderLeft: isUrgent ? '6px solid var(--error)' : '6px solid var(--primary)',
+                      background: isUrgent
+                        ? 'linear-gradient(135deg, rgba(159,28,28,0.08) 0%, rgba(197,160,89,0.1) 100%)'
+                        : 'var(--glass-bg)',
+                      boxShadow: isUrgent
+                        ? '0 8px 32px rgba(159,28,28,0.12)'
+                        : 'var(--card-shadow)',
+                    }}
+                  >
+                    <button
+                      onClick={() => handleDismissAnnouncement(ann.id)}
+                      style={{
+                        position: 'absolute',
+                        top: '16px',
+                        right: '16px',
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '1.2rem',
+                        color: 'var(--muted)',
+                        cursor: 'pointer',
+                        padding: '4px 8px',
+                      }}
+                      aria-label="Dismiss announcement"
+                    >
+                      &times;
+                    </button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                      {isUrgent ? (
+                        <span className="badge" style={{ background: 'var(--error)', color: '#fff', fontWeight: 700 }}>
+                          🚨 URGENT ANNOUNCEMENT
+                        </span>
+                      ) : (
+                        <span className="badge" style={{ background: 'rgba(11,77,36,0.1)', color: 'var(--primary)', fontWeight: 600 }}>
+                          📢 ANNOUNCEMENT
+                        </span>
+                      )}
+                      {ann.is_pinned && (
+                        <span style={{ fontSize: '0.78rem', color: 'var(--accent)', fontWeight: 700 }}>
+                          📌 Pinned
+                        </span>
+                      )}
+                      <span style={{ fontSize: '0.78rem', color: 'var(--muted)', marginLeft: 'auto', marginRight: '32px' }}>
+                        {new Date(ann.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: isUrgent ? 'var(--error)' : 'var(--primary)', margin: '0 0 8px 0' }}>
+                      {ann.title}
+                    </h2>
+                    <p style={{ margin: 0, fontSize: '0.98rem', color: 'var(--foreground)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                      {ann.body}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Welcome Card */}
           <div className="glass-container anim-header" style={{ position: 'relative', overflow: 'hidden' }}>
             <h1 style={{ fontSize: '2.25rem', fontWeight: 700, marginBottom: '8px', color: 'var(--primary)' }}>
               Welcome back, {profile.full_name}!
             </h1>
-            <p style={{ color: 'var(--muted)', fontSize: '1.05rem' }}>
+            <p style={{ color: 'var(--muted)', fontSize: '1.05rem', margin: 0 }}>
               You are signed in as a <strong style={{ color: 'var(--accent)', textTransform: 'uppercase' }}>{profile.role}</strong>.
             </p>
           </div>

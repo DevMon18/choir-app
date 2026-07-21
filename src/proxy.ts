@@ -132,8 +132,8 @@ export const proxy = async (request: NextRequest) => {
     }
 
     if (role === 'secretary') {
-      // Secretary is allowed only `/admin/users`, `/admin/roster`, `/admin/attendance`, `/admin/songs`, `/admin/analytics`, `/admin/sequences`
-      const allowedSecRoutes = ['/admin/users', '/admin/roster', '/admin/attendance', '/admin/songs', '/admin/analytics', '/admin/sequences'];
+      // Secretary is allowed `/admin/users`, `/admin/roster`, `/admin/attendance`, `/admin/songs`, `/admin/analytics`, `/admin/sequences`, `/admin/announcements`
+      const allowedSecRoutes = ['/admin/users', '/admin/roster', '/admin/attendance', '/admin/songs', '/admin/analytics', '/admin/sequences', '/admin/announcements'];
       const isAllowed = allowedSecRoutes.some(
         (r) => path === r || path.startsWith(r + '/')
       );
