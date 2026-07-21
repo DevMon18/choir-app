@@ -111,9 +111,30 @@ const ProfileClient = ({ profile, isAdmin }: ProfileClientProps) => {
         .getPublicUrl(filePath);
 
       setAvatarUrl(publicUrl);
-      setSuccess('Profile picture uploaded successfully! Save your changes to complete.');
+
+      // Persist avatar URL immediately to database
+      const saveRes = await updatePersonalProfile({
+        fullName,
+        birthdate: birthdate || null,
+        phone,
+        emergencyContact,
+        address,
+        isPhonePrivate,
+        isAddressPrivate,
+        avatarUrl: publicUrl,
+      });
+
+      if (saveRes.error) {
+        throw new Error(saveRes.error);
+      }
+
+      setSuccess('Profile picture uploaded and saved successfully!');
+      addToast({ type: 'success', title: 'Avatar Saved!', message: 'Your profile picture has been updated.' });
+      router.refresh();
     } catch (err: any) {
-      setError(err.message || 'Failed to upload image.');
+      const msg = err.message || 'Failed to upload image.';
+      setError(msg);
+      addToast({ type: 'error', title: 'Upload Failed', message: msg });
     } finally {
       setUploading(false);
     }

@@ -42,9 +42,12 @@ export const updatePersonalProfile = async (input: {
       return { error: `Profile update failed: ${profileErr.message}` };
     }
 
-    // 2. Update auth user metadata
+    // 2. Update auth user metadata (syncs full_name and avatar_url to JWT/auth)
     const { error: authErr } = await supabase.auth.updateUser({
-      data: { full_name: input.fullName }
+      data: {
+        full_name: input.fullName,
+        avatar_url: input.avatarUrl || null,
+      },
     });
 
     if (authErr) {
@@ -52,8 +55,12 @@ export const updatePersonalProfile = async (input: {
     }
 
     revalidatePath('/profile');
+    revalidatePath('/profile', 'layout');
     revalidatePath('/dashboard');
     revalidatePath('/directory');
+    revalidatePath('/admin/users');
+    revalidatePath('/admin/roster');
+    revalidatePath('/admin/finances');
     return { success: true };
   } catch (err: any) {
     return { error: err.message || 'An unexpected error occurred' };
