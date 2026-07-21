@@ -111,6 +111,10 @@ export const AnnouncementsManagerClient = ({
         setAnnouncements([res.announcement as AnnouncementItem, ...announcements]);
         setShowModal(false);
 
+        if (res.warning) {
+          alert(`Warning: ${res.warning}`);
+        }
+
         // Schedule native mobile pop-up banner notification if running on native Capacitor Android
         try {
           const { LocalNotifications } = await import('@capacitor/local-notifications');

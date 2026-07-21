@@ -98,15 +98,31 @@ export async function createAnnouncement(input: AnnouncementInput) {
     }
 
     // Trigger Push Notification for all announcements
-    sendPushToAll({
-      title: input.priority === 'urgent' ? `🚨 Urgent: ${input.title}` : `📢 Announcement: ${input.title}`,
-      body: input.body.substring(0, 120),
-      url: '/dashboard',
-    }).catch((err) => console.error('Failed sending push alert:', err));
+    let warning: string | undefined = undefined;
+    try {
+      const report = await sendPushToAll({
+        title: input.priority === 'urgent' ? `🚨 Urgent: ${input.title}` : `📢 Announcement: ${input.title}`,
+        body: input.body.substring(0, 120),
+        url: '/dashboard',
+      });
+
+      // Assemble warning if there are any failures or errors
+      const failedWeb = report.webPush.failed;
+      const failedFcm = report.fcm.failed;
+      if (failedWeb > 0 || failedFcm > 0 || report.webPush.errors.length > 0 || report.fcm.errors.length > 0) {
+        warning = `Announcement created, but some push notifications failed to deliver (Web Push: ${report.webPush.success}/${report.webPush.total} successful, FCM: ${report.fcm.success}/${report.fcm.total} successful).`;
+        if (report.fcm.errors.length > 0) {
+          warning += ` FCM Errors: ${report.fcm.errors.slice(0, 2).join('; ')}`;
+        }
+      }
+    } catch (pushErr: any) {
+      console.error('Failed sending push alert:', pushErr);
+      warning = `Announcement created, but push notification system encountered an error: ${pushErr.message || pushErr}`;
+    }
 
     revalidatePath('/dashboard');
     revalidatePath('/admin/announcements');
-    return { success: true, announcement: data };
+    return { success: true, announcement: data, warning };
   } catch (err: any) {
     return { error: err.message || 'Failed to create announcement' };
   }
