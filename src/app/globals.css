@@ -705,7 +705,7 @@ body {
 
   /* Admin content full spacing on mobile */
   .admin-content-full {
-    padding: 16px 12px !important;
+    padding: 16px 12px calc(112px + env(safe-area-inset-bottom, 0px)) 12px !important;
   }
 
   /* Responsive grid overrides on mobile */
@@ -754,7 +754,7 @@ body {
     display: flex;
   }
   .admin-content {
-    padding: 16px;
+    padding: 16px 16px calc(112px + env(safe-area-inset-bottom, 0px)) 16px !important;
     width: 100%;
   }
 
