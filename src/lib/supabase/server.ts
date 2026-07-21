@@ -14,9 +14,15 @@ export const createClient = async () => {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // Force long persistence for Supabase authentication cookies
+              const cookieOptions = { ...options };
+              if (name.includes('sb-') || name.includes('supabase')) {
+                cookieOptions.maxAge = 60 * 60 * 24 * 365; // 1 year
+                cookieOptions.expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
+              }
+              cookieStore.set(name, value, cookieOptions);
+            });
           } catch {
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing

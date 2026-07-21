@@ -19,9 +19,14 @@ export const proxy = async (request: NextRequest) => {
           supabaseResponse = NextResponse.next({
             request,
           });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const cookieOptions = { ...options };
+            if (name.includes('sb-') || name.includes('supabase')) {
+              cookieOptions.maxAge = 60 * 60 * 24 * 365; // 1 year
+              cookieOptions.expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
+            }
+            supabaseResponse.cookies.set(name, value, cookieOptions);
+          });
         },
       },
     }
