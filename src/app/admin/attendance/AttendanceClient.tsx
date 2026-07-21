@@ -606,9 +606,9 @@ export const AttendanceClient = ({
                           const cfg = STATUS_CONFIG[status];
                           return (
                             <tr key={member.id}>
-                              <td><strong>{member.full_name}</strong></td>
-                              <td>{member.voice_part || <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>—</span>}</td>
-                              <td>
+                              <td data-label="Full Name"><strong>{member.full_name}</strong></td>
+                              <td data-label="Voice Part">{member.voice_part || <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>—</span>}</td>
+                              <td data-label="Status">
                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, fontSize: '0.85rem', color: cfg.color }}>
                                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: cfg.dot }} />
                                   {cfg.label}

@@ -246,11 +246,11 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
                           .filter(inv => !inv.period_label?.startsWith('Sinking Fund'))
                           .map((inv) => (
                             <tr key={inv.id}>
-                              <td><strong>{inv.profiles?.full_name || 'System User'}</strong></td>
-                              <td>{inv.profiles?.email || 'N/A'}</td>
-                              <td>₱{Number(inv.amount).toFixed(2)}</td>
-                              <td>{new Date(inv.due_date).toLocaleDateString()}</td>
-                              <td>
+                              <td data-label="Choir Member"><strong>{inv.profiles?.full_name || 'System User'}</strong></td>
+                              <td data-label="Email Address">{inv.profiles?.email || 'N/A'}</td>
+                              <td data-label="Amount">₱{Number(inv.amount).toFixed(2)}</td>
+                              <td data-label="Due Date">{new Date(inv.due_date).toLocaleDateString()}</td>
+                              <td data-label="Status">
                                 {inv.status === 'paid' ? (
                                   <span className="badge badge-approved">Paid</span>
                                 ) : inv.status === 'overdue' ? (
@@ -259,7 +259,7 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
                                   <span className="badge badge-rejected">Unpaid</span>
                                 )}
                               </td>
-                              <td>
+                              <td data-label="Actions">
                                 {inv.status !== 'paid' ? (
                                   <button
                                     onClick={() => handleRecordPayment(inv.id)}

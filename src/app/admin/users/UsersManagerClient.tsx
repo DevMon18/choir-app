@@ -396,11 +396,11 @@ export const UsersManagerClient = ({
                         })
                         .map((u) => (
                           <tr key={u.id}>
-                            <td>
+                            <td data-label="Name">
                               <strong>{u.full_name}</strong> {u.id === currentUserProfile.id && <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontStyle: 'italic' }}>(You)</span>}
                             </td>
-                            <td>{u.email}</td>
-                            <td>
+                            <td data-label="Email">{u.email}</td>
+                            <td data-label="Role">
                               <span className="badge" style={{
                                 background: u.role === 'super_admin' ? 'rgba(30,58,138,0.06)' : u.role === 'director' ? 'rgba(180,83,9,0.06)' : 'rgba(0,0,0,0.03)',
                                 color: u.role === 'super_admin' ? 'var(--primary)' : u.role === 'director' ? 'var(--accent)' : 'var(--foreground)'
@@ -408,8 +408,8 @@ export const UsersManagerClient = ({
                                 {u.role}
                               </span>
                             </td>
-                            <td>{u.voice_part || <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>None</span>}</td>
-                            <td>
+                            <td data-label="Voice Part">{u.voice_part || <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>None</span>}</td>
+                            <td data-label="Actions">
                               <div style={{ display: 'flex', gap: '8px' }}>
                                 <button
                                   onClick={() => handleOpenEditModal(u)}

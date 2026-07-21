@@ -69,9 +69,9 @@ export const RosterClient = ({ currentUserProfile, roster }: RosterClientProps) 
                   <tbody>
                     {roster.map((member) => (
                       <tr key={member.id}>
-                        <td><strong>{member.full_name}</strong></td>
-                        <td>{member.email}</td>
-                        <td>
+                        <td data-label="Full Name"><strong>{member.full_name}</strong></td>
+                        <td data-label="Email">{member.email}</td>
+                        <td data-label="System Role">
                           <span 
                             className="badge" 
                             style={{ 
@@ -82,7 +82,7 @@ export const RosterClient = ({ currentUserProfile, roster }: RosterClientProps) 
                             {member.role}
                           </span>
                         </td>
-                        <td>{new Date(member.created_at).toLocaleDateString()}</td>
+                        <td data-label="Member Since">{new Date(member.created_at).toLocaleDateString()}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -133,14 +133,14 @@ const DuesPage = async () => {
                     const s = statusStyle[d.status] ?? statusStyle.unpaid;
                     return (
                       <tr key={d.id}>
-                        <td style={{ fontWeight: 600 }}>{d.period_label ?? '—'}</td>
-                        <td>₱{(d.amount ?? 0).toLocaleString()}</td>
-                        <td>{d.due_date ? new Date(d.due_date).toLocaleDateString() : '—'}</td>
-                        <td>{d.paid_date ? new Date(d.paid_date).toLocaleDateString() : '—'}</td>
-                        <td>
+                        <td data-label="Period" style={{ fontWeight: 600 }}>{d.period_label ?? '—'}</td>
+                        <td data-label="Amount">₱{(d.amount ?? 0).toLocaleString()}</td>
+                        <td data-label="Due Date">{d.due_date ? new Date(d.due_date).toLocaleDateString() : '—'}</td>
+                        <td data-label="Paid Date">{d.paid_date ? new Date(d.paid_date).toLocaleDateString() : '—'}</td>
+                        <td data-label="Status">
                           <span className="badge" style={{ background: s.bg, color: s.color }}>{s.label}</span>
                         </td>
-                        <td style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>{d.notes ?? '—'}</td>
+                        <td data-label="Notes" style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>{d.notes ?? '—'}</td>
                       </tr>
                     );
                   })}

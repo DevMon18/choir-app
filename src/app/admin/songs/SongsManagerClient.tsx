@@ -161,21 +161,21 @@ export const SongsManagerClient = ({ currentUserProfile, initialSongs }: SongsMa
                       <tbody>
                         {filteredSongs.map((song) => (
                           <tr key={song.id}>
-                            <td><strong>{song.title}</strong></td>
-                            <td>{song.composer || <span style={{ color: 'var(--muted)' }}>—</span>}</td>
-                            <td>
+                            <td data-label="Title"><strong>{song.title}</strong></td>
+                            <td data-label="Composer">{song.composer || <span style={{ color: 'var(--muted)' }}>—</span>}</td>
+                            <td data-label="Category">
                               {song.category ? (
                                 <span className="badge badge-pending" style={{ background: 'rgba(30,58,138,0.06)', color: 'var(--primary)' }}>{song.category}</span>
                               ) : <span style={{ color: 'var(--muted)' }}>—</span>}
                             </td>
-                            <td>
+                            <td data-label="Lyrics">
                               {song.lyrics ? (
                                 <span style={{ color: 'var(--success)', fontSize: '0.85rem', fontWeight: 600 }}>✓ ChordPro</span>
                               ) : (
                                 <span style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>None</span>
                               )}
                             </td>
-                            <td>
+                            <td data-label="Actions">
                               <div style={{ display: 'flex', gap: '8px' }}>
                                 <button
                                   onClick={() => { setEditingSong(song); setViewMode('edit'); }}

@@ -68,7 +68,7 @@ export const DirectoryClient = ({ profile, members }: Props) => {
 
       <Navbar profile={profile} />
 
-      <main style={{ flex: 1, padding: '40px 16px', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
+      <main style={{ flex: 1, padding: '40px 16px 120px', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
         {/* Header */}
         <div className="anim-header" style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 700, color: 'var(--primary)', marginBottom: '8px' }}>

@@ -44,17 +44,17 @@ export const PendingUsersTable = ({
         <tbody>
           {pendingUsers.map((user) => (
             <tr key={user.profile_id}>
-              <td><strong>{user.full_name}</strong></td>
-              <td>{user.email}</td>
-              <td>
+              <td data-label="Full Name"><strong>{user.full_name}</strong></td>
+              <td data-label="Email">{user.email}</td>
+              <td data-label="Status">
                 {user.email_confirmed ? (
                   <span className="badge badge-approved">Email Confirmed</span>
                 ) : (
                   <span className="badge badge-pending">Unconfirmed Email</span>
                 )}
               </td>
-              <td>{new Date(user.created_at).toLocaleDateString()}</td>
-              <td>
+              <td data-label="Request Date">{new Date(user.created_at).toLocaleDateString()}</td>
+              <td data-label="Actions">
                 <div style={{ display: 'flex', gap: '10px' }}>
                   {!user.email_confirmed ? (
                     <span style={{ fontSize: '0.85rem', color: 'var(--muted)', alignSelf: 'center' }}>
