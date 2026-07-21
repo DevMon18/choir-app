@@ -97,14 +97,12 @@ export async function createAnnouncement(input: AnnouncementInput) {
       return { error: error.message };
     }
 
-    // Trigger Push Notification if urgent priority
-    if (input.priority === 'urgent') {
-      sendPushToAll({
-        title: `🚨 Urgent: ${input.title}`,
-        body: input.body.substring(0, 120),
-        url: '/dashboard',
-      }).catch((err) => console.error('Failed sending push alert:', err));
-    }
+    // Trigger Push Notification for all announcements
+    sendPushToAll({
+      title: input.priority === 'urgent' ? `🚨 Urgent: ${input.title}` : `📢 Announcement: ${input.title}`,
+      body: input.body.substring(0, 120),
+      url: '/dashboard',
+    }).catch((err) => console.error('Failed sending push alert:', err));
 
     revalidatePath('/dashboard');
     revalidatePath('/admin/announcements');

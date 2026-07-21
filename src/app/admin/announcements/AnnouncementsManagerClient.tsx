@@ -110,6 +110,26 @@ export const AnnouncementsManagerClient = ({
       } else if (res.announcement) {
         setAnnouncements([res.announcement as AnnouncementItem, ...announcements]);
         setShowModal(false);
+
+        // Schedule native mobile pop-up banner notification if running on native Capacitor Android
+        try {
+          const { LocalNotifications } = await import('@capacitor/local-notifications');
+          await LocalNotifications.schedule({
+            notifications: [
+              {
+                title: input.priority === 'urgent' ? `🚨 Urgent: ${title}` : `📢 ${title}`,
+                body: body.substring(0, 120),
+                id: Math.floor(Math.random() * 100000),
+                schedule: { at: new Date(Date.now() + 500) },
+                channelId: 'choir_alerts',
+                actionTypeId: '',
+                extra: null,
+              },
+            ],
+          });
+        } catch (e) {
+          // Fall back gracefully if on web browser
+        }
       }
     }
   };

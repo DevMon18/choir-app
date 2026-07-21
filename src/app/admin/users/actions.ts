@@ -78,9 +78,9 @@ export const updateProfileRole = async (profileId: string, role: string) => {
     const { error } = await checkAdminAuth();
     if (error) return { error };
 
-    const supabase = await createClient();
+    const supabaseAdmin = createAdminClient();
 
-    const { error: updateErr } = await supabase
+    const { error: updateErr } = await supabaseAdmin
       .from('profiles')
       .update({ role })
       .eq('id', profileId);
@@ -89,7 +89,14 @@ export const updateProfileRole = async (profileId: string, role: string) => {
       return { error: updateErr.message };
     }
 
+    // Sync updated role into auth.users app_metadata (JWT claim)
+    await supabaseAdmin.auth.admin.updateUserById(profileId, {
+      app_metadata: { role },
+    });
+
     revalidatePath('/admin/users');
+    revalidatePath('/admin/roster');
+    revalidatePath('/directory');
     return { success: true };
   } catch (err: any) {
     return { error: err.message || 'An unexpected error occurred' };
@@ -260,10 +267,11 @@ export const updateUserProfile = async (
       return { error: `Profile update failed: ${profileErr.message}` };
     }
 
-    // 2. Update auth.users email and metadata
+    // 2. Update auth.users email, user_metadata, and app_metadata (role claim)
     const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(profileId, {
       email: input.email,
       user_metadata: { full_name: input.fullName },
+      app_metadata: { role: input.role },
     });
 
     if (authErr) {
