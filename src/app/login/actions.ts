@@ -26,7 +26,7 @@ export const loginWithEmail = async (formData: FormData) => {
   redirect('/dashboard');
 };
 
-export const loginWithGoogle = async () => {
+export const loginWithGoogle = async (isNative?: boolean) => {
   const supabase = await createClient();
   const headersList = await headers();
   const host = headersList.get('host');
@@ -39,16 +39,25 @@ export const loginWithGoogle = async () => {
   if (!siteUrl) {
     siteUrl = 'http://localhost:3000';
   }
+
+  const redirectTo = isNative
+    ? 'com.choircollective.app://auth/callback'
+    : `${siteUrl}/auth/callback`;
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${siteUrl}/auth/callback`,
+      redirectTo,
+      skipBrowserRedirect: isNative ? true : false,
     },
   });
 
   if (error) {
     return { error: error.message };
+  }
+
+  if (isNative) {
+    return { url: data?.url };
   }
 
   if (data?.url) {

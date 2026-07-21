@@ -6,6 +6,9 @@ import { signupWithEmail } from './actions';
 import { loginWithGoogle } from '../login/actions';
 import gsap from 'gsap';
 
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+
 const SignupPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -91,10 +94,22 @@ const SignupPage = () => {
   const handleGoogleSignup = async () => {
     setError(null);
     setGoogleLoading(true);
-    const result = await loginWithGoogle();
-    if (result?.error) {
-      setError(result.error);
-      setGoogleLoading(false);
+
+    if (Capacitor.isNativePlatform()) {
+      const result = await loginWithGoogle(true);
+      if (result?.error) {
+        setError(result.error);
+        setGoogleLoading(false);
+      } else if (result?.url) {
+        await Browser.open({ url: result.url });
+        setGoogleLoading(false);
+      }
+    } else {
+      const result = await loginWithGoogle(false);
+      if (result?.error) {
+        setError(result.error);
+        setGoogleLoading(false);
+      }
     }
   };
 
