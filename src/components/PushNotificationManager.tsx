@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { savePushSubscriptionAction } from '@/app/actions/push-actions';
 
+import { LocalNotifications } from '@capacitor/local-notifications';
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -21,6 +23,21 @@ export const PushNotificationManager = () => {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    // 1. Initialize native Android Notification channels if available via Capacitor
+    try {
+      LocalNotifications.createChannel({
+        id: 'choir_alerts',
+        name: 'Choir Collective Alerts',
+        description: 'Urgent announcements and rehearsal notifications',
+        importance: 5,
+        visibility: 1,
+        vibration: true,
+      }).catch((e) => console.log('LocalNotifications channel init:', e));
+    } catch (e) {
+      // Ignore if not running in native app
+    }
+
+    // 2. Register Web Service Worker if browser supports PushManager
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
       setIsSupported(true);
       navigator.serviceWorker.register('/sw.js').then((reg) => {
@@ -43,6 +60,14 @@ export const PushNotificationManager = () => {
   const handleSubscribe = async () => {
     setLoading(true);
     try {
+      // 1. Request native Android notification permission if on native device
+      try {
+        await LocalNotifications.requestPermissions();
+      } catch (e) {
+        // Fallback gracefully for web browser mode
+      }
+
+      // 2. Register Web Push subscription
       const reg = await navigator.serviceWorker.ready;
       const publicVapidKey =
         process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||

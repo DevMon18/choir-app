@@ -7,6 +7,12 @@ const config: CapacitorConfig = {
   server: {
     url: 'https://choir-app-ecru.vercel.app',
     cleartext: false
+  },
+  plugins: {
+    LocalNotifications: {
+      smallIcon: 'ic_launcher',
+      iconColor: '#0b4d24',
+    }
   }
 };
 
