@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "91770139453",
+    "project_id": "web-application-cc",
+    "storage_bucket": "web-application-cc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:91770139453:android:141ac21bdf9947c7808b54",
+        "android_client_info": {
+          "package_name": "com.choircollective.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "91770139453-ttksuf781mahsovj4ub61d7ujngc5gqv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsXyY5ZKADZko2gT3fMsiFbJ1DiU39Rh4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "91770139453-ttksuf781mahsovj4ub61d7ujngc5gqv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

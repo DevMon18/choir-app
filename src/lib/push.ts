@@ -76,6 +76,42 @@ export const sendPushToAll = async (payload: PushPayload) => {
         .delete()
         .in('id', expiredOrInvalidIds);
     }
+
+    // 2. Fetch Native FCM Tokens for Android Devices
+    const { data: fcmData, error: fcmError } = await adminSupabase
+      .from('fcm_tokens')
+      .select('*');
+
+    if (!fcmError && fcmData && fcmData.length > 0) {
+      const fcmTokens = fcmData.map((f) => f.token);
+      const fcmApiKey = process.env.FCM_SERVER_KEY || 'AIzaSyCsXyY5ZKADZko2gT3fMsiFbJ1DiU39Rh4';
+
+      try {
+        const res = await fetch('https://fcm.googleapis.com/fcm/send', {
+          method: 'POST',
+          headers: {
+            'Authorization': `key=${fcmApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            registration_ids: fcmTokens,
+            notification: {
+              title: payload.title,
+              body: payload.body,
+              sound: 'default',
+              click_action: 'https://choir-app-ecru.vercel.app/dashboard',
+            },
+            data: {
+              url: payload.url || '/dashboard',
+            },
+            priority: 'high',
+          }),
+        });
+        console.log('FCM native broadcast response status:', res.status);
+      } catch (err) {
+        console.error('Error broadcasting native FCM alerts:', err);
+      }
+    }
   } catch (err) {
     console.error('Error in sendPushToAll:', err);
   }

@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { savePushSubscriptionAction } from '@/app/actions/push-actions';
+import { savePushSubscriptionAction, saveFCMTokenAction } from '@/app/actions/push-actions';
 
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -28,10 +29,49 @@ export const PushNotificationManager = () => {
     const checkAndRequestNativePermissions = async () => {
       if (Capacitor.isNativePlatform()) {
         try {
-          const status = await LocalNotifications.checkPermissions();
-          if (status.display !== 'granted') {
+          // Check & request local notification permissions (for scheduling)
+          const localStatus = await LocalNotifications.checkPermissions();
+          if (localStatus.display !== 'granted') {
             await LocalNotifications.requestPermissions();
           }
+
+          // Register for native Push Notifications via FCM
+          const pushStatus = await PushNotifications.requestPermissions();
+          if (pushStatus.receive === 'granted') {
+            await PushNotifications.register();
+          }
+
+          // Listeners for native push notifications
+          await PushNotifications.addListener('registration', async (token) => {
+            console.log('FCM registration token acquired:', token.value);
+            await saveFCMTokenAction(token.value);
+          });
+
+          await PushNotifications.addListener('registrationError', (err) => {
+            console.error('FCM registration error:', err.error);
+          });
+
+          await PushNotifications.addListener('pushNotificationReceived', async (notification) => {
+            console.log('Push notification received in foreground:', notification);
+            // Re-schedule locally to show a popup heads-up banner if app is currently in foreground
+            try {
+              await LocalNotifications.schedule({
+                notifications: [
+                  {
+                    title: notification.title || 'Choir Collective Alert',
+                    body: notification.body || '',
+                    id: Math.floor(Math.random() * 100000),
+                    schedule: { at: new Date(Date.now() + 500) },
+                    channelId: 'choir_alerts',
+                    actionTypeId: '',
+                    extra: notification.data || null,
+                  },
+                ],
+              });
+            } catch (e) {
+              console.error('Failed to schedule local notification from push:', e);
+            }
+          });
         } catch (e) {
           console.error('Error requesting native notifications permission:', e);
         }

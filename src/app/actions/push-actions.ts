@@ -60,3 +60,31 @@ export async function removePushSubscriptionAction(endpoint: string) {
     return { error: err.message || 'Failed to remove push subscription' };
   }
 }
+
+export async function saveFCMTokenAction(token: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: 'Not authenticated' };
+    }
+
+    const { error } = await supabase.from('fcm_tokens').upsert(
+      {
+        user_id: user.id,
+        token: token,
+      },
+      { onConflict: 'token' }
+    );
+
+    if (error) {
+      console.error('Failed to save FCM token:', error);
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || 'Failed to save FCM token' };
+  }
+}
