@@ -15,6 +15,21 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+const envPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envPath)) {
+  const envText = fs.readFileSync(envPath, 'utf8');
+  envText.split('\n').forEach(line => {
+    const cleanLine = line.replace(/\r/g, '').trim();
+    if (!cleanLine || cleanLine.startsWith('#')) return;
+    const match = cleanLine.match(/^([^=]+)=(.*)$/);
+    if (match) {
+      const key = match[1].trim();
+      const val = match[2].trim().replace(/^["']|["']$/g, '');
+      process.env[key] = val;
+    }
+  });
+}
+
 const PROJECT_REF = process.env.SUPABASE_PROJECT_REF || 'twjtupwztrndxtvagmca';
 const PAT = process.env.SUPABASE_PAT;
 
