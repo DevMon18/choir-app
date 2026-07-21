@@ -1,7 +1,12 @@
+import dynamicImport from 'next/dynamic';
 import { redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
 import { getCalendarEvents } from './actions';
-import { CalendarClient } from './CalendarClient';
+
+const CalendarClient = dynamicImport(
+  () => import('./CalendarClient').then((m) => m.CalendarClient),
+  { ssr: true }
+);
 
 export default async function CalendarPage() {
   const profile = await getProfile();

@@ -53,7 +53,12 @@ export const sendPushToAll = async (payload: PushPayload) => {
         };
 
         try {
-          await webpush.sendNotification(pushSubscription, notificationPayload);
+          await webpush.sendNotification(pushSubscription, notificationPayload, {
+            headers: {
+              Urgency: 'high',
+              TTL: '86400',
+            },
+          });
         } catch (err: any) {
           // If subscription has expired or is invalid (404/410), mark for deletion
           if (err.statusCode === 404 || err.statusCode === 410) {

@@ -1,5 +1,6 @@
 'use server';
 
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 
 export interface CalendarEvent {
@@ -7,13 +8,14 @@ export interface CalendarEvent {
   title: string;
   date: string; // YYYY-MM-DD
   dateTimeISO: string;
-  type: 'mass' | 'rehearsal' | 'performance' | 'special_event';
-  source: 'mass_sequence' | 'attendance_session';
+  type: 'mass' | 'rehearsal' | 'performance' | 'special_event' | 'announcement';
+  source: 'mass_sequence' | 'attendance_session' | 'announcement';
   details?: string;
   linkHref?: string;
+  isUrgent?: boolean;
 }
 
-export async function getCalendarEvents(): Promise<CalendarEvent[]> {
+export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
   try {
     const supabase = await createClient();
     const events: CalendarEvent[] = [];
@@ -67,6 +69,29 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
       });
     }
 
+    // 3. Fetch Active & Scheduled Announcements
+    const { data: annData, error: annError } = await supabase
+      .from('announcements')
+      .select('id, title, body, priority, starts_at, is_pinned')
+      .order('starts_at', { ascending: true });
+
+    if (!annError && annData) {
+      annData.forEach((ann) => {
+        const d = new Date(ann.starts_at);
+        events.push({
+          id: `ann_${ann.id}`,
+          title: ann.title || 'Announcement',
+          date: d.toISOString().split('T')[0],
+          dateTimeISO: ann.starts_at,
+          type: 'announcement',
+          source: 'announcement',
+          details: ann.body,
+          linkHref: '/dashboard',
+          isUrgent: ann.priority === 'urgent',
+        });
+      });
+    }
+
     // Sort combined events by dateTimeISO ascending
     events.sort((a, b) => new Date(a.dateTimeISO).getTime() - new Date(b.dateTimeISO).getTime());
 
@@ -75,4 +100,4 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
     console.error('getCalendarEvents failed:', err);
     return [];
   }
-}
+});

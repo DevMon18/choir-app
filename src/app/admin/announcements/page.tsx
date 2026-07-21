@@ -1,7 +1,12 @@
+import dynamicImport from 'next/dynamic';
 import { redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
 import { getAnnouncements } from './actions';
-import { AnnouncementsManagerClient } from './AnnouncementsManagerClient';
+
+const AnnouncementsManagerClient = dynamicImport(
+  () => import('./AnnouncementsManagerClient').then((m) => m.AnnouncementsManagerClient),
+  { ssr: true }
+);
 
 export default async function AnnouncementsPage() {
   const profile = await getProfile();

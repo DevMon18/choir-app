@@ -44,6 +44,12 @@ const TYPE_CONFIG: Record<
     color: '#ec4899',
     dot: '#ec4899',
   },
+  announcement: {
+    label: 'Announcement / Alert',
+    bg: 'rgba(159, 28, 28, 0.12)',
+    color: 'var(--error)',
+    dot: '#9f1c1c',
+  },
 };
 
 export const CalendarClient = ({ currentUserProfile, events }: Props) => {

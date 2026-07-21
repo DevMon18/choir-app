@@ -11,10 +11,13 @@ self.addEventListener('push', function (event) {
       body: data.body || '',
       icon: data.icon || '/collective-logo.png',
       badge: '/collective-logo.png',
+      tag: data.tag || 'choir-urgent-alert',
+      renotify: true,
+      requireInteraction: true,
       data: {
         url: data.url || '/dashboard',
       },
-      vibrate: [100, 50, 100],
+      vibrate: [200, 100, 200, 100, 200],
     };
 
     event.waitUntil(self.registration.showNotification(title, options));

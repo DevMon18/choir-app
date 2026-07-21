@@ -1,7 +1,12 @@
+import dynamicImport from 'next/dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
-import { DirectoryClient } from './DirectoryClient';
+
+const DirectoryClient = dynamicImport(
+  () => import('./DirectoryClient').then((m) => m.DirectoryClient),
+  { ssr: true }
+);
 
 export const dynamic = 'force-dynamic';
 
