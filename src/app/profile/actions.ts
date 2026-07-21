@@ -24,7 +24,7 @@ export const updatePersonalProfile = async (input: {
     }
 
     // 1. Update public.profiles table
-    const { error: profileErr } = await supabase
+    const { data: updatedRows, error: profileErr } = await supabase
       .from('profiles')
       .update({
         full_name: input.fullName,
@@ -36,10 +36,15 @@ export const updatePersonalProfile = async (input: {
         is_address_private: input.isAddressPrivate,
         avatar_url: input.avatarUrl || null,
       })
-      .eq('id', user.id);
+      .eq('id', user.id)
+      .select();
 
     if (profileErr) {
       return { error: `Profile update failed: ${profileErr.message}` };
+    }
+
+    if (!updatedRows || updatedRows.length === 0) {
+      return { error: 'Profile update failed: Permission denied or profile record not found (0 rows updated).' };
     }
 
     // 2. Update auth user metadata (syncs full_name and avatar_url to JWT/auth)
