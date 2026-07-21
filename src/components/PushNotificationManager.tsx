@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { savePushSubscriptionAction } from '@/app/actions/push-actions';
 
+import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -23,7 +24,22 @@ export const PushNotificationManager = () => {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // 1. Initialize native Android Notification channels if available via Capacitor
+    // 1. If running natively in the Capacitor APK, request native permissions on startup
+    const checkAndRequestNativePermissions = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const status = await LocalNotifications.checkPermissions();
+          if (status.display !== 'granted') {
+            await LocalNotifications.requestPermissions();
+          }
+        } catch (e) {
+          console.error('Error requesting native notifications permission:', e);
+        }
+      }
+    };
+    checkAndRequestNativePermissions();
+
+    // 2. Initialize native Android Notification channels if available via Capacitor
     try {
       LocalNotifications.createChannel({
         id: 'choir_alerts',
