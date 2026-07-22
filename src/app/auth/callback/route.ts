@@ -33,46 +33,6 @@ export async function GET(request: Request) {
         }
       }
 
-      if (isNative) {
-        const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Authenticating...</title>
-  <style>
-    body { background: #090d16; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
-    .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 32px; border-radius: 16px; backdrop-filter: blur(12px); max-width: 320px; width: 90%; }
-    .spinner { border: 3px solid rgba(255,255,255,0.1); border-top-color: #3b82f6; border-radius: 50%; width: 36px; height: 36px; animation: spin 1s linear infinite; margin: 0 auto 16px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .btn { display: inline-block; margin-top: 16px; padding: 10px 20px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="spinner"></div>
-    <h3 style="margin: 0 0 8px;">Authenticated!</h3>
-    <p style="margin: 0; color: #9ca3af; font-size: 14px;">Returning to Choir Collective...</p>
-    <a id="app-link" href="intent://auth/callback#Intent;scheme=com.choircollective.app;package=com.choircollective.app;end" class="btn">Open Choir Collective App</a>
-  </div>
-  <script>
-    var intentUrl = "intent://auth/callback#Intent;scheme=com.choircollective.app;package=com.choircollective.app;end";
-    var customUrl = "com.choircollective.app://auth/callback";
-    
-    // Instantly launch Android Intent
-    window.location.href = intentUrl;
-
-    setTimeout(function() {
-      window.location.href = customUrl;
-    }, 400);
-  </script>
-</body>
-</html>`;
-        return new NextResponse(html, {
-          headers: { 'Content-Type': 'text/html' },
-        });
-      }
-
       const forwardedHost = request.headers.get('x-forwarded-host');
       let targetOrigin = origin;
       if (forwardedHost) {
