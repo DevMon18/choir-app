@@ -44,7 +44,7 @@ export const loginWithGoogle = async (isNative?: boolean) => {
   }
 
   const redirectTo = isNative
-    ? 'com.choircollective.app://auth/callback'
+    ? `${siteUrl}/auth/callback?native=true`
     : `${siteUrl}/auth/callback`;
   
   const { data, error } = await supabase.auth.signInWithOAuth({

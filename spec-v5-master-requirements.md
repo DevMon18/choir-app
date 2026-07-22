@@ -1,164 +1,248 @@
-# Choir Collective App — Master Requirements Spec (v5)
+# Choir Collective App — v6 Addendum: Agent Rules & Cross-Platform Sync
 
-> Consolidates v2 (base spec), v3 (security/realtime/OAuth fixes), and v4
-> (super admin + email/password auth) into one comprehensive functional +
-> non-functional requirements checklist. Read this file first; it points
-> back to v3/v4 for the actual SQL/code where relevant rather than
-> repeating it. Save all four files together under `.agent/rules/`.
->
-> **Definition of done for this project:** every checkbox in §1 and §2 has
-> a corresponding migration, route, component, test, and monitoring signal
-> — not just a database table. A feature with a table and an RLS policy
-> but no test and no error handling is not done.
+> Read alongside `spec-v5-master-requirements.md` — this file only adds to
+> and redlines that spec based on real bugs found in production (mobile
+> OAuth stranding, silent RLS no-op on self-profile-update, dead legacy
+> FCM endpoint). Save this alongside v2-v5 under `.agent/rules/`. Don't
+> merge by hand — this file states precisely what changes on top of v5.
 
 ---
 
-## 1. Functional Requirements
+## 0. Why this addendum exists
 
-### 1.1 Authentication & Identity
-- [ ] Google OAuth sign-in (existing accounts auto-verified)
-- [ ] Email/password sign-up with mandatory confirmation-link verification (v4 §7)
-- [ ] Unconfirmed email/password accounts cannot reach the app shell, and don't appear in the admin approval queue as approvable (v4 §7)
-- [ ] `pending` → `member` / `rejected` transitions, admin-only
-- [ ] `rejected` → resubmission via `/join` only, never automatic re-entry (v4 §4)
-- [ ] Password reset flow (not previously specified — standard Supabase Auth recovery email)
-- [ ] Session refresh handled transparently on both web and Capacitor wrapper
-- [ ] Sign-out invalidates the session across tabs/devices (Supabase default — verify, don't assume)
+Three bugs were found post-launch that the v5 spec either didn't fully
+cover or flagged but didn't make specific enough to prevent:
 
-### 1.2 Role-Based Access Control
-- [ ] Six-tier role model: `super_admin`, `director`, `secretary`, `treasurer`, `member`, `pending`/`rejected` (v4 §1)
-- [ ] Role-assignment hierarchy enforced at the DB layer, not just the UI (v4 §4) — Secretary cannot create Director/Super Admin; only Super Admin creates Director/Super Admin
-- [ ] Self-privilege-escalation blocked at the DB layer (v3 §5.1)
-- [ ] Middleware route table matches DB RLS exactly — no route accessible in the UI that RLS would silently reject, and vice versa
-- [ ] Super Admin direct user-creation flow, role-assignable except `super_admin` itself (v4 §5)
+1. Google OAuth on the Capacitor Android APK opens the system browser
+   correctly, but never returns control to the app afterward — the user
+   is stranded on the web page inside the browser tab.
+2. A `member`-role user editing their own profile (avatar, phone,
+   address) gets a success toast, but the write silently doesn't
+   persist — RLS filters the `UPDATE` to zero rows, and Supabase-js does
+   not raise an error for that, so the server action reports success
+   anyway.
+3. Native push notifications (`src/lib/push.ts`) call the legacy FCM
+   HTTP API (`fcm.googleapis.com/fcm/send`), which Google decommissioned
+   in June 2024. Failures are only `console.error`'d server-side and
+   never surfaced, so this looked identical to "notifications just don't
+   work" with no diagnostic trail.
 
-### 1.3 Repertoire Hub
-- [ ] ChordPro lyrics+chord entry and storage (v3 §3.3)
-- [ ] ChordPro renderer with transposition and adjustable font size (prototyped)
-- [ ] Optional scanned sheet-music viewer (pinch-to-zoom), independent of ChordPro content (v3 §3.3 note)
-- [ ] Full-text search over lyrics (chord brackets stripped) (v3 §3.3)
-- [ ] Optional full-choir reference audio upload/playback, Secretary+Director only (v3 §3.4, demoted priority)
-- [ ] Song archival (soft delete via `is_archived`) rather than hard delete when referenced by a setlist (v3 §3.8 FK note)
-
-### 1.4 Live Mass Sequence
-- [ ] Director builds/reorders a setlist (`mass_sequences` + `sequence_items`) — Secretary can also build setlists (v3 §5.2)
-- [ ] Director starts a live session, selects active song
-- [ ] Director controls transpose and scroll speed in real time, reflected to all viewers (v3 §3.6)
-- [ ] Realtime sync via `postgres_changes`, RLS-filtered, publication enabled (v3 §3.6 — **do not skip the `alter publication` step**)
-- [ ] Members' devices auto-scroll or allow manual override
-- [ ] Screen Wake Lock during live sessions, re-acquired on `visibilitychange` (v2 §7)
-- [ ] Offline fallback: most recent sequence + songs cached for mid-Mass Wi-Fi drops (v2 §6)
-
-### 1.5 Community Directory
-- [ ] Server-masked directory view (`public_directory`), never raw `profiles`, for non-admins (v3 §3.2)
-- [ ] Per-user toggle for phone/address privacy
-- [ ] `emergency_contact` never exposed to non-admins regardless of toggle
-- [ ] Voice-part assignment, Secretary/Director only
-
-### 1.6 Finance (Dues)
-- [ ] Treasurer/Director full CRUD on `member_dues`
-- [ ] Members can view only their own dues history
-- [ ] Treasurer has read access to `profiles` to attribute dues to a name (v3 §5.1)
-
-### 1.7 Attendance
-- [ ] `/admin/attendance` route, Secretary/Director (route existed in v2 middleware table; **schema for attendance itself was never defined — needs a table + RLS before this is buildable**, flagged as a gap below)
-
-### 1.8 Recruitment / Join Flow
-- [ ] Public `/join` pre-interest form, unauthenticated, writes to `join_requests`
-- [ ] Staff-only read access to `join_requests` (v4 §3.8)
-- [ ] Retention: auto-delete `join_requests` after 12 months with no matching profile (v4 §4)
+All three share the same shape: a plausible-looking success path that
+hides a real failure, on a system with more than one deployment surface.
+The rules below exist to stop that shape of bug from recurring, and to
+close the specific spec gaps that let these three slip through.
 
 ---
 
-## 2. Non-Functional Requirements
+## 1. New Functional Requirement — §1.9 Announcements & Push Notifications
 
-### 2.1 Performance
-- [ ] Largest Contentful Paint < 2.5s on 4G for the `/dashboard` and `/live` routes (Core Web Vitals "good" threshold)
-- [ ] Interaction to Next Paint < 200ms for chord-transpose and setlist-reorder actions
-- [ ] Realtime update latency (Director action → Member screen) < 1s at expected scale (tens of concurrent devices, per v3 §5.3)
-- [ ] Signed URL generation for sheet-music/audio reads adds < 300ms to initial load
-- [ ] Service worker precaches app shell + last-viewed sequence so `/live` is usable within 1s on repeat visits, even offline
+This section did not exist in v5. `announcements`, `fcm_tokens`, and
+`push_subscriptions` are real, shipped features (see migrations
+`20260722000000`–`20260722000003`) that were built without ever being
+tracked in the spec — which is exactly how a dead API endpoint went
+unnoticed. Add:
 
-### 2.2 Scalability
-- [ ] Current design targets tens of concurrent devices per live session (v3 §5.3); Postgres `postgres_changes` is explicitly the right call at this scale — re-evaluate only past ~500 concurrent connections per session, and only then consider Realtime Broadcast channels
-- [ ] No architectural assumption blocks scaling to multiple simultaneous choirs/branches later (e.g. don't hardcode a single `live_sessions` row as "the" session — schema already supports multiple rows, keep it that way in app code)
-
-### 2.3 Security
-- [ ] RLS enabled on every table with no exceptions, including `join_requests` (v4 §3.8, gap in v2)
-- [ ] No RLS policy relies on client-supplied role claims — every check re-queries `profiles` server-side
-- [ ] Self-privilege-escalation and role-assignment-hierarchy triggers in place (v3 §5.1, v4 §4)
-- [ ] Storage buckets default-private except `avatars`; signed URLs with 1-hour expiry for private buckets (v3 §5.5)
-- [ ] Service-role key (`/lib/supabase/admin.ts`) never imported into any client component or exposed via `NEXT_PUBLIC_*` env vars
-- [ ] Super Admin bootstrap credentials are environment-driven with production hard-refusal of dev defaults (this conversation's seed script)
-- [ ] Google OAuth in Capacitor uses the system browser (`@capacitor/browser`), never the in-app WebView (v3 §6)
-- [ ] Secrets (`SUPABASE_SERVICE_ROLE_KEY`, `SUPER_ADMIN_BOOTSTRAP_EMAILS`, OAuth client secrets) live in platform secret storage (Vercel env vars / GitHub Actions secrets), never committed
-
-### 2.4 Reliability & Availability
-- [ ] Realtime live-session feature degrades gracefully if the WebSocket connection drops mid-Mass — reconnect with exponential backoff, show a "reconnecting" indicator rather than a blank screen
-- [ ] Offline cache (§1.4) is the reliability fallback for the flagship feature specifically because live-choir use is failure-intolerant — a chorister stuck without music mid-hymn is the worst-case UX failure for this app
-- [ ] Database backups: Supabase automatic daily backups at minimum; define RPO (recovery point objective) — recommend ≤24h — and RTO (recovery time objective) — recommend ≤4h for a volunteer-run org
-- [ ] Storage bucket contents (sheet music, audio) included in backup scope, not just the Postgres database
-
-### 2.5 Maintainability
-- [ ] Every RLS policy and trigger lives in a numbered migration file, applied in the documented order (v3 §9, v4 §9) — no ad-hoc dashboard-applied policies that aren't captured in version control
-- [ ] TypeScript strict mode across the Next.js app
-- [ ] Shared Supabase client helpers (`/lib/supabase/client.ts`, `server.ts`, `admin.ts`) are the only places a Supabase client is instantiated — no ad-hoc `createClient()` calls scattered through components
-- [ ] Component library (shadcn/ui) used consistently rather than one-off custom styling per screen
-
-### 2.6 Usability & Accessibility
-- [ ] WCAG 2.1 AA minimum for all Member-facing screens (Directory, Repertoire Hub, Live view) — this app serves a volunteer choir that may include older adults; accessibility isn't optional
-- [ ] Minimum 48px touch targets (v2 §7, already specified — keep it)
-- [ ] Performance Mode's dark palette meets 4.5:1 contrast ratio for lyric text against background
-- [ ] ChordPro font-size control persists per-user (so a chorister who needs larger text doesn't reset it every session)
-- [ ] Screen-reader labels on all icon-only buttons (bottom nav, transpose controls)
-
-### 2.7 Compatibility
-- [ ] Target browsers: last 2 versions of Chrome, Safari, Firefox, Edge; Android system WebView (Capacitor)
-- [ ] iOS Capacitor wrapper explicitly out of scope unless requested — v2/v3/v4 only specified Android; confirm before assuming iOS parity is needed
-- [ ] PWA installability verified on both Android (Chrome) and iOS (Safari "Add to Home Screen"), even without the Capacitor wrapper, since not every member will install the native app
-
-### 2.8 Observability
-- [ ] Error tracking (e.g. Sentry) wired into both the Next.js app and any Supabase Edge Functions
-- [ ] Structured logging for every RLS-denial and auth failure — these are the events you'll actually need to debug ("why can't the Secretary see the roster")
-- [ ] Realtime connection health surfaced somewhere admins can check it before a live Mass (a simple "last heartbeat" status, not full APM)
-- [ ] Basic usage analytics (which songs get practiced, dues payment completion rate) — optional, but flag as a decision rather than an oversight
-
-### 2.9 Data Privacy & Compliance
-- [ ] Directory privacy masking is enforced server-side, never client-side-only (v2/v3, already correct — keep it)
-- [ ] Data export/deletion path for a member who leaves the choir and requests their data removed (not previously specified — worth deciding: does `profiles.id → auth.users.id on delete cascade` (v3 §3.9) fully satisfy this, or do dues/attendance records need independent retention rules for accounting purposes?)
-- [ ] `emergency_contact` and financial data (`member_dues`) treated as the two most sensitive fields in the schema — audit their RLS policies first in any future review
-
-### 2.10 Testing Strategy
-- [ ] Unit tests for every RLS policy — a role-matrix test suite (each role × each table × each operation) is the highest-leverage test given how much of this system's correctness lives in RLS rather than app code
-- [ ] Integration test for the full pending → approved → member flow, including the email-confirmation gate (v4 §7)
-- [ ] Integration test for the role-hierarchy trigger (v4 §4) — assert a Secretary-authenticated request to set someone's role to `director` is rejected
-- [ ] E2E test for a full live-session flow: Director starts session → sets active song → Member's client receives the realtime update — this is the feature most likely to silently break (missing publication statement, RLS mismatch) and least likely to be caught by unit tests alone
-- [ ] Since Antigravity has a built-in Browser Subagent, use it specifically for this E2E flow and for the OAuth-in-system-browser redirect — both are exactly the kind of "click through it and watch what happens" cases that are hard to unit-test but easy for an agent to visually verify
-
-### 2.11 Deployment & Environments
-- [ ] Three environments minimum: local dev, staging, production — each with its own Supabase project (never share a database across environments)
-- [ ] Migration files applied identically across all three via the Supabase CLI, never hand-applied differently per environment
-- [ ] `SUPER_ADMIN_BOOTSTRAP_EMAILS` and seed-script defaults differ per environment (dev fallback allowed, staging/production require explicit values — enforced by the seed script's `NODE_ENV` check from this conversation)
-- [ ] CI pipeline runs the RLS role-matrix tests (§2.10) before any deploy — this is the cheapest place to catch a regression that would otherwise leak data in production
+- [ ] Announcements CRUD, Director/Secretary/Super Admin only, with
+      `priority` (normal/urgent), `is_pinned`, and optional `ends_at`
+      expiry (already implemented — bring under spec tracking)
+- [ ] **Two independent, both-required delivery paths** for every
+      announcement broadcast:
+  - [ ] Web Push (`public/sw.js` + VAPID keys) for browser subscribers
+  - [ ] Native FCM (`@capacitor/push-notifications`) for the installed
+        Android APK, via **FCM HTTP v1** (service-account + short-lived
+        OAuth2 token) — **never** the legacy `fcm.googleapis.com/fcm/send`
+        server-key endpoint, which is permanently retired
+- [ ] A broadcast is not "sent" unless both paths are attempted and
+      their individual success/failure is logged distinguishably — a
+      feature that silently only implements one path is an incomplete
+      implementation, not a partial success
+- [ ] Push/broadcast failures are returned to the admin UI (even just a
+      warning toast), not only `console.error`'d server-side
+- [ ] Expired/invalid push subscriptions and FCM tokens are pruned on
+      send failure (404/410), not accumulated indefinitely
 
 ---
 
-## 3. Known Gaps Not Yet Resolved
+## 2. Redline — §2.3 Security (v5)
 
-These were surfaced during this spec's development and don't yet have a decision — flag to the team before Antigravity builds against them:
+v5 currently states:
 
-1. **Attendance schema.** The `/admin/attendance` route has existed since v2's routing table, but no `attendance` table, columns, or RLS were ever specified. Needs: what's tracked (per-rehearsal? per-Mass? per-song within a session?), who marks it (Secretary manually, or auto-derived from live-session presence?).
-2. **iOS support.** All mobile work so far (§6 across v2-v4) assumes Android/Capacitor only. Decide before building any native-only feature (Wake Lock, audio recording) whether iOS parity is in scope.
-3. **Data retention for leavers.** §2.9 above — decide whether `member_dues`/attendance history is deleted alongside a departing member's `profiles` row (accounting implications) or retained independently.
-4. **Analytics.** §2.8 — decide if this is wanted at all before building any tracking, given the org's privacy-conscious posture elsewhere in this spec (masked directory, private storage buckets).
+> Google OAuth in Capacitor uses the system browser (`@capacitor/browser`), never the in-app WebView (v3 §6)
+
+This checkbox is necessary but not sufficient, and its current wording
+is exactly vague enough that "we installed `@capacitor/browser`" reads
+as done when the actual OAuth loop was never closed. Replace with:
+
+- [ ] Google OAuth in Capacitor uses the system browser
+      (`Browser.open()` from `@capacitor/browser`) to launch the OAuth
+      URL — never the in-app WebView, and never a bare server-side
+      `redirect()` (`redirect()` is a web-only assumption that strands
+      native users in the browser tab with no way back into the app)
+- [ ] A custom URL scheme / deep link is registered in
+      `android/app/src/main/AndroidManifest.xml` for the OAuth
+      callback, and an `appUrlOpen` (`@capacitor/app`) or
+      `browserFinished` listener explicitly calls `Browser.close()` and
+      resumes the app at `/dashboard` once the callback fires
+- [ ] This full loop — launch, redirect, deep link, close, resume — is
+      verified on a real device or emulator for cold-start (app fully
+      closed) and warm-start (app backgrounded) cases, not just "the
+      browser opened"
 
 ---
 
-## 4. How to Prompt Antigravity With This
+## 3. §3 Known Gaps — two additions
 
-Recommended approach given Antigravity's agent-and-artifact workflow:
-1. Drop all four files (`spec-v2` implicit in v3, `spec-v3-antigravity.md`, `spec-v4-superadmin-addendum.md`, this file) into `.agent/rules/`.
-2. Work through §9's migration order (v3) then v4 §9, one migration per agent task, reviewing each Walkthrough artifact before advancing — don't dispatch all 18 migrations as one task, Antigravity's parallel-agent model works best on independently verifiable units.
-3. For §1's feature checkboxes, assign one feature area per agent dispatch (e.g. "Repertoire Hub" as one task, "Live Mass Sequence" as another) rather than one agent for the whole app — this matches Antigravity's Manager view's parallel-agent design.
-4. Explicitly ask the agent to use its Browser Subagent for the two flows flagged in §2.10 (live-session realtime sync, OAuth system-browser redirect) — these are the two places a working diff can still be functionally broken in a way only interaction reveals.
-5. Resolve §3's open gaps before dispatching any task that touches them — an unresolved gap handed to an autonomous agent becomes a silent assumption baked into the schema.
+v5 §3 lists four known gaps (attendance schema, iOS support, data
+retention, analytics). Add:
+
+**5. Mobile OAuth return-trip.** Opening the system browser for Google
+sign-in was implemented; resuming the native app afterward was not.
+There is no deep link, no `appUrlOpen` listener, and no
+`Browser.close()` call anywhere in the codebase. This is a gap in
+implementation completeness, not just a missing checkbox — treat as a
+required fix before any further native-auth work, not a nice-to-have.
+
+**6. Self-service data edits under RLS.** Every RLS-related requirement
+in v5 (§2.3, §1.2) is framed around admin-vs-admin or admin-vs-member
+access. Nowhere does the spec explicitly require "a member can update
+their own profile row," and no table's RLS policy set actually grants
+it — `profiles` currently only allows admin roles to `UPDATE`, with no
+`auth.uid() = id` policy for self-edits. Any future table storing
+user-editable, non-admin-owned data (preferences, personal notes, etc.)
+must have this called out explicitly per-table, not assumed to be
+covered by a general RLS pass.
+
+---
+
+## 4. Standing Agent Rules (apply to all future work, not just the bugs above)
+
+These are architecture-level rules, not feature-specific ones — every
+agent session working on this codebase should treat them as always-on,
+regardless of what the current task is.
+
+### A. Three deployment surfaces, one codebase
+This app ships as a Next.js web app (Vercel), a Capacitor-wrapped
+Android APK (WebView pointed at the deployed site, `capacitor.config.ts`
+`server.url`), and a Supabase backend, accessed via three different
+clients (`src/lib/supabase/client.ts` browser, `server.ts` server/RLS,
+`admin.ts` service-role/bypasses-RLS). Before starting any feature,
+state which of these three surfaces it touches, and don't assume a fix
+on one automatically covers the others.
+
+### B. RLS & data access
+- Every table gets RLS enabled with an explicit policy per role **and**
+  an explicit "user acts on their own row" policy
+  (`auth.uid() = owner_column`) — this is a default case to design for,
+  not an edge case to bolt on later.
+- Supabase-js does not throw when RLS silently filters a write to zero
+  rows. Any server action that writes user-visible data must confirm
+  the write with `.select()` and treat an empty result as a failure,
+  not a success.
+- The service-role admin client (`src/lib/supabase/admin.ts`) is
+  server-action-only, after re-verifying the caller's role server-side.
+  Never in a client component, never behind `NEXT_PUBLIC_*`.
+- New role-sensitive triggers must be cross-checked against every
+  existing policy touching `profiles.role` so a new feature can't open
+  an escalation path.
+- All schema/policy/trigger changes are new, timestamp-ordered files
+  under `supabase/migrations/` — never a hand-applied dashboard change.
+
+### C. Auth & native branching
+- Any change to login/signup/redirect logic must explicitly branch on
+  `Capacitor.isNativePlatform()`. A bare `redirect()` is a web-only
+  assumption. Native OAuth requires `Browser.open()` +
+  deep-link/`appUrlOpen` handling to hand control back to the app — see
+  §2 above as the reference case for what "done" looks like.
+- Role/permission checks are re-verified server-side on every
+  privileged action, even when the UI already hides the option —
+  `src/proxy.ts`'s route table and each table's RLS policies are the
+  real enforcement layer and must agree with each other.
+
+### D. Realtime
+- Any feature using `postgres_changes` must confirm its table is in the
+  `supabase_realtime` publication — a missing `ALTER PUBLICATION` is a
+  silent, hard-to-diagnose failure.
+- Realtime UI must handle disconnect/reconnect explicitly (backoff +
+  visible "reconnecting" state), especially on mobile where network
+  switching and backgrounding are routine, not exceptional.
+
+### E. Notifications
+- Web Push and native FCM are two independent, both-required paths —
+  see §1 above. A change to one without considering the other is
+  incomplete.
+- Always use current, non-deprecated integration APIs (FCM HTTP v1 with
+  a service-account OAuth token). When touching any external
+  integration, confirm the credential type and API version are current
+  before assuming a bug is "just a config problem" — deprecated
+  integrations fail in ways indistinguishable from misconfiguration.
+
+### F. Native-only capabilities
+- Browser-only APIs (localStorage, Wake Lock, camera/file picker,
+  clipboard, geolocation, vibration) need a Capacitor plugin equivalent
+  for parity in the wrapped APK, with graceful degradation — not a
+  silent no-op inside the WebView.
+- Routes reachable via a push-notification tap or OAuth/deep-link
+  redirect need a matching intent-filter / URL scheme in
+  `android/app/src/main/AndroidManifest.xml` — a route that only exists
+  in the Next.js router is invisible to the native OS.
+
+### G. Mobile-first responsive design
+- Every new page/component is designed mobile-first (≤768px layout
+  first, then progressively enhanced), per the existing `mobile-design`
+  skill reference in `AGENTS.md`.
+- Minimum 48px touch targets; reuse existing `.btn`/`.input-field`
+  sizing rather than introducing smaller custom controls.
+- New data tables degrade to the existing card-based mobile pattern
+  (`.custom-table`'s mobile `@media` block), not raw horizontal scroll.
+- Respect `prefers-reduced-motion` for any new animation.
+- Reuse existing design tokens (`var(--primary)`, `.glass-container`,
+  `.badge`, etc.) instead of one-off inline styles, unless the
+  component is a deliberate one-off.
+
+### H. No silent failures
+- No server action returns `{ success: true }` (or omits an error
+  field) unless the underlying write/send was verifiably confirmed —
+  "didn't throw" is not confirmation.
+- Any `catch` block that only `console.error()`s without surfacing the
+  failure to the caller is an incomplete implementation, not a
+  finished one — upgrade it to return an actionable result.
+
+---
+
+## 5. Definition of Done (extends v5's project-level DoD)
+
+v5's DoD requires a migration, route, component, test, and monitoring
+signal per checkbox. Add: a feature is not done until you can answer
+**yes** to all of the following, in addition to v5's criteria:
+
+1. Does it work correctly under RLS as the least-privileged role that
+   should have access — not just as `super_admin` during testing?
+2. Does it behave correctly on both the web deployment and the
+   Capacitor Android build, including any native-only branching?
+3. Is every failure path surfaced or logged in a way that's actually
+   actionable, not silently swallowed?
+4. Is the mobile (≤768px) layout verified, not assumed to inherit from
+   desktop?
+5. If it touches auth, notifications, or realtime — have **all**
+   relevant delivery/return paths been implemented, not just the one
+   that was easiest to test?
+
+---
+
+## 6. Migration / Task Order (extends v5 §4's dispatch guidance)
+
+Recommended next dispatches, in priority order, given what's now known:
+
+1. Fix `public.profiles` self-update RLS gap (§3 item 6) — add
+   `auth.uid() = id` UPDATE policy, cross-checked against the
+   role-hierarchy triggers; fix `updatePersonalProfile` to verify
+   writes via `.select()`.
+2. Migrate `src/lib/push.ts` off legacy FCM to HTTP v1 (§1); surface
+   send failures to the admin UI.
+3. Close the mobile OAuth loop (§2 / §3 item 5) — `Browser.open()` +
+   deep link + `appUrlOpen` listener + `Browser.close()`.
+4. Only after 1–3: resume new feature work, applying §4's standing
+   rules and §5's DoD to everything going forward.
+5. Backfill the RLS role-matrix test suite (v5 §2.10, already flagged
+   there as highest-leverage) — prioritize `profiles` given item 1 just
+   proved it was untested and broken.
