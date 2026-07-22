@@ -12,57 +12,49 @@ export const CapacitorManager = () => {
 
     const supabase = createClient();
 
-    const handleAuthSuccess = async () => {
-      try {
-        await Browser.close();
-      } catch (e) {
-        // Browser tab might already be closed
-      }
-      
-      const path = window.location.pathname;
-      if (path === '/login' || path === '/signup' || path === '/join' || path === '/') {
+    const appUrlListener = App.addListener('appUrlOpen', async (data) => {
+      console.log('Mobile app opened with URL:', data.url);
+
+      if (data.url && (data.url.includes('auth/callback') || data.url.startsWith('com.choircollective.app'))) {
+        // 1. Immediately close the in-app browser overlay tab
+        try {
+          await Browser.close();
+        } catch (e) {
+          // Tab might already be dismissed
+        }
+
+        try {
+          // Parse hash or query parameters from URL
+          const urlStr = data.url.replace('com.choircollective.app://', 'https://choir-app-ecru.vercel.app/');
+          const parsed = new URL(urlStr);
+
+          // Check hash fragment parameters (#access_token=...&refresh_token=...)
+          const hashParams = new URLSearchParams(parsed.hash.substring(1));
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
+
+          // Check search query parameters (?code=...)
+          const code = parsed.searchParams.get('code');
+
+          if (accessToken && refreshToken) {
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+          } else if (code) {
+            await supabase.auth.exchangeCodeForSession(code);
+          }
+        } catch (err) {
+          console.error('Error handling mobile auth deep link:', err);
+        }
+
+        // 2. Navigate native WebView to dashboard
         window.location.href = '/dashboard';
       }
-    };
-
-    // 1. Listen for deep link events (e.g. com.choircollective.app://auth/callback)
-    const appUrlListener = App.addListener('appUrlOpen', async (data) => {
-      console.log('App opened with URL:', data.url);
-      if (data.url.includes('auth/callback') || data.url.includes('com.choircollective.app')) {
-        await handleAuthSuccess();
-      }
     });
-
-    // 2. Listen for when the browser overlay is finished or closed
-    const browserFinishedListener = Browser.addListener('browserFinished', async () => {
-      console.log('Browser overlay finished/closed');
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await handleAuthSuccess();
-      }
-    });
-
-    // 3. Listen for active session state changes (e.g. when OAuth completes inside Custom Tab)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Native auth state change:', event, session?.user?.email);
-      if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
-        await handleAuthSuccess();
-      }
-    });
-
-    // 4. Fast polling fallback while browser overlay is open
-    const interval = setInterval(async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await handleAuthSuccess();
-      }
-    }, 1500);
 
     return () => {
       appUrlListener.then((h) => h.remove());
-      browserFinishedListener.then((h) => h.remove());
-      subscription.unsubscribe();
-      clearInterval(interval);
     };
   }, []);
 
