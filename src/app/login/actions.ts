@@ -33,11 +33,14 @@ export const loginWithGoogle = async (isNative?: boolean) => {
   const proto = headersList.get('x-forwarded-proto') || 'https';
   
   let siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!siteUrl && host) {
-    siteUrl = `${host.includes('localhost') ? 'http' : proto}://${host}`;
-  }
-  if (!siteUrl) {
-    siteUrl = 'http://localhost:3000';
+  if (host && !host.includes('localhost')) {
+    siteUrl = `${proto}://${host}`;
+  } else if (!siteUrl || siteUrl.includes('localhost')) {
+    if (host) {
+      siteUrl = `${host.includes('localhost') ? 'http' : proto}://${host}`;
+    } else {
+      siteUrl = 'http://localhost:3000';
+    }
   }
 
   const redirectTo = isNative

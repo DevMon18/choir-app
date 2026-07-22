@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { headers } from 'next/headers';
 
 export const signupWithEmail = async (formData: FormData) => {
   const fullName = formData.get('fullName') as string;
@@ -24,7 +25,20 @@ export const signupWithEmail = async (formData: FormData) => {
     return { error: 'Your registration request has been rejected. Resubmission must occur via the official interest form (/join) only.' };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const headersList = await headers();
+  const host = headersList.get('host');
+  const proto = headersList.get('x-forwarded-proto') || 'https';
+  
+  let siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (host && !host.includes('localhost')) {
+    siteUrl = `${proto}://${host}`;
+  } else if (!siteUrl || siteUrl.includes('localhost')) {
+    if (host) {
+      siteUrl = `${host.includes('localhost') ? 'http' : proto}://${host}`;
+    } else {
+      siteUrl = 'http://localhost:3000';
+    }
+  }
 
   const { error } = await supabase.auth.signUp({
     email,
