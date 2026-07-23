@@ -11,6 +11,7 @@ export const updatePersonalProfile = async (input: {
   address?: string | null;
   isPhonePrivate: boolean;
   isAddressPrivate: boolean;
+  isBirthdatePrivate?: boolean;
   avatarUrl?: string | null;
 }) => {
   try {
@@ -34,6 +35,7 @@ export const updatePersonalProfile = async (input: {
         address: input.address || null,
         is_phone_private: input.isPhonePrivate,
         is_address_private: input.isAddressPrivate,
+        is_birthdate_private: input.isBirthdatePrivate ?? true,
         avatar_url: input.avatarUrl || null,
       })
       .eq('id', user.id)

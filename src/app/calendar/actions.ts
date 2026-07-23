@@ -8,11 +8,12 @@ export interface CalendarEvent {
   title: string;
   date: string; // YYYY-MM-DD
   dateTimeISO: string;
-  type: 'mass' | 'rehearsal' | 'performance' | 'special_event' | 'announcement';
-  source: 'mass_sequence' | 'attendance_session' | 'announcement';
+  type: 'mass' | 'rehearsal' | 'performance' | 'special_event' | 'announcement' | 'birthday';
+  source: 'mass_sequence' | 'attendance_session' | 'announcement' | 'birthday';
   details?: string;
   linkHref?: string;
   isUrgent?: boolean;
+  birthMonthDay?: string; // MM-DD format for annual recurring birthday mapping
 }
 
 export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
@@ -89,6 +90,38 @@ export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
           linkHref: '/dashboard',
           isUrgent: ann.priority === 'urgent',
         });
+      });
+    }
+
+    // 4. Fetch Non-Private Member Birthdays
+    const { data: bdayData, error: bdayError } = await supabase
+      .from('profiles')
+      .select('id, full_name, birthdate')
+      .not('birthdate', 'is', null)
+      .eq('is_birthdate_private', false)
+      .not('role', 'in', '("pending","rejected")');
+
+    if (!bdayError && bdayData) {
+      bdayData.forEach((profile) => {
+        if (!profile.birthdate) return;
+        const parts = profile.birthdate.split('-');
+        if (parts.length >= 3) {
+          const monthStr = parts[1];
+          const dayStr = parts[2];
+          const birthMonthDay = `${monthStr}-${dayStr}`;
+
+          events.push({
+            id: `bday_${profile.id}`,
+            title: `🎂 ${profile.full_name}'s Birthday`,
+            date: profile.birthdate,
+            dateTimeISO: `${new Date().getFullYear()}-${monthStr}-${dayStr}T00:00:00.000Z`,
+            type: 'birthday',
+            source: 'birthday',
+            birthMonthDay,
+            details: `Celebrate ${profile.full_name}'s birthday!`,
+            linkHref: '/directory',
+          });
+        }
       });
     }
 

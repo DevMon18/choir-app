@@ -90,19 +90,26 @@ async function getAccessToken(serviceAccount: {
   return tokenData.access_token;
 }
 
-export const sendPushToAll = async (payload: PushPayload): Promise<PushReport> => {
+export const sendPushToAll = async (
+  payload: PushPayload,
+  options?: { excludeUserIds?: string[] }
+): Promise<PushReport> => {
   const report: PushReport = {
     webPush: { total: 0, success: 0, failed: 0, errors: [] },
     fcm: { total: 0, success: 0, failed: 0, errors: [] },
   };
 
+  const excludeSet = new Set(options?.excludeUserIds || []);
+
   try {
     const adminSupabase = createAdminClient();
 
     // 1. Web Push Path
-    const { data: subs, error: subError } = await adminSupabase
+    const { data: rawSubs, error: subError } = await adminSupabase
       .from('push_subscriptions')
       .select('*');
+
+    const subs = (rawSubs || []).filter((sub) => !excludeSet.has(sub.user_id));
 
     if (subError) {
       report.webPush.errors.push(`Database error: ${subError.message}`);
@@ -154,9 +161,11 @@ export const sendPushToAll = async (payload: PushPayload): Promise<PushReport> =
     }
 
     // 2. Native FCM Path
-    const { data: fcmData, error: fcmError } = await adminSupabase
+    const { data: rawFcmData, error: fcmError } = await adminSupabase
       .from('fcm_tokens')
       .select('*');
+
+    const fcmData = (rawFcmData || []).filter((item) => !excludeSet.has(item.user_id));
 
     if (fcmError) {
       report.fcm.errors.push(`Database error: ${fcmError.message}`);

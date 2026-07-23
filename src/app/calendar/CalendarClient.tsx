@@ -50,6 +50,12 @@ const TYPE_CONFIG: Record<
     color: 'var(--error)',
     dot: '#9f1c1c',
   },
+  birthday: {
+    label: '🎂 Member Birthday',
+    bg: 'rgba(236, 72, 153, 0.15)',
+    color: '#db2777',
+    dot: '#ec4899',
+  },
 };
 
 export const CalendarClient = ({ currentUserProfile, events }: Props) => {
@@ -78,15 +84,30 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
     return arr;
   }, [year, month, daysInMonth, firstDayOfWeek]);
 
-  // Group events by dateStr
+  // Map events to currently displayed year and group by dateStr
+  const displayEvents = useMemo(() => {
+    return events.map((ev) => {
+      if (ev.type === 'birthday' && ev.birthMonthDay) {
+        const mappedDateStr = `${year}-${ev.birthMonthDay}`;
+        const mappedISO = `${year}-${ev.birthMonthDay}T00:00:00.000Z`;
+        return {
+          ...ev,
+          date: mappedDateStr,
+          dateTimeISO: mappedISO,
+        };
+      }
+      return ev;
+    }).sort((a, b) => new Date(a.dateTimeISO).getTime() - new Date(b.dateTimeISO).getTime());
+  }, [events, year]);
+
   const eventsByDate = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {};
-    events.forEach((ev) => {
+    displayEvents.forEach((ev) => {
       if (!map[ev.date]) map[ev.date] = [];
       map[ev.date].push(ev);
     });
     return map;
-  }, [events]);
+  }, [displayEvents]);
 
   const selectedDayEvents = selectedDateStr ? eventsByDate[selectedDateStr] || [] : [];
 
@@ -176,16 +197,16 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
           <div className="mobile-agenda-block" style={{ display: viewMode === 'auto' ? 'block' : 'block' }}>
             <div className="glass-container" style={{ padding: '24px', marginBottom: '24px' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '16px' }}>
-                Upcoming Agenda ({events.length} Events)
+                Upcoming Agenda ({displayEvents.length} Events)
               </h2>
 
-              {events.length === 0 ? (
+              {displayEvents.length === 0 ? (
                 <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '30px 0' }}>
                   No upcoming rehearsals or Mass engagements scheduled.
                 </p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {events.map((ev) => {
+                  {displayEvents.map((ev) => {
                     const cfg = TYPE_CONFIG[ev.type];
                     const dateObj = new Date(ev.dateTimeISO);
                     return (

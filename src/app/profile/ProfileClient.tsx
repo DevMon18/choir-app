@@ -22,6 +22,7 @@ interface Profile {
   voice_part: string;
   is_phone_private: boolean;
   is_address_private: boolean;
+  is_birthdate_private?: boolean;
   avatar_url: string | null;
   created_at: string;
 }
@@ -44,6 +45,7 @@ const ProfileClient = ({ profile, isAdmin }: ProfileClientProps) => {
   const [emergencyContact, setEmergencyContact] = useState(profile.emergency_contact);
   const [isPhonePrivate, setIsPhonePrivate] = useState(profile.is_phone_private);
   const [isAddressPrivate, setIsAddressPrivate] = useState(profile.is_address_private);
+  const [isBirthdatePrivate, setIsBirthdatePrivate] = useState(profile.is_birthdate_private ?? true);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatar_url);
 
   const [loading, setLoading] = useState(false);
@@ -121,6 +123,7 @@ const ProfileClient = ({ profile, isAdmin }: ProfileClientProps) => {
         address,
         isPhonePrivate,
         isAddressPrivate,
+        isBirthdatePrivate,
         avatarUrl: publicUrl,
       });
 
@@ -157,6 +160,7 @@ const ProfileClient = ({ profile, isAdmin }: ProfileClientProps) => {
       address,
       isPhonePrivate,
       isAddressPrivate,
+      isBirthdatePrivate,
       avatarUrl,
     });
     setLoading(false);
@@ -332,6 +336,25 @@ const ProfileClient = ({ profile, isAdmin }: ProfileClientProps) => {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
               
+              <div className="input-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label className="input-label" htmlFor="birthdatePrivate">Birthdate Privacy</label>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                    <input
+                      id="birthdatePrivate"
+                      type="checkbox"
+                      checked={isBirthdatePrivate}
+                      onChange={(e) => setIsBirthdatePrivate(e.target.checked)}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Keep Private</span>
+                  </label>
+                </div>
+                <p style={{ color: 'var(--muted)', fontSize: '0.8rem', lineHeight: 1.4 }}>
+                  If private, your birthday will not appear on the Choir Calendar or in automatic birthday notifications.
+                </p>
+              </div>
+
               <div className="input-group">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <label className="input-label" htmlFor="phonePrivate">Phone Privacy</label>
