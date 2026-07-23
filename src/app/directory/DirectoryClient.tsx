@@ -135,7 +135,7 @@ export const DirectoryClient = ({ profile, members }: Props) => {
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; }}
                 >
                   {/* Avatar rendering — 40px circle matching IG/FB list standards */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <Link href={`/directory/${m.id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                     <div style={{
                       width: 40, height: 40, borderRadius: '50%',
                       background: m.avatar_url ? 'none' : `linear-gradient(135deg, ${voiceColor}, ${voiceColor}99)`,
@@ -152,14 +152,14 @@ export const DirectoryClient = ({ profile, members }: Props) => {
                       )}
                     </div>
                     <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontWeight: 600, color: 'var(--foreground)', fontSize: '15px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--primary)', fontSize: '15px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {m.full_name}
                       </div>
                       <div style={{ fontSize: '13px', color: 'var(--muted)', textTransform: 'capitalize' }}>
                         {ROLE_LABELS[m.role] ?? m.role}
                       </div>
                     </div>
-                  </div>
+                  </Link>
 
                   {/* Voice part */}
                   {m.voice_part && (
