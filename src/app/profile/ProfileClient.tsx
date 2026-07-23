@@ -203,20 +203,20 @@ const ProfileClient = ({ profile, isAdmin }: ProfileClientProps) => {
 
       <Navbar profile={profile as any} />
 
-      <main style={{ flex: 1, padding: '40px 20px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+      <main style={{ flex: 1, padding: '24px 16px 120px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          <div className="glass-container anim-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <div className="glass-container anim-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', padding: '20px' }}>
             <div>
-              <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '8px', color: 'var(--primary)' }}>
+              <h1 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '4px', color: 'var(--primary)' }}>
                 My Profile
               </h1>
-              <p style={{ color: 'var(--muted)', fontSize: '1rem' }}>
-                Update your personal details, profile picture, and directories visibility settings.
+              <p style={{ color: 'var(--muted)', fontSize: '13px', margin: 0 }}>
+                Update your personal details, profile picture, and directory privacy settings.
               </p>
             </div>
             <form action={logout}>
-              <button type="submit" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
+              <button type="submit" className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '14px' }}>
                 🚪 Log Out
               </button>
             </form>
@@ -234,22 +234,22 @@ const ProfileClient = ({ profile, isAdmin }: ProfileClientProps) => {
           {success && (
             <div className="alert alert-success anim-card">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1-1.414L9 10.586 7.707 9.293a1 1 0 00-1-1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
               <span>{success}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="glass-container anim-card" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <form onSubmit={handleSubmit} className="glass-container anim-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px' }}>
             
-            {/* Avatar Section */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '24px', flexWrap: 'wrap' }}>
-              <div style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(30,58,138,0.06)', overflow: 'hidden', border: '2px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Avatar Section — 88px circle matching IG/FB profile header standards */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '20px', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', width: '88px', height: '88px', borderRadius: '50%', background: 'rgba(30,58,138,0.06)', overflow: 'hidden', border: '2px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: '2.5rem', fontWeight: 600, color: 'var(--primary)' }}>
+                  <span style={{ fontSize: '2rem', fontWeight: 600, color: 'var(--primary)' }}>
                     {fullName ? fullName.charAt(0).toUpperCase() : '?'}
                   </span>
                 )}

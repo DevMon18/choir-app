@@ -201,7 +201,33 @@ looks.
 
 ---
 
-## 8. Pre-ship checklist — run this before calling any UI work done
+## 8. Mobile Typography & Sizing Standards (Instagram / Facebook Conventions)
+
+Applies to consumer/social surfaces (`Directory`, `Profile`, `Direct Messages`, `Photo Gallery`, `Calendar` on mobile viewports ≤768px):
+
+### Typography Scale (Mobile)
+- **Body text / message content**: `14–15px` (fixed px for native-app consistency).
+- **Primary names / usernames**: `15–16px`, semibold.
+- **Profile display name** (on `/directory/[id]` & `/profile` header): `18–20px`, bold.
+- **Secondary / meta text**: `12–13px`, `var(--muted)`.
+- **Section labels / headers**: `11–12px`, uppercase, letterspaced (`.input-label`).
+- **Button text**: `14–15px` (compact, no oversized mobile buttons).
+
+### Avatar & Image Sizing
+- **List Row Avatar**: `36–40px` circle.
+- **Profile Header Avatar**: `80–96px` circle.
+- **Navbar Avatar**: `32px` circle.
+- **Photo Gallery Grid**: 1:1 square aspect ratio thumbnails in 3-column mobile grid, `object-fit: cover`.
+
+### Layout & Spacing
+- **Screen Edge Padding**: `16px` on mobile consumer screens.
+- **List Item Gap**: `8–12px`.
+- **Chat Bubbles**: `10–12px` vertical, `12–14px` horizontal padding, max-width ~75%.
+- **Touch Targets**: Minimum `48px` tappable area.
+
+---
+
+## 9. Pre-ship checklist — run this before calling any UI work done
 
 1. Does every color/spacing value trace back to an existing token/class, 
    or is there a good reason for the exception?
@@ -212,7 +238,8 @@ looks.
 4. Does this pass a real contrast check against its ACTUAL rendered 
    background, not an assumed one?
 5. Does this work and look correct at 375px width, not just desktop?
-6. Would this look like it belongs in the same app as the rest of the 
+6. Does mobile typography & avatar sizing match Instagram/Facebook conventions for consumer screens?
+7. Would this look like it belongs in the same app as the rest of the 
    screens, or does it look like it was designed in isolation?
 
 If the answer to any of these is "no" or "not sure," that's not done yet — 

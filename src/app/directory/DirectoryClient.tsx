@@ -122,25 +122,25 @@ export const DirectoryClient = ({ profile, members }: Props) => {
         ) : (
           <div
             className="directory-grid"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}
           >
-            {filtered.map((m, i) => {
+            {filtered.map((m) => {
               const voiceColor = VOICE_COLORS[m.voice_part ?? ''] ?? 'var(--primary)';
               return (
                 <div
                   key={m.id}
                   className="member-card glass-container"
-                  style={{ padding: '24px', opacity: 0, transition: 'transform 0.2s, box-shadow 0.2s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'; }}
+                  style={{ padding: '16px 20px', opacity: 0, transition: 'transform 0.2s, box-shadow 0.2s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; }}
                 >
-                  {/* Avatar rendering */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                  {/* Avatar rendering — 40px circle matching IG/FB list standards */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                     <div style={{
-                      width: 48, height: 48, borderRadius: '50%',
+                      width: 40, height: 40, borderRadius: '50%',
                       background: m.avatar_url ? 'none' : `linear-gradient(135deg, ${voiceColor}, ${voiceColor}99)`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', fontWeight: 700, fontSize: '1.1rem', flexShrink: 0,
+                      color: '#fff', fontWeight: 600, fontSize: '0.95rem', flexShrink: 0,
                       overflow: 'hidden',
                       border: m.avatar_url ? '1px solid var(--glass-border)' : 'none'
                     }}>
@@ -152,10 +152,10 @@ export const DirectoryClient = ({ profile, members }: Props) => {
                       )}
                     </div>
                     <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--foreground)', fontSize: '15px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {m.full_name}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'capitalize' }}>
+                      <div style={{ fontSize: '13px', color: 'var(--muted)', textTransform: 'capitalize' }}>
                         {ROLE_LABELS[m.role] ?? m.role}
                       </div>
                     </div>
@@ -164,10 +164,10 @@ export const DirectoryClient = ({ profile, members }: Props) => {
                   {/* Voice part */}
                   {m.voice_part && (
                     <span style={{
-                      display: 'inline-block', fontSize: '0.72rem', fontWeight: 700,
+                      display: 'inline-block', fontSize: '11px', fontWeight: 700,
                       textTransform: 'uppercase', letterSpacing: '0.06em',
                       color: voiceColor, background: `${voiceColor}12`,
-                      padding: '3px 10px', borderRadius: '99px', marginBottom: '12px',
+                      padding: '2px 8px', borderRadius: '99px', marginBottom: '10px',
                       border: `1px solid ${voiceColor}30`,
                     }}>
                       {m.voice_part}
@@ -175,7 +175,7 @@ export const DirectoryClient = ({ profile, members }: Props) => {
                   )}
 
                   {/* Contact info (if not private) */}
-                  <div style={{ fontSize: '0.82rem', color: 'var(--muted)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ fontSize: '13px', color: 'var(--muted)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {m.phone && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span>📞</span>
@@ -191,8 +191,8 @@ export const DirectoryClient = ({ profile, members }: Props) => {
 
                   {/* Admin actions */}
                   {isAdmin && (
-                    <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--glass-border)' }}>
-                      <Link href={`/admin/roster`} style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
+                    <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--glass-border)' }}>
+                      <Link href={`/admin/roster`} style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
                         Manage in Roster →
                       </Link>
                     </div>
