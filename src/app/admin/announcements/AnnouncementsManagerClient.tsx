@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { Navbar } from '@/components/Navbar';
+import { useToast } from '@/components/Toast';
+import { ConfirmModal } from '@/components/ConfirmModal';
 import {
   createAnnouncement,
   updateAnnouncement,
@@ -36,9 +38,11 @@ export const AnnouncementsManagerClient = ({
   currentUserProfile,
   initialAnnouncements,
 }: Props) => {
+  const { addToast } = useToast();
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(initialAnnouncements);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [priority, setPriority] = useState<'normal' | 'urgent'>('normal');
@@ -112,7 +116,9 @@ export const AnnouncementsManagerClient = ({
         setShowModal(false);
 
         if (res.warning) {
-          alert(`Warning: ${res.warning}`);
+          addToast({ type: 'warning', title: 'Push Notice', message: res.warning });
+        } else {
+          addToast({ type: 'success', title: 'Announcement Posted', message: 'Successfully broadcasted announcement.' });
         }
 
         // Schedule native mobile pop-up banner notification if running on native Capacitor Android
@@ -138,13 +144,21 @@ export const AnnouncementsManagerClient = ({
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this announcement?')) return;
+  const handleDeleteClick = (id: string) => {
+    setConfirmDeleteId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
 
     setAnnouncements(announcements.filter((a) => a.id !== id));
     const res = await deleteAnnouncement(id);
     if (res.error) {
-      alert(`Delete failed: ${res.error}`);
+      addToast({ type: 'error', title: 'Delete Failed', message: res.error });
+    } else {
+      addToast({ type: 'success', title: 'Announcement Deleted', message: 'Announcement removed.' });
     }
   };
 
@@ -228,7 +242,7 @@ export const AnnouncementsManagerClient = ({
                         <button onClick={() => handleOpenEdit(item)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', minHeight: '32px' }}>
                           Edit
                         </button>
-                        <button onClick={() => handleDelete(item.id)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', minHeight: '32px', color: 'var(--error)', borderColor: 'var(--error)' }}>
+                        <button onClick={() => handleDeleteClick(item.id)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', minHeight: '32px', color: 'var(--error)', borderColor: 'var(--error)' }}>
                           Delete
                         </button>
                       </div>
@@ -337,6 +351,16 @@ export const AnnouncementsManagerClient = ({
             </form>
           </div>
         </div>
+      )}
+      {confirmDeleteId && (
+        <ConfirmModal
+          title="Delete Announcement"
+          message="Are you sure you want to delete this announcement? This action cannot be undone."
+          confirmLabel="Yes, Delete"
+          isDanger
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
       )}
     </div>
   );

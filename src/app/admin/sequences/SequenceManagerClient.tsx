@@ -17,6 +17,7 @@ import {
   updateLiveSession,
   updateSequenceItemRole,
 } from './actions';
+import { ConfirmModal } from '@/components/ConfirmModal';
 import gsap from 'gsap';
 
 interface Profile { id: string; full_name: string; role: string; }
@@ -168,13 +169,21 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
     });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this sequence? This cannot be undone.')) return;
+  const [confirmDeleteSeq, setConfirmDeleteSeq] = useState<Sequence | null>(null);
+
+  const handleDeleteClick = (seq: Sequence) => {
+    setConfirmDeleteSeq(seq);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteSeq) return;
+    const id = confirmDeleteSeq.id;
+    setConfirmDeleteSeq(null);
     startTransition(async () => {
       const res = await deleteSequence(id);
       if (res?.error) flash(res.error, 'err');
       else {
-        flash('Deleted.', 'ok');
+        flash('Deleted sequence.', 'ok');
         if (selectedSeqId === id) setSelectedSeqId(null);
         router.refresh();
       }
@@ -381,7 +390,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
                         {canManage && (
                           <>
                             <button onClick={() => setEditingSeq(seq)} className="btn btn-secondary" style={{ minHeight: '44px', padding: '8px 14px', fontSize: '0.82rem' }}>Edit</button>
-                            <button onClick={() => handleDelete(seq.id)} className="btn btn-secondary" style={{ minHeight: '44px', padding: '8px 14px', fontSize: '0.82rem', color: 'var(--error)' }} disabled={isPending}>Delete</button>
+                            <button onClick={() => handleDeleteClick(seq)} className="btn btn-secondary" style={{ minHeight: '44px', padding: '8px 14px', fontSize: '0.82rem', color: 'var(--error)' }} disabled={isPending}>Delete</button>
                           </>
                         )}
                         <button onClick={() => setSelectedSeqId(isSelected ? null : seq.id)} className="btn btn-secondary" style={{ minHeight: '44px', padding: '8px 14px', fontSize: '0.82rem' }}>
@@ -568,6 +577,16 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
                 </div>
               </div>
             </div>
+          )}
+          {confirmDeleteSeq && (
+            <ConfirmModal
+              title="Delete Sequence"
+              message={`Are you sure you want to delete sequence "${confirmDeleteSeq.title}"? This action cannot be undone.`}
+              confirmLabel="Yes, Delete"
+              isDanger
+              onConfirm={handleConfirmDelete}
+              onCancel={() => setConfirmDeleteSeq(null)}
+            />
           )}
       </main>
     </div>

@@ -151,27 +151,19 @@ export const JoinPage = () => {
           </div>
         )}
 
-        <div className="stagger-item" style={{ marginBottom: '1.5rem', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-          <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem', marginBottom: '12px' }}>
+        <div className="stagger-item" style={{ marginBottom: '1.5rem', background: 'rgba(11, 77, 36, 0.04)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+          <p style={{ color: 'var(--muted)', fontSize: '0.875rem', marginBottom: '12px', fontWeight: 500 }}>
             Fast Track — Register instantly using Google:
           </p>
           <button
             type="button"
-            className="btn btn-secondary google-btn"
+            className={`btn btn-secondary google-btn ${googleLoading ? 'btn-disabled' : ''}`}
             style={{
               width: '100%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '10px',
-              padding: '12px',
-              borderRadius: '8px',
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.18)',
-              color: '#fff',
-              fontWeight: '500',
-              cursor: googleLoading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
             }}
             onClick={handleGoogleSignup}
             disabled={googleLoading || loading}
@@ -205,14 +197,14 @@ export const JoinPage = () => {
             alignItems: 'center',
             textAlign: 'center',
             margin: '1.5rem 0',
-            color: 'rgba(255, 255, 255, 0.4)',
+            color: 'var(--muted)',
             fontSize: '0.8rem',
             fontWeight: '600'
           }}
         >
-          <div style={{ flex: 1, borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}></div>
+          <div style={{ flex: 1, borderBottom: '1px solid var(--glass-border)' }}></div>
           <span style={{ padding: '0 10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>OR FILL OUT AUDITION FORM</span>
-          <div style={{ flex: 1, borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}></div>
+          <div style={{ flex: 1, borderBottom: '1px solid var(--glass-border)' }}></div>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

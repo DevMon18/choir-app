@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { archiveSong, restoreSong } from './actions';
 import { SongForm } from './SongForm';
+import { ConfirmModal } from '@/components/ConfirmModal';
+import { useToast } from '@/components/Toast';
 import gsap from 'gsap';
 
 interface Profile {
@@ -41,6 +43,9 @@ export const SongsManagerClient = ({ currentUserProfile, initialSongs }: SongsMa
   const [actionMsg, setActionMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
+  const { addToast } = useToast();
+  const [archiveConfirmSong, setArchiveConfirmSong] = useState<Song | null>(null);
+
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
@@ -52,10 +57,20 @@ export const SongsManagerClient = ({ currentUserProfile, initialSongs }: SongsMa
 
   const showMsg = (type: 'success' | 'error', text: string) => {
     setActionMsg({ type, text });
+    addToast({ type: type === 'error' ? 'error' : 'success', title: type === 'error' ? 'Error' : 'Success', message: text });
     setTimeout(() => setActionMsg(null), 3500);
   };
 
-  const handleArchive = async (song: Song) => {
+  const handleArchiveClick = (song: Song) => {
+    if (song.is_archived) {
+      handlePerformArchiveOrRestore(song);
+    } else {
+      setArchiveConfirmSong(song);
+    }
+  };
+
+  const handlePerformArchiveOrRestore = async (song: Song) => {
+    setArchiveConfirmSong(null);
     setLoadingId(song.id);
     const result = song.is_archived ? await restoreSong(song.id) : await archiveSong(song.id);
     setLoadingId(null);
@@ -185,7 +200,7 @@ export const SongsManagerClient = ({ currentUserProfile, initialSongs }: SongsMa
                                   Edit
                                 </button>
                                 <button
-                                  onClick={() => handleArchive(song)}
+                                  onClick={() => handleArchiveClick(song)}
                                   className="btn btn-secondary"
                                   disabled={loadingId === song.id}
                                   style={{
@@ -225,6 +240,16 @@ export const SongsManagerClient = ({ currentUserProfile, initialSongs }: SongsMa
                 onCancel={() => { setViewMode('list'); setEditingSong(null); }}
               />
             </div>
+          )}
+          {archiveConfirmSong && (
+            <ConfirmModal
+              title="Archive Song"
+              message={`Are you sure you want to archive "${archiveConfirmSong.title}"? It will be moved out of the active repertoire catalogue.`}
+              confirmLabel="Yes, Archive"
+              isDanger
+              onConfirm={() => handlePerformArchiveOrRestore(archiveConfirmSong)}
+              onCancel={() => setArchiveConfirmSong(null)}
+            />
           )}
       </main>
     </div>
