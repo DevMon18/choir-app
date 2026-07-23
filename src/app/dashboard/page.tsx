@@ -3,6 +3,7 @@ import React from 'react';
 import { redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
 import { getActiveAnnouncements } from '@/app/admin/announcements/actions';
+import { checkAndTriggerTodayBirthdayPush } from '@/lib/birthdayPushHelper';
 
 const DashboardClient = dynamicImport(() => import('./DashboardClient'), { ssr: true });
 
@@ -14,6 +15,9 @@ const DashboardPage = async () => {
   if (!profile) {
     redirect('/login');
   }
+
+  // Trigger today's birthday push if not yet executed today (fire & forget non-blocking)
+  checkAndTriggerTodayBirthdayPush().catch(console.error);
 
   const isAdmin = ['super_admin', 'director', 'secretary'].includes(profile.role);
   const announcements = await getActiveAnnouncements();

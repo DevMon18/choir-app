@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { signupWithEmail } from './actions';
 import { loginWithGoogle } from '../login/actions';
+import { PasswordInput } from '@/components/PasswordInput';
 import gsap from 'gsap';
 
 import { Capacitor } from '@capacitor/core';
@@ -14,8 +15,6 @@ const SignupPage = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [googleLoading, setGoogleLoading] = useState<boolean>(false);
-
-  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -231,52 +230,14 @@ const SignupPage = () => {
           </div>
 
           <div className="input-group stagger-item">
-            <label className="input-label" htmlFor="password">Password</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                className="input-field"
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                name="password"
-                placeholder="Choose a strong password"
-                required
-                disabled={loading}
-                style={{ paddingRight: '48px' }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                style={{
-                  position: 'absolute',
-                  right: '4px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  padding: '12px',
-                  minWidth: '48px',
-                  minHeight: '48px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--muted)',
-                  cursor: 'pointer',
-                }}
-              >
-                {showPassword ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                    <line x1="1" y1="1" x2="23" y2="23" />
-                  </svg>
-                ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                )}
-              </button>
-            </div>
+            <PasswordInput
+              label="Password"
+              id="password"
+              name="password"
+              placeholder="Choose a strong password"
+              required
+              disabled={loading}
+            />
           </div>
 
           <button

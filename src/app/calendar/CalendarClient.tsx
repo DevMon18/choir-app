@@ -114,6 +114,23 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
+  // Separate events into Repertoire/Schedule and Birthdays
+  const agendaScheduleEvents = useMemo(
+    () => displayEvents.filter((ev) => ev.type !== 'birthday'),
+    [displayEvents]
+  );
+
+  const agendaBirthdayEvents = useMemo(
+    () => displayEvents.filter((ev) => ev.type === 'birthday'),
+    [displayEvents]
+  );
+
+  const getEventActionLabel = (ev: CalendarEvent) => {
+    if (ev.type === 'birthday') return 'View Member Profile →';
+    if (ev.type === 'announcement') return 'View Notice →';
+    return 'View Repertoire Sequence →';
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
       <div className="bg-orb bg-orb-1" style={{ width: '450px', height: '450px' }} />
@@ -129,7 +146,7 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
               Schedule & Mass Calendar
             </h1>
             <p style={{ color: 'var(--muted)', margin: '4px 0 0 0', fontSize: '0.95rem' }}>
-              Unified schedule for choir rehearsals, Mass singing engagements, and performances.
+              Unified schedule for choir rehearsals, Mass singing engagements, and member celebrations.
             </p>
           </div>
 
@@ -147,7 +164,7 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
                 fontWeight: viewMode === 'auto' ? 700 : 500,
               }}
             >
-              Responsive
+              Month View
             </button>
             <button
               onClick={() => setViewMode('agenda')}
@@ -164,21 +181,6 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
             >
               Agenda List
             </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className="btn"
-              style={{
-                padding: '6px 14px',
-                fontSize: '0.82rem',
-                minHeight: '34px',
-                background: viewMode === 'grid' ? '#fff' : 'transparent',
-                color: viewMode === 'grid' ? 'var(--primary)' : 'var(--muted)',
-                boxShadow: viewMode === 'grid' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                fontWeight: viewMode === 'grid' ? 700 : 500,
-              }}
-            >
-              Month Grid
-            </button>
           </div>
         </div>
 
@@ -192,21 +194,171 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
           ))}
         </div>
 
-        {/* AGENDA VIEW (Always shown on mobile or when agenda mode selected) */}
-        {(viewMode === 'agenda' || viewMode === 'auto') && (
-          <div className="mobile-agenda-block" style={{ display: viewMode === 'auto' ? 'block' : 'block' }}>
+        {/* MONTH GRID VIEW (Shown in Auto Mode or Grid Mode) */}
+        {(viewMode === 'grid' || viewMode === 'auto') && (
+          <div className="desktop-grid-block">
             <div className="glass-container" style={{ padding: '24px', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '16px' }}>
-                Upcoming Agenda ({displayEvents.length} Events)
+              {/* Month Selector Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+                  {monthName}
+                </h2>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={prevMonth} className="btn btn-secondary" style={{ padding: '6px 12px', minHeight: '34px' }}>
+                    ‹ Prev
+                  </button>
+                  <button onClick={nextMonth} className="btn btn-secondary" style={{ padding: '6px 12px', minHeight: '34px' }}>
+                    Next ›
+                  </button>
+                </div>
+              </div>
+
+              {/* Grid Header Days */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', textAlign: 'center', fontWeight: 700, fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '8px' }}>
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+              </div>
+
+              {/* Days Grid — Fixed Cell Height to prevent grid distortion */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
+                {daysArray.map((item, idx) => {
+                  if (!item) {
+                    return <div key={`empty_${idx}`} style={{ height: '92px', background: 'rgba(0,0,0,0.01)', borderRadius: '10px' }} />;
+                  }
+
+                  const dayEvs = eventsByDate[item.dateStr] || [];
+                  const isSelected = selectedDateStr === item.dateStr;
+
+                  return (
+                    <div
+                      key={item.dateStr}
+                      onClick={() => setSelectedDateStr(isSelected ? null : item.dateStr)}
+                      style={{
+                        height: '92px',
+                        padding: '6px 8px',
+                        borderRadius: '10px',
+                        background: isSelected ? 'rgba(11, 77, 36, 0.08)' : 'rgba(255,255,255,0.6)',
+                        border: isSelected ? '2px solid var(--primary)' : '1px solid var(--glass-border)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        overflow: 'hidden',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: isSelected ? 'var(--primary)' : 'var(--foreground)' }}>
+                        {item.day}
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
+                        {dayEvs.slice(0, 2).map((ev) => {
+                          const cfg = TYPE_CONFIG[ev.type];
+                          return (
+                            <div
+                              key={ev.id}
+                              style={{
+                                fontSize: '0.65rem',
+                                padding: '2px 4px',
+                                borderRadius: '4px',
+                                background: cfg.bg,
+                                color: cfg.color,
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {ev.type === 'birthday' ? '🎂' : '•'} {ev.title.replace('🎂 ', '').replace("'s Birthday", '')}
+                            </div>
+                          );
+                        })}
+                        {dayEvs.length > 2 && (
+                          <div style={{ fontSize: '0.62rem', color: 'var(--muted)', fontWeight: 700 }}>
+                            +{dayEvs.length - 2} more
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Day Filter Details Drawer */}
+              {selectedDateStr && (
+                <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--glass-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+                      Selected Date: {new Date(selectedDateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                    </h3>
+                    <button onClick={() => setSelectedDateStr(null)} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.78rem' }}>
+                      Close Details ✕
+                    </button>
+                  </div>
+
+                  {selectedDayEvents.length === 0 ? (
+                    <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>No events or celebrations scheduled for this day.</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {selectedDayEvents.map((ev) => {
+                        const cfg = TYPE_CONFIG[ev.type];
+                        return (
+                          <div
+                            key={ev.id}
+                            style={{
+                              padding: '12px 16px',
+                              borderRadius: '12px',
+                              background: ev.type === 'birthday' ? 'rgba(236, 72, 153, 0.08)' : 'rgba(255,255,255,0.7)',
+                              border: ev.type === 'birthday' ? '1px solid rgba(236, 72, 153, 0.25)' : '1px solid var(--glass-border)',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              flexWrap: 'wrap',
+                              gap: '10px',
+                            }}
+                          >
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <span className="badge" style={{ background: cfg.bg, color: cfg.color, fontSize: '0.72rem' }}>
+                                  {cfg.label}
+                                </span>
+                              </div>
+                              <strong style={{ color: ev.type === 'birthday' ? '#db2777' : 'var(--foreground)', fontSize: '0.95rem' }}>
+                                {ev.title}
+                              </strong>
+                              {ev.details && <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginTop: '2px' }}>{ev.details}</div>}
+                            </div>
+                            {ev.linkHref && (
+                              <Link href={ev.linkHref} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+                                {getEventActionLabel(ev)}
+                              </Link>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* AGENDA VIEW (Shown when Agenda Mode selected or at bottom of auto mode) */}
+        {(viewMode === 'agenda' || (viewMode === 'auto' && !selectedDateStr)) && (
+          <div className="agenda-block">
+            {/* Section 1: Rehearsals & Mass Engagements */}
+            <div className="glass-container" style={{ padding: '24px', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>🎵</span> Rehearsals & Mass Engagements ({agendaScheduleEvents.length})
               </h2>
 
-              {displayEvents.length === 0 ? (
-                <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '30px 0' }}>
+              {agendaScheduleEvents.length === 0 ? (
+                <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '24px 0', margin: 0 }}>
                   No upcoming rehearsals or Mass engagements scheduled.
                 </p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {displayEvents.map((ev) => {
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {agendaScheduleEvents.map((ev) => {
                     const cfg = TYPE_CONFIG[ev.type];
                     const dateObj = new Date(ev.dateTimeISO);
                     return (
@@ -265,7 +417,86 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
 
                         {ev.linkHref && (
                           <Link href={ev.linkHref} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-                            View Repertoire Sequence →
+                            {getEventActionLabel(ev)}
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Section 2: Choir Member Birthdays */}
+            <div className="glass-container" style={{ padding: '24px', background: 'rgba(255, 254, 252, 0.85)' }}>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#db2777', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>🎂</span> Member Birthday Calendar ({agendaBirthdayEvents.length})
+              </h2>
+
+              {agendaBirthdayEvents.length === 0 ? (
+                <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '24px 0', margin: 0 }}>
+                  No upcoming public member birthdays recorded.
+                </p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+                  {agendaBirthdayEvents.map((ev) => {
+                    const dateObj = new Date(ev.dateTimeISO);
+                    return (
+                      <div
+                        key={ev.id}
+                        style={{
+                          padding: '14px 16px',
+                          borderRadius: '14px',
+                          background: 'rgba(236, 72, 153, 0.06)',
+                          border: '1px solid rgba(236, 72, 153, 0.2)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div
+                            style={{
+                              background: '#fce7f3',
+                              color: '#db2777',
+                              padding: '6px 10px',
+                              borderRadius: '10px',
+                              textAlign: 'center',
+                              minWidth: '50px',
+                            }}
+                          >
+                            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 700 }}>
+                              {dateObj.toLocaleString('default', { month: 'short' })}
+                            </div>
+                            <div style={{ fontSize: '1.15rem', fontWeight: 700, lineHeight: 1 }}>
+                              {dateObj.getDate()}
+                            </div>
+                          </div>
+
+                          <div>
+                            <strong style={{ display: 'block', fontSize: '0.95rem', color: '#831843' }}>
+                              {ev.title}
+                            </strong>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+                              🎉 Annual Member Celebration
+                            </span>
+                          </div>
+                        </div>
+
+                        {ev.linkHref && (
+                          <Link
+                            href={ev.linkHref}
+                            className="btn btn-secondary"
+                            style={{
+                              padding: '6px 12px',
+                              fontSize: '0.78rem',
+                              color: '#db2777',
+                              borderColor: 'rgba(236, 72, 153, 0.4)',
+                              background: '#fff',
+                            }}
+                          >
+                            Profile →
                           </Link>
                         )}
                       </div>
@@ -276,130 +507,8 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
             </div>
           </div>
         )}
-
-        {/* MONTH GRID VIEW (Shown on desktop or when grid mode explicitly toggled) */}
-        {(viewMode === 'grid' || viewMode === 'auto') && (
-          <div className="desktop-grid-block" style={{ display: viewMode === 'auto' ? 'block' : 'block' }}>
-            <div className="glass-container" style={{ padding: '24px' }}>
-              {/* Month Selector Controls */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
-                  {monthName}
-                </h2>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={prevMonth} className="btn btn-secondary" style={{ padding: '6px 12px', minHeight: '34px' }}>
-                    ‹ Prev
-                  </button>
-                  <button onClick={nextMonth} className="btn btn-secondary" style={{ padding: '6px 12px', minHeight: '34px' }}>
-                    Next ›
-                  </button>
-                </div>
-              </div>
-
-              {/* Grid Header Days */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', textAlign: 'center', fontWeight: 700, fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '8px' }}>
-                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-              </div>
-
-              {/* Days Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
-                {daysArray.map((item, idx) => {
-                  if (!item) {
-                    return <div key={`empty_${idx}`} style={{ minHeight: '80px', background: 'rgba(0,0,0,0.01)', borderRadius: '10px' }} />;
-                  }
-
-                  const dayEvs = eventsByDate[item.dateStr] || [];
-                  const isSelected = selectedDateStr === item.dateStr;
-
-                  return (
-                    <div
-                      key={item.dateStr}
-                      onClick={() => setSelectedDateStr(isSelected ? null : item.dateStr)}
-                      style={{
-                        minHeight: '84px',
-                        padding: '8px',
-                        borderRadius: '10px',
-                        background: isSelected ? 'rgba(11, 77, 36, 0.08)' : 'rgba(255,255,255,0.6)',
-                        border: isSelected ? '2px solid var(--primary)' : '1px solid var(--glass-border)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isSelected ? 'var(--primary)' : 'var(--foreground)' }}>
-                        {item.day}
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                        {dayEvs.slice(0, 2).map((ev) => {
-                          const cfg = TYPE_CONFIG[ev.type];
-                          return (
-                            <div
-                              key={ev.id}
-                              style={{
-                                fontSize: '0.68rem',
-                                padding: '2px 4px',
-                                borderRadius: '4px',
-                                background: cfg.bg,
-                                color: cfg.color,
-                                fontWeight: 600,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
-                              • {ev.title}
-                            </div>
-                          );
-                        })}
-                        {dayEvs.length > 2 && (
-                          <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700 }}>
-                            +{dayEvs.length - 2} more
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Day Filter Details */}
-              {selectedDateStr && (
-                <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--glass-border)' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '12px' }}>
-                    Events on {selectedDateStr} ({selectedDayEvents.length})
-                  </h3>
-
-                  {selectedDayEvents.length === 0 ? (
-                    <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>No events scheduled for this day.</p>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {selectedDayEvents.map((ev) => {
-                        const cfg = TYPE_CONFIG[ev.type];
-                        return (
-                          <div key={ev.id} style={{ padding: '12px 16px', borderRadius: '10px', background: cfg.bg, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                              <strong style={{ color: cfg.color }}>{ev.title}</strong>
-                              {ev.details && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{ev.details}</div>}
-                            </div>
-                            {ev.linkHref && (
-                              <Link href={ev.linkHref} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.78rem' }}>
-                                View Sequence →
-                              </Link>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );
 };
+
