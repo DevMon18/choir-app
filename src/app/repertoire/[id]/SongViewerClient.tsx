@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import Link from 'next/navigation';
 import { ChordProRenderer, ChordProControls, usePersistedFontSize } from '@/components/ChordProRenderer';
 import { useRouter } from 'next/navigation';
-import { logout } from '../../actions';
+import { Navbar } from '@/components/Navbar';
+import { SongCategory } from '@/app/admin/songs/SongForm';
 import gsap from 'gsap';
 
 interface Profile {
@@ -19,6 +19,7 @@ interface Song {
   composer: string | null;
   arranger: string | null;
   category: string | null;
+  categories?: SongCategory[];
   lyrics: string | null;
 }
 
@@ -50,39 +51,18 @@ export const SongViewerClient = ({ currentUserProfile, song }: SongViewerClientP
     router.push('/repertoire');
   };
 
-  const isAdmin = ['super_admin', 'director', 'secretary'].includes(currentUserProfile.role);
+  const tags = song.categories && song.categories.length > 0
+    ? song.categories
+    : song.category
+    ? [{ id: song.category, name: song.category }]
+    : [];
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
 
-      <header className="nav-bar">
-        <div className="nav-brand">Choir Collective</div>
-        <div className="nav-links">
-          {isAdmin && (
-            <button
-              onClick={() => router.push('/admin/songs')}
-              className="btn btn-secondary"
-              style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-            >
-              Manage Songs
-            </button>
-          )}
-          <button
-            onClick={handleBack}
-            className="btn btn-secondary"
-            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-          >
-            All Songs
-          </button>
-          <form action={logout}>
-            <button type="submit" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
-              Log Out
-            </button>
-          </form>
-        </div>
-      </header>
+      <Navbar profile={currentUserProfile} />
 
       <main style={{ flex: 1, padding: '40px 20px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
         {/* Back navigation */}
@@ -112,23 +92,30 @@ export const SongViewerClient = ({ currentUserProfile, song }: SongViewerClientP
         <div className="glass-container anim-header" style={{ padding: '30px', marginBottom: '24px', opacity: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
             <div>
-              {song.category && (
-                <span style={{
-                  display: 'inline-block',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'var(--accent)',
-                  background: 'rgba(180,83,9,0.06)',
-                  padding: '3px 10px',
-                  borderRadius: '99px',
-                  marginBottom: '10px',
-                  border: '1px solid rgba(180,83,9,0.2)',
-                }}>
-                  {song.category}
-                </span>
+              {tags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+                  {tags.map((t) => (
+                    <span
+                      key={t.id}
+                      style={{
+                        display: 'inline-block',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        color: 'var(--accent)',
+                        background: 'rgba(180,83,9,0.06)',
+                        padding: '3px 10px',
+                        borderRadius: '99px',
+                        border: '1px solid rgba(180,83,9,0.2)',
+                      }}
+                    >
+                      {t.name}
+                    </span>
+                  ))}
+                </div>
               )}
+
               <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary)', lineHeight: 1.2 }}>
                 {song.title}
               </h1>

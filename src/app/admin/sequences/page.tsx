@@ -5,6 +5,23 @@ import { SequenceManagerClient } from './SequenceManagerClient';
 
 export const dynamic = 'force-dynamic';
 
+const songSelectWithCategories = `
+  id, title, composer, category, lyrics,
+  song_category_links (
+    song_categories ( id, name )
+  )
+`;
+
+const mapSong = (s: any) => {
+  if (!s) return null;
+  return {
+    ...s,
+    categories: (s.song_category_links || [])
+      .map((l: any) => l.song_categories)
+      .filter(Boolean),
+  };
+};
+
 const AdminSequencesPage = async () => {
   const profile = await getProfile();
   if (!profile || !['super_admin', 'director', 'secretary'].includes(profile.role)) {
@@ -15,8 +32,8 @@ const AdminSequencesPage = async () => {
 
   // Fetch sequences, songs, and activeSession concurrently via Promise.all
   const [
-    { data: sequences },
-    { data: songs },
+    { data: sequencesData },
+    { data: songsData },
     { data: activeSession },
   ] = await Promise.all([
     supabase
@@ -25,13 +42,13 @@ const AdminSequencesPage = async () => {
         id, title, description, scheduled_at,
         sequence_items (
           id, order_index, notes, role_in_mass,
-          songs ( id, title, composer, category, lyrics )
+          songs ( ${songSelectWithCategories} )
         )
       `)
       .order('created_at', { ascending: false }),
     supabase
       .from('songs')
-      .select('id, title, composer, category, lyrics')
+      .select(songSelectWithCategories)
       .eq('is_archived', false)
       .order('title'),
     supabase
@@ -43,11 +60,20 @@ const AdminSequencesPage = async () => {
       .maybeSingle(),
   ]);
 
+  const mappedSongs = (songsData || []).map(mapSong);
+  const mappedSequences = (sequencesData || []).map((seq: any) => ({
+    ...seq,
+    sequence_items: (seq.sequence_items || []).map((item: any) => ({
+      ...item,
+      songs: mapSong(item.songs),
+    })),
+  }));
+
   return (
     <SequenceManagerClient
       profile={profile}
-      sequences={(sequences ?? []) as unknown as Parameters<typeof SequenceManagerClient>[0]['sequences']}
-      songs={songs ?? []}
+      sequences={mappedSequences as unknown as Parameters<typeof SequenceManagerClient>[0]['sequences']}
+      songs={mappedSongs}
       activeSession={activeSession}
     />
   );

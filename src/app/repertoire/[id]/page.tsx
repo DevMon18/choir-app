@@ -19,22 +19,34 @@ const SongDetailPage = async ({ params }: PageProps) => {
 
   const supabase = await createClient();
 
-  // 3. Fetch specific non-archived song
-  const { data: song, error } = await supabase
+  // Fetch specific non-archived song with categories
+  const { data: rawSong, error } = await supabase
     .from('songs')
-    .select('*')
+    .select(`
+      *,
+      song_category_links (
+        song_categories ( id, name )
+      )
+    `)
     .eq('id', id)
     .eq('is_archived', false)
     .single();
 
-  if (error || !song) {
+  if (error || !rawSong) {
     notFound();
   }
+
+  const mappedSong = {
+    ...rawSong,
+    categories: (rawSong.song_category_links || [])
+      .map((l: any) => l.song_categories)
+      .filter(Boolean),
+  };
 
   return (
     <SongViewerClient
       currentUserProfile={currentProfile}
-      song={song}
+      song={mappedSong}
     />
   );
 };

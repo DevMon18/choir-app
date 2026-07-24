@@ -21,7 +21,7 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import gsap from 'gsap';
 
 interface Profile { id: string; full_name: string; role: string; }
-interface Song { id: string; title: string; composer: string | null; category: string | null; lyrics?: string | null; }
+interface Song { id: string; title: string; composer: string | null; category: string | null; categories?: { id: string; name: string }[]; lyrics?: string | null; }
 interface SequenceItem { id: string; order_index: number; notes: string | null; role_in_mass: string | null; songs: Song; }
 interface Sequence {
   id: string;
@@ -551,11 +551,16 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
               <div style={{ background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.12)', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(11, 77, 36, 0.25)', maxWidth: '640px', width: '100%', padding: '32px', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
                   <div>
-                    {previewSong.category && (
-                      <span style={{ display: 'inline-block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', background: 'rgba(180,83,9,0.06)', padding: '2px 8px', borderRadius: '99px', border: '1px solid rgba(180,83,9,0.2)', marginBottom: '6px' }}>
-                        {previewSong.category}
+                    {(previewSong.categories && previewSong.categories.length > 0
+                      ? previewSong.categories
+                      : previewSong.category
+                      ? [{ id: previewSong.category, name: previewSong.category }]
+                      : []
+                    ).map((cat: any) => (
+                      <span key={cat.id || cat.name} style={{ display: 'inline-block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', background: 'rgba(180,83,9,0.06)', padding: '2px 8px', borderRadius: '99px', border: '1px solid rgba(180,83,9,0.2)', marginBottom: '6px', marginRight: '4px' }}>
+                        {cat.name}
                       </span>
-                    )}
+                    ))}
                     <h2 style={{ fontWeight: 700, color: 'var(--primary)', margin: 0 }}>{previewSong.title}</h2>
                     {previewSong.composer && <p style={{ color: 'var(--muted)', fontSize: '0.82rem', margin: '4px 0 0' }}>by {previewSong.composer}</p>}
                   </div>

@@ -16,6 +16,7 @@ interface Song {
   title: string;
   composer: string | null;
   category: string | null;
+  categories?: { id: string; name: string }[];
   lyrics: string | null;
 }
 
@@ -345,11 +346,16 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                               {activeSongMassRole}
                             </span>
                           )}
-                          {activeSong.category && (
-                            <span style={{ display: 'inline-block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', background: 'rgba(180,83,9,0.06)', padding: '2px 8px', borderRadius: '99px', border: '1px solid rgba(180,83,9,0.2)' }}>
-                              {activeSong.category}
+                          {(activeSong.categories && activeSong.categories.length > 0
+                            ? activeSong.categories
+                            : activeSong.category
+                            ? [{ id: activeSong.category, name: activeSong.category }]
+                            : []
+                          ).map((cat: any) => (
+                            <span key={cat.id || cat.name} style={{ display: 'inline-block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', background: 'rgba(180,83,9,0.06)', padding: '2px 8px', borderRadius: '99px', border: '1px solid rgba(180,83,9,0.2)' }}>
+                              {cat.name}
                             </span>
-                          )}
+                          ))}
                         </div>
                         <h1 style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>{activeSong.title}</h1>
                         {activeSong.composer && <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: '4px' }}>{activeSong.composer}</p>}
@@ -446,11 +452,16 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                               {MASS_ROLE_LABELS[nextItem.role_in_mass] || nextItem.role_in_mass}
                             </span>
                           )}
-                          {nextItem.songs.category && (
-                            <span style={{ display: 'inline-block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', background: 'rgba(180,83,9,0.06)', padding: '1px 6px', borderRadius: '99px', border: '1px solid rgba(180,83,9,0.15)' }}>
-                              {nextItem.songs.category}
+                          {(nextItem.songs.categories && nextItem.songs.categories.length > 0
+                            ? nextItem.songs.categories
+                            : nextItem.songs.category
+                            ? [{ id: nextItem.songs.category, name: nextItem.songs.category }]
+                            : []
+                          ).map((cat: any) => (
+                            <span key={cat.id || cat.name} style={{ display: 'inline-block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', background: 'rgba(180,83,9,0.06)', padding: '1px 6px', borderRadius: '99px', border: '1px solid rgba(180,83,9,0.15)' }}>
+                              {cat.name}
                             </span>
-                          )}
+                          ))}
                         </div>
                         <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
                           {nextItem.songs.title}

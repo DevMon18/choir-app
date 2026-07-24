@@ -11,6 +11,23 @@ export const metadata = {
   description: 'Follow along with the choir in real time',
 };
 
+const songCategorySelect = `
+  id, title, composer, category, lyrics,
+  song_category_links (
+    song_categories ( id, name )
+  )
+`;
+
+const mapSong = (s: any) => {
+  if (!s) return null;
+  return {
+    ...s,
+    categories: (s.song_category_links || [])
+      .map((l: any) => l.song_categories)
+      .filter(Boolean),
+  };
+};
+
 const LivePage = async () => {
   const profile = await getProfile();
   if (!profile) redirect('/login');
@@ -24,7 +41,7 @@ const LivePage = async () => {
   // Fetch activeSession and allSongs concurrently via Promise.all
   const [
     { data: activeSession },
-    { data: allSongs },
+    { data: rawAllSongs },
   ] = await Promise.all([
     supabase
       .from('live_sessions')
@@ -35,7 +52,7 @@ const LivePage = async () => {
       .maybeSingle(),
     supabase
       .from('songs')
-      .select('id, title, composer, category, lyrics')
+      .select(songCategorySelect)
       .eq('is_archived', false),
   ]);
 
@@ -48,7 +65,7 @@ const LivePage = async () => {
       activeSession.active_song_id
         ? supabase
             .from('songs')
-            .select('id, title, composer, category, lyrics')
+            .select(songCategorySelect)
             .eq('id', activeSession.active_song_id)
             .single()
         : Promise.resolve({ data: null }),
@@ -60,16 +77,21 @@ const LivePage = async () => {
               order_index,
               role_in_mass,
               song_id,
-              songs ( id, title, composer, category, lyrics )
+              songs ( ${songCategorySelect} )
             `)
             .eq('sequence_id', activeSession.sequence_id)
             .order('order_index', { ascending: true })
         : Promise.resolve({ data: [] }),
     ]);
 
-    activeSong = songRes.data;
-    activeSequenceItems = itemsRes.data || [];
+    activeSong = mapSong(songRes.data);
+    activeSequenceItems = (itemsRes.data || []).map((item: any) => ({
+      ...item,
+      songs: mapSong(item.songs),
+    }));
   }
+
+  const allSongs = (rawAllSongs || []).map(mapSong);
 
   return (
     <LiveSessionClient
