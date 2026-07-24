@@ -1,6 +1,8 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export interface ConversationItem {
   id: string;
@@ -10,6 +12,7 @@ export interface ConversationItem {
     avatar_url: string | null;
     voice_part: string | null;
     role: string;
+    isDeletedUser?: boolean;
   };
   lastMessage: {
     body: string;
@@ -106,13 +109,18 @@ export async function getConversations(): Promise<{ conversations?: Conversation
     const result: ConversationItem[] = await Promise.all(
       convs.map(async (c) => {
         const otherId = c.participant_one === user.id ? c.participant_two : c.participant_one;
-        const otherUser = profileMap.get(otherId) || {
-          id: otherId,
-          full_name: 'Choir Member',
-          avatar_url: null,
-          voice_part: null,
-          role: 'member',
-        };
+        const fetchedProfile = profileMap.get(otherId);
+        
+        const otherUser = fetchedProfile
+          ? { ...fetchedProfile, isDeletedUser: false }
+          : {
+              id: otherId,
+              full_name: 'Removed Account',
+              avatar_url: null,
+              voice_part: null,
+              role: 'member',
+              isDeletedUser: true,
+            };
 
         // Fetch last message and unread count concurrently via Promise.all
         const [{ data: lastMsg }, { count: unreadCount }] = await Promise.all([
@@ -176,7 +184,7 @@ export async function getMessages(conversationId: string) {
         .from('profiles')
         .select('id, full_name, avatar_url, voice_part, role')
         .eq('id', otherId)
-        .single(),
+        .maybeSingle(),
       supabase
         .from('messages')
         .select('*')
@@ -188,7 +196,9 @@ export async function getMessages(conversationId: string) {
 
     return {
       messages: (msgs || []) as MessageItem[],
-      otherUser: otherUser || { id: otherId, full_name: 'Choir Member', avatar_url: null, voice_part: null, role: 'member' },
+      otherUser: otherUser
+        ? { ...otherUser, isDeletedUser: false }
+        : { id: otherId, full_name: 'Removed Account', avatar_url: null, voice_part: null, role: 'member', isDeletedUser: true },
       currentUserId: user.id,
     };
   } catch (err: any) {
@@ -225,6 +235,9 @@ export async function sendMessage(conversationId: string, body: string) {
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', conversationId);
 
+    revalidatePath('/messages');
+    revalidatePath(`/messages/${conversationId}`);
+
     return { message: inserted as MessageItem };
   } catch (err: any) {
     return { error: err.message || 'Send message failed' };
@@ -244,7 +257,82 @@ export async function markMessagesAsRead(conversationId: string) {
       .eq('conversation_id', conversationId)
       .neq('sender_id', user.id)
       .is('read_at', null);
+
+    revalidatePath('/messages');
   } catch (err) {
     console.error('markMessagesAsRead error:', err);
+  }
+}
+
+export async function deleteConversation(conversationId: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: 'Unauthorized' };
+
+    // Verify membership
+    const { data: conv } = await supabase
+      .from('conversations')
+      .select('id, participant_one, participant_two')
+      .eq('id', conversationId)
+      .single();
+
+    if (!conv || (conv.participant_one !== user.id && conv.participant_two !== user.id)) {
+      return { error: 'Conversation not found or unauthorized' };
+    }
+
+    const adminSupabase = createAdminClient();
+
+    // 1. Delete all messages inside this conversation
+    await adminSupabase
+      .from('messages')
+      .delete()
+      .eq('conversation_id', conversationId);
+
+    // 2. Delete the conversation record
+    const { error: delErr } = await adminSupabase
+      .from('conversations')
+      .delete()
+      .eq('id', conversationId);
+
+    if (delErr) {
+      return { error: delErr.message };
+    }
+
+    revalidatePath('/messages');
+    revalidatePath(`/messages/${conversationId}`);
+
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || 'Failed to delete conversation' };
+  }
+}
+
+export async function deleteMessage(messageId: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: 'Unauthorized' };
+
+    const { data: msg } = await supabase
+      .from('messages')
+      .select('id, sender_id, conversation_id')
+      .eq('id', messageId)
+      .single();
+
+    if (!msg || msg.sender_id !== user.id) {
+      return { error: 'Unauthorized to delete this message' };
+    }
+
+    const adminSupabase = createAdminClient();
+    await adminSupabase.from('messages').delete().eq('id', messageId);
+
+    revalidatePath(`/messages/${msg.conversation_id}`);
+
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || 'Failed to delete message' };
   }
 }
