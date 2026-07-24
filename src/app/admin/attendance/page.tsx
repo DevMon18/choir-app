@@ -20,36 +20,30 @@ const AdminAttendancePage = async () => {
 
   const supabase = await createClient();
 
-  // 3. Fetch active roster from database
-  const { data: roster, error: rosterErr } = await supabase
-    .from('profiles')
-    .select('*')
-    .neq('role', 'pending')
-    .neq('role', 'rejected')
-    .order('full_name');
+  // Fetch roster, sessions, and records concurrently via Promise.all
+  const [
+    { data: roster, error: rosterErr },
+    { data: sessions, error: sessionsErr },
+    { data: records, error: recordsErr },
+  ] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('*')
+      .neq('role', 'pending')
+      .neq('role', 'rejected')
+      .order('full_name'),
+    supabase
+      .from('attendance_sessions')
+      .select('*')
+      .order('date', { ascending: false }),
+    supabase
+      .from('attendance_records')
+      .select('*'),
+  ]);
 
-  if (rosterErr) {
-    console.error('Error fetching roster:', rosterErr);
-  }
-
-  // 4. Fetch attendance sessions from database
-  const { data: sessions, error: sessionsErr } = await supabase
-    .from('attendance_sessions')
-    .select('*')
-    .order('date', { ascending: false });
-
-  if (sessionsErr) {
-    console.error('Error fetching sessions:', sessionsErr);
-  }
-
-  // 5. Fetch all attendance records
-  const { data: records, error: recordsErr } = await supabase
-    .from('attendance_records')
-    .select('*');
-
-  if (recordsErr) {
-    console.error('Error fetching records:', recordsErr);
-  }
+  if (rosterErr) console.error('Error fetching roster:', rosterErr);
+  if (sessionsErr) console.error('Error fetching sessions:', sessionsErr);
+  if (recordsErr) console.error('Error fetching records:', recordsErr);
 
   return (
     <AttendanceClient

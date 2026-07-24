@@ -20,18 +20,22 @@ const ProfilePage = async () => {
 
   const supabase = await createClient();
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', currentProfile.id)
-    .single();
-
-  // Fetch user profile photos
-  const { data: rawPhotos } = await supabase
-    .from('profile_photos')
-    .select('*')
-    .eq('user_id', currentProfile.id)
-    .order('created_at', { ascending: false });
+  // Fetch profile and profile_photos concurrently via Promise.all
+  const [
+    { data: profile },
+    { data: rawPhotos },
+  ] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', currentProfile.id)
+      .single(),
+    supabase
+      .from('profile_photos')
+      .select('*')
+      .eq('user_id', currentProfile.id)
+      .order('created_at', { ascending: false }),
+  ]);
 
   const initialPhotos = (rawPhotos || []).map((p) => {
     const { data: { publicUrl } } = supabase.storage

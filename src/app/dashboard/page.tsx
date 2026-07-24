@@ -22,17 +22,24 @@ const DashboardPage = async () => {
 
   const supabase = await createClient();
 
-  const { data: fullProfile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', profile.id)
-    .single();
-
-  const { data: rawPhotos } = await supabase
-    .from('profile_photos')
-    .select('*')
-    .eq('user_id', profile.id)
-    .order('created_at', { ascending: false });
+  // Fetch fullProfile, rawPhotos, and announcements concurrently via Promise.all
+  const [
+    { data: fullProfile },
+    { data: rawPhotos },
+    announcements,
+  ] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', profile.id)
+      .single(),
+    supabase
+      .from('profile_photos')
+      .select('*')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false }),
+    getActiveAnnouncements(),
+  ]);
 
   const initialPhotos = (rawPhotos || []).map((p) => {
     const { data: { publicUrl } } = supabase.storage
@@ -45,7 +52,6 @@ const DashboardPage = async () => {
   });
 
   const isAdmin = ['super_admin', 'director', 'secretary'].includes(profile.role);
-  const announcements = await getActiveAnnouncements();
 
   return (
     <DashboardClient

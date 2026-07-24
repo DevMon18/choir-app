@@ -38,26 +38,35 @@ export async function getMemberProfileWithPhotos(targetUserId: string) {
 
     if (!user) return { error: 'Unauthorized' };
 
-    // Fetch current user's profile to check role
-    const { data: currentUserProfile } = await supabase
-      .from('profiles')
-      .select('id, role')
-      .eq('id', user.id)
-      .single();
-
-    const isCurrentAdmin = ['super_admin', 'director', 'secretary', 'treasurer'].includes(currentUserProfile?.role || '');
-    const isOwner = user.id === targetUserId;
-
-    // Fetch target member's profile
-    const { data: targetProfile, error: profileErr } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', targetUserId)
-      .single();
+    // Fetch currentUserProfile, targetProfile, and rawPhotos concurrently via Promise.all
+    const [
+      { data: currentUserProfile },
+      { data: targetProfile, error: profileErr },
+      { data: rawPhotos, error: photoErr },
+    ] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, role')
+        .eq('id', user.id)
+        .single(),
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', targetUserId)
+        .single(),
+      supabase
+        .from('profile_photos')
+        .select('*')
+        .eq('user_id', targetUserId)
+        .order('created_at', { ascending: false }),
+    ]);
 
     if (profileErr || !targetProfile) {
       return { error: 'Member profile not found.' };
     }
+
+    const isCurrentAdmin = ['super_admin', 'director', 'secretary', 'treasurer'].includes(currentUserProfile?.role || '');
+    const isOwner = user.id === targetUserId;
 
     // Mask private fields if viewer is not owner and not admin
     const maskedProfile: DetailedMemberProfile = {
@@ -79,13 +88,6 @@ export async function getMemberProfileWithPhotos(targetUserId: string) {
       interests: Array.isArray(targetProfile.interests) ? targetProfile.interests : [],
       created_at: targetProfile.created_at,
     };
-
-    // Fetch member's photos
-    const { data: rawPhotos, error: photoErr } = await supabase
-      .from('profile_photos')
-      .select('*')
-      .eq('user_id', targetUserId)
-      .order('created_at', { ascending: false });
 
     const photos: PhotoItemServer[] = (rawPhotos || []).map((p) => {
       const { data: { publicUrl } } = supabase.storage

@@ -13,33 +13,35 @@ const AdminSequencesPage = async () => {
 
   const supabase = await createClient();
 
-  // Fetch sequences with their items and songs
-  const { data: sequences } = await supabase
-    .from('mass_sequences')
-    .select(`
-      id, title, description, scheduled_at,
-      sequence_items (
-        id, order_index, notes, role_in_mass,
-        songs ( id, title, composer, category, lyrics )
-      )
-    `)
-    .order('created_at', { ascending: false });
-
-  // Fetch all active (non-archived) songs for the add-song picker
-  const { data: songs } = await supabase
-    .from('songs')
-    .select('id, title, composer, category, lyrics')
-    .eq('is_archived', false)
-    .order('title');
-
-  // Fetch current active live session (if any)
-  const { data: activeSession } = await supabase
-    .from('live_sessions')
-    .select('id, sequence_id, active_song_id, director_semitones, scroll_speed, is_active')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Fetch sequences, songs, and activeSession concurrently via Promise.all
+  const [
+    { data: sequences },
+    { data: songs },
+    { data: activeSession },
+  ] = await Promise.all([
+    supabase
+      .from('mass_sequences')
+      .select(`
+        id, title, description, scheduled_at,
+        sequence_items (
+          id, order_index, notes, role_in_mass,
+          songs ( id, title, composer, category, lyrics )
+        )
+      `)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('songs')
+      .select('id, title, composer, category, lyrics')
+      .eq('is_archived', false)
+      .order('title'),
+    supabase
+      .from('live_sessions')
+      .select('id, sequence_id, active_song_id, director_semitones, scroll_speed, is_active')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   return (
     <SequenceManagerClient

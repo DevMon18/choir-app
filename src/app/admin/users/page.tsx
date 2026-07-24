@@ -20,37 +20,28 @@ const AdminUsersPage = async () => {
 
   const supabase = await createClient();
 
-  // 1. Fetch pending direct signups
-  const { data: pendingUsers, error: pendingErr } = await supabase.rpc('admin_list_pending_users');
-
-  if (pendingErr) {
-    console.error('Error fetching pending users:', pendingErr);
-  }
-
-  // 2. Fetch pending recruitment applications
-  const { data: joinRequests, error: requestsErr } = await supabase
-    .from('join_requests')
-    .select('*')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: false });
-
-  if (requestsErr) {
-    console.error('Error fetching join requests:', requestsErr);
-  }
-
-  // 3. Fetch all system users if the user is a super_admin
-  let allUsers: any[] = [];
-  if (currentProfile.role === 'super_admin') {
-    const { data: allUsersData, error: allUsersErr } = await supabase
-      .from('profiles')
+  // Fetch pendingUsers, joinRequests, and allUsers (if super_admin) concurrently via Promise.all
+  const [
+    { data: pendingUsers, error: pendingErr },
+    { data: joinRequests, error: requestsErr },
+    allUsersRes,
+  ] = await Promise.all([
+    supabase.rpc('admin_list_pending_users'),
+    supabase
+      .from('join_requests')
       .select('*')
-      .order('full_name');
-    if (allUsersErr) {
-      console.error('Error fetching all users:', allUsersErr);
-    } else {
-      allUsers = allUsersData || [];
-    }
-  }
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false }),
+    currentProfile.role === 'super_admin'
+      ? supabase.from('profiles').select('*').order('full_name')
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (pendingErr) console.error('Error fetching pending users:', pendingErr);
+  if (requestsErr) console.error('Error fetching join requests:', requestsErr);
+  if (allUsersRes.error) console.error('Error fetching all users:', allUsersRes.error);
+
+  const allUsers = allUsersRes.data || [];
 
   return (
     <UsersManagerClient

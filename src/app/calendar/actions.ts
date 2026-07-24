@@ -21,13 +21,35 @@ export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
     const supabase = await createClient();
     const events: CalendarEvent[] = [];
 
-    // 1. Fetch Scheduled Mass Sequences
-    const { data: massData, error: massError } = await supabase
-      .from('mass_sequences')
-      .select('id, title, scheduled_at, description')
-      .not('scheduled_at', 'is', null)
-      .order('scheduled_at', { ascending: true });
+    // Fire all 4 independent database queries concurrently via Promise.all
+    const [
+      { data: massData, error: massError },
+      { data: sessionData, error: sessionError },
+      { data: annData, error: annError },
+      { data: bdayData, error: bdayError },
+    ] = await Promise.all([
+      supabase
+        .from('mass_sequences')
+        .select('id, title, scheduled_at, description')
+        .not('scheduled_at', 'is', null)
+        .order('scheduled_at', { ascending: true }),
+      supabase
+        .from('attendance_sessions')
+        .select('id, date, type, title, notes')
+        .order('date', { ascending: true }),
+      supabase
+        .from('announcements')
+        .select('id, title, body, priority, starts_at, is_pinned')
+        .order('starts_at', { ascending: true }),
+      supabase
+        .from('profiles')
+        .select('id, full_name, birthdate')
+        .not('birthdate', 'is', null)
+        .eq('is_birthdate_private', false)
+        .not('role', 'in', '("pending","rejected")'),
+    ]);
 
+    // 1. Process Scheduled Mass Sequences
     if (!massError && massData) {
       massData.forEach((seq) => {
         const d = new Date(seq.scheduled_at);
@@ -44,12 +66,7 @@ export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
       });
     }
 
-    // 2. Fetch Attendance Sessions (Rehearsal, Mass, Performance, Special Event)
-    const { data: sessionData, error: sessionError } = await supabase
-      .from('attendance_sessions')
-      .select('id, date, type, title, notes')
-      .order('date', { ascending: true });
-
+    // 2. Process Attendance Sessions
     if (!sessionError && sessionData) {
       sessionData.forEach((sess) => {
         const d = new Date(sess.date);
@@ -70,12 +87,7 @@ export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
       });
     }
 
-    // 3. Fetch Active & Scheduled Announcements
-    const { data: annData, error: annError } = await supabase
-      .from('announcements')
-      .select('id, title, body, priority, starts_at, is_pinned')
-      .order('starts_at', { ascending: true });
-
+    // 3. Process Announcements
     if (!annError && annData) {
       annData.forEach((ann) => {
         const d = new Date(ann.starts_at);
@@ -93,14 +105,7 @@ export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
       });
     }
 
-    // 4. Fetch Non-Private Member Birthdays
-    const { data: bdayData, error: bdayError } = await supabase
-      .from('profiles')
-      .select('id, full_name, birthdate')
-      .not('birthdate', 'is', null)
-      .eq('is_birthdate_private', false)
-      .not('role', 'in', '("pending","rejected")');
-
+    // 4. Process Member Birthdays
     if (!bdayError && bdayData) {
       bdayData.forEach((profile) => {
         if (!profile.birthdate) return;

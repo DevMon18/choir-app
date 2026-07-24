@@ -114,22 +114,22 @@ export async function getConversations(): Promise<{ conversations?: Conversation
           role: 'member',
         };
 
-        // Fetch last message
-        const { data: lastMsg } = await supabase
-          .from('messages')
-          .select('body, created_at, sender_id')
-          .eq('conversation_id', c.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        // Count unread
-        const { count: unreadCount } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('conversation_id', c.id)
-          .neq('sender_id', user.id)
-          .is('read_at', null);
+        // Fetch last message and unread count concurrently via Promise.all
+        const [{ data: lastMsg }, { count: unreadCount }] = await Promise.all([
+          supabase
+            .from('messages')
+            .select('body, created_at, sender_id')
+            .eq('conversation_id', c.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('conversation_id', c.id)
+            .neq('sender_id', user.id)
+            .is('read_at', null),
+        ]);
 
         return {
           id: c.id,
@@ -167,17 +167,22 @@ export async function getMessages(conversationId: string) {
 
     const otherId = conv.participant_one === user.id ? conv.participant_two : conv.participant_one;
 
-    const { data: otherUser } = await supabase
-      .from('profiles')
-      .select('id, full_name, avatar_url, voice_part, role')
-      .eq('id', otherId)
-      .single();
-
-    const { data: msgs, error: msgErr } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
+    // Fetch otherUser profile and messages concurrently via Promise.all
+    const [
+      { data: otherUser },
+      { data: msgs, error: msgErr },
+    ] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, voice_part, role')
+        .eq('id', otherId)
+        .single(),
+      supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true }),
+    ]);
 
     if (msgErr) return { error: msgErr.message };
 

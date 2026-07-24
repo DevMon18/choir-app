@@ -20,51 +20,41 @@ const AdminAnalyticsPage = async () => {
 
   const supabase = await createClient();
 
-  // 3. Fetch active profiles count grouped by role
-  const { data: profiles, error: profilesErr } = await supabase
-    .from('profiles')
-    .select('role, created_at')
-    .neq('role', 'pending')
-    .neq('role', 'rejected');
+  // Fetch all analytics datasets concurrently via Promise.all
+  const [
+    { data: profiles, error: profilesErr },
+    { data: dues, error: duesErr },
+    { data: sessions, error: sessionsErr },
+    { data: records, error: recordsErr },
+    { data: songs, error: songsErr },
+    { data: sequenceItems, error: itemsErr },
+  ] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('role, created_at')
+      .neq('role', 'pending')
+      .neq('role', 'rejected'),
+    supabase
+      .from('member_dues')
+      .select('amount, status'),
+    supabase
+      .from('attendance_sessions')
+      .select('id, type'),
+    supabase
+      .from('attendance_records')
+      .select('status, session_id'),
+    supabase
+      .from('songs')
+      .select('id, title, category'),
+    supabase
+      .from('sequence_items')
+      .select('song_id'),
+  ]);
 
-  if (profilesErr) {
-    console.error('Error fetching profiles for analytics:', profilesErr);
-  }
-
-  // 4. Fetch member dues statistics
-  const { data: dues, error: duesErr } = await supabase
-    .from('member_dues')
-    .select('amount, status');
-
-  if (duesErr) {
-    console.error('Error fetching member dues for analytics:', duesErr);
-  }
-
-  // 5. Fetch sessions and records for attendance analysis
-  const { data: sessions, error: sessionsErr } = await supabase
-    .from('attendance_sessions')
-    .select('id, type');
-
-  const { data: records, error: recordsErr } = await supabase
-    .from('attendance_records')
-    .select('status, session_id');
-
-  if (sessionsErr || recordsErr) {
-    console.error('Error fetching attendance data for analytics:', { sessionsErr, recordsErr });
-  }
-
-  // 6. Fetch song sequence items count for popular songs
-  const { data: songs, error: songsErr } = await supabase
-    .from('songs')
-    .select('id, title, category');
-
-  const { data: sequenceItems, error: itemsErr } = await supabase
-    .from('sequence_items')
-    .select('song_id');
-
-  if (songsErr || itemsErr) {
-    console.error('Error fetching songs/sequences for analytics:', { songsErr, itemsErr });
-  }
+  if (profilesErr) console.error('Error fetching profiles for analytics:', profilesErr);
+  if (duesErr) console.error('Error fetching member dues for analytics:', duesErr);
+  if (sessionsErr || recordsErr) console.error('Error fetching attendance data for analytics:', { sessionsErr, recordsErr });
+  if (songsErr || itemsErr) console.error('Error fetching songs/sequences for analytics:', { songsErr, itemsErr });
 
   // Calculate Metrics
   const activeMembers = profiles || [];
