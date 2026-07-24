@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { PushNotificationManager } from '@/components/PushNotificationManager';
 import { PhotoGallery, PhotoItem } from '@/components/PhotoGallery';
+import { useToast } from '@/components/Toast';
 import { uploadProfilePhotoAction, deleteProfilePhotoAction, uploadCoverPhotoAction, updateInterestsAction, updateCoverPositionAction } from '../directory/[id]/actions';
 import gsap from 'gsap';
+import { Camera, Move, Check, X, Plus, Tag, Megaphone, UserCheck, Shield } from 'lucide-react';
 
 interface AnnouncementItem {
   id: string;
@@ -43,6 +45,7 @@ interface DashboardClientProps {
 
 const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements = [] }: DashboardClientProps) => {
   const router = useRouter();
+  const { addToast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
@@ -117,12 +120,13 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
 
       if (res.success && res.coverUrl) {
         setCoverUrl(res.coverUrl);
+        addToast({ type: 'success', title: 'Cover Updated', message: 'Cover photo updated successfully.' });
         router.refresh();
       } else {
-        alert(res.error || 'Failed to upload cover image.');
+        addToast({ type: 'error', title: 'Upload Failed', message: res.error || 'Failed to upload cover image.' });
       }
     } catch (err: any) {
-      alert('Cover upload error: ' + (err.message || 'Unknown error'));
+      addToast({ type: 'error', title: 'Cover Upload Error', message: err.message || 'Unknown error during cover upload.' });
     } finally {
       setUploadingCover(false);
       if (e.target) e.target.value = '';
@@ -135,9 +139,10 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
 
     const res = await updateCoverPositionAction(posToSave);
     if (res.error) {
-      alert('Failed to save cover position: ' + res.error);
+      addToast({ type: 'error', title: 'Save Failed', message: 'Failed to save cover position: ' + res.error });
       setCoverPosition(coverPosition); // revert
     } else {
+      addToast({ type: 'success', title: 'Position Saved', message: 'Cover photo position updated.' });
       router.refresh();
     }
   };
@@ -153,7 +158,7 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
 
     const res = await updateInterestsAction(nextInterests);
     if (res.error) {
-      alert('Failed to save interest: ' + res.error);
+      addToast({ type: 'error', title: 'Save Failed', message: 'Failed to save interest: ' + res.error });
       setInterests(interests); // revert
     } else {
       router.refresh();
@@ -166,7 +171,7 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
 
     const res = await updateInterestsAction(nextInterests);
     if (res.error) {
-      alert('Failed to remove interest: ' + res.error);
+      addToast({ type: 'error', title: 'Update Failed', message: 'Failed to remove interest: ' + res.error });
       setInterests(interests); // revert
     } else {
       router.refresh();
@@ -223,10 +228,13 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
                       backdropFilter: 'blur(8px)',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                       border: 'none',
-                      borderRadius: '20px'
+                      borderRadius: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
                     }}
                   >
-                    🎯 Reposition
+                    <Move size={14} /> Reposition
                   </button>
                 )}
 
@@ -242,10 +250,13 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
                       backdropFilter: 'blur(8px)',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                       border: 'none',
-                      borderRadius: '20px'
+                      borderRadius: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
                     }}
                   >
-                    {uploadingCover ? 'Uploading...' : '🖼 Change Cover'}
+                    <Camera size={14} /> {uploadingCover ? 'Uploading...' : 'Change Cover'}
                   </button>
                 )}
               </div>

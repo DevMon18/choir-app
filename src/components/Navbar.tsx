@@ -4,6 +4,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { logout } from '@/app/actions';
+import {
+  Users,
+  Music,
+  ClipboardList,
+  Music2,
+  Mic,
+  Megaphone,
+  DollarSign,
+  BarChart3,
+  LogOut,
+  User,
+  Calendar,
+  Radio,
+  FileMusic,
+  MessageSquare,
+  ShieldCheck,
+  ChevronDown
+} from 'lucide-react';
 
 interface NavbarProps {
   profile: {
@@ -17,15 +35,16 @@ type Role = string;
 
 // Role-based admin menu items
 const getAdminItems = (role: Role) => {
+  const iconSize = 16;
   const all = [
-    { href: '/admin/users',     label: 'Manage Users',  icon: '👥', roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/roster',    label: 'Choir Roster',  icon: '🎼', roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/attendance',label: 'Attendance',    icon: '📋', roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/songs',     label: 'Songs',         icon: '🎵', roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/sequences', label: 'Sequences',     icon: '🎤', roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/announcements', label: 'Announcements', icon: '📢', roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/finances',  label: 'Finances',      icon: '💰', roles: ['super_admin', 'director', 'treasurer'] },
-    { href: '/admin/analytics', label: 'Analytics',     icon: '📊', roles: ['super_admin', 'director', 'secretary', 'treasurer'] },
+    { href: '/admin/users',     label: 'Manage Users',  icon: <Users size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
+    { href: '/admin/roster',    label: 'Choir Roster',  icon: <Music size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
+    { href: '/admin/attendance',label: 'Attendance',    icon: <ClipboardList size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
+    { href: '/admin/songs',     label: 'Songs',         icon: <Music2 size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
+    { href: '/admin/sequences', label: 'Sequences',     icon: <Mic size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
+    { href: '/admin/announcements', label: 'Announcements', icon: <Megaphone size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
+    { href: '/admin/finances',  label: 'Finances',      icon: <DollarSign size={iconSize} />, roles: ['super_admin', 'director', 'treasurer'] },
+    { href: '/admin/analytics', label: 'Analytics',     icon: <BarChart3 size={iconSize} />, roles: ['super_admin', 'director', 'secretary', 'treasurer'] },
   ];
   return all.filter(item => item.roles.includes(role));
 };

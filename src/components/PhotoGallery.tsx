@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { useToast } from '@/components/Toast';
+import { Camera } from 'lucide-react';
 
 export interface PhotoItem {
   id: string;
@@ -114,7 +115,8 @@ export const PhotoGallery: React.FC<Props> = ({
               gap: '6px',
             }}
           >
-            <span>{uploading ? '⏳ Uploading...' : '📷 Add Photo'}</span>
+            <Camera size={14} />
+            <span>{uploading ? 'Uploading...' : 'Add Photo'}</span>
             <input
               type="file"
               accept="image/*"
