@@ -102,36 +102,68 @@ export const MemberProfileClient: React.FC<Props> = ({
           </Link>
         </div>
 
-        {/* Profile Card Header (Instagram/Facebook conventions) */}
-        <div className="glass-container" style={{ padding: '20px', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            {/* 88px circle avatar */}
-            <div
-              style={{
-                width: 88,
-                height: 88,
-                borderRadius: '50%',
-                background: targetProfile.avatar_url ? 'none' : `linear-gradient(135deg, ${voiceColor}, ${voiceColor}99)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: '2rem',
-                flexShrink: 0,
-                overflow: 'hidden',
-                border: '2px solid var(--primary)',
-              }}
-            >
-              {targetProfile.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={targetProfile.avatar_url} alt={targetProfile.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                targetProfile.full_name.charAt(0).toUpperCase()
-              )}
+        {/* Profile Card Header (Facebook/Instagram conventions) */}
+        <div className="glass-container" style={{ padding: 0, overflow: 'hidden', marginBottom: '16px' }}>
+          {/* Cover Banner */}
+          <div style={{
+            height: '140px',
+            background: targetProfile.cover_url
+              ? `url(${targetProfile.cover_url}) center/cover no-repeat`
+              : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
+            position: 'relative'
+          }} />
+
+          {/* Profile Details Container */}
+          <div style={{ padding: '0 20px 20px', position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: '-44px', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
+              {/* 88px circle avatar */}
+              <div
+                style={{
+                  width: 88,
+                  height: 88,
+                  borderRadius: '50%',
+                  background: targetProfile.avatar_url ? 'none' : `linear-gradient(135deg, ${voiceColor}, ${voiceColor}99)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: '2rem',
+                  flexShrink: 0,
+                  overflow: 'hidden',
+                  border: '3px solid var(--card-bg)',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.15)'
+                }}
+              >
+                {targetProfile.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={targetProfile.avatar_url} alt={targetProfile.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  targetProfile.full_name.charAt(0).toUpperCase()
+                )}
+              </div>
+
+              {/* Message CTA & Edit Profile Actions */}
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {!isOwner && (
+                  <button
+                    onClick={handleOpenConversation}
+                    disabled={messagingLoading}
+                    className="btn btn-primary"
+                    style={{ padding: '8px 16px', fontSize: '14px', minHeight: '40px' }}
+                  >
+                    💬 {messagingLoading ? 'Opening Chat...' : 'Direct Message'}
+                  </button>
+                )}
+                {isOwner && (
+                  <Link href="/profile" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '14px' }}>
+                    ⚙ Edit My Settings
+                  </Link>
+                )}
+              </div>
             </div>
 
-            <div style={{ flex: 1, minWidth: '200px' }}>
+            <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
                 {/* 20px bold name */}
                 <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
@@ -160,24 +192,32 @@ export const MemberProfileClient: React.FC<Props> = ({
                 {ROLE_LABELS[targetProfile.role] || targetProfile.role}
               </div>
 
-              {/* Message CTA & Edit Profile Actions */}
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                {!isOwner && (
-                  <button
-                    onClick={handleOpenConversation}
-                    disabled={messagingLoading}
-                    className="btn btn-primary"
-                    style={{ padding: '8px 16px', fontSize: '14px', minHeight: '40px' }}
-                  >
-                    💬 {messagingLoading ? 'Opening Chat...' : 'Direct Message'}
-                  </button>
-                )}
-                {isOwner && (
-                  <Link href="/profile" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '14px' }}>
-                    ⚙ Edit My Settings
-                  </Link>
-                )}
-              </div>
+              {/* Interests Section */}
+              {targetProfile.interests && targetProfile.interests.length > 0 && (
+                <div style={{ marginTop: '12px', borderTop: '1px solid var(--glass-border)', paddingTop: '10px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', marginBottom: '6px' }}>
+                    MUSICAL INTERESTS & HOBBIES
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {targetProfile.interests.map((interest) => (
+                      <span
+                        key={interest}
+                        style={{
+                          background: 'rgba(30,58,138,0.08)',
+                          border: '1px solid rgba(30,58,138,0.15)',
+                          color: 'var(--primary)',
+                          borderRadius: '16px',
+                          padding: '4px 10px',
+                          fontSize: '12px',
+                          fontWeight: 600
+                        }}
+                      >
+                        ✨ {interest}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

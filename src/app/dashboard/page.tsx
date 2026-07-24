@@ -56,6 +56,8 @@ const DashboardPage = async () => {
         role: profile.role,
         voice_part: fullProfile?.voice_part || '',
         avatar_url: fullProfile?.avatar_url || null,
+        cover_url: fullProfile?.cover_url || null,
+        interests: Array.isArray(fullProfile?.interests) ? fullProfile.interests : [],
         created_at: profile.created_at || '',
       }}
       initialPhotos={initialPhotos}

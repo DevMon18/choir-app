@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { PushNotificationManager } from '@/components/PushNotificationManager';
 import { PhotoGallery, PhotoItem } from '@/components/PhotoGallery';
-import { uploadProfilePhotoAction, deleteProfilePhotoAction } from '../directory/[id]/actions';
+import { uploadProfilePhotoAction, deleteProfilePhotoAction, uploadCoverPhotoAction, updateInterestsAction } from '../directory/[id]/actions';
 import gsap from 'gsap';
 
 interface AnnouncementItem {
@@ -28,6 +28,8 @@ interface Profile {
   role: 'super_admin' | 'director' | 'treasurer' | 'secretary' | 'member' | 'pending' | 'rejected';
   voice_part?: string;
   avatar_url?: string | null;
+  cover_url?: string | null;
+  interests?: string[];
   created_at: string;
 }
 
@@ -41,8 +43,15 @@ interface DashboardClientProps {
 const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements = [] }: DashboardClientProps) => {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
+  const [coverUrl, setCoverUrl] = useState<string | null>(profile.cover_url || null);
+  const [interests, setInterests] = useState<string[]>(profile.interests || []);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [addingInterest, setAddingInterest] = useState(false);
+  const [newInterestInput, setNewInterestInput] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -92,6 +101,61 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
     return () => ctx.revert();
   }, []);
 
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingCover(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await uploadCoverPhotoAction(formData);
+
+      if (res.success && res.coverUrl) {
+        setCoverUrl(res.coverUrl);
+        router.refresh();
+      } else {
+        alert(res.error || 'Failed to upload cover image.');
+      }
+    } catch (err: any) {
+      alert('Cover upload error: ' + (err.message || 'Unknown error'));
+    } finally {
+      setUploadingCover(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleAddInterest = async (interestToAdd: string) => {
+    const trimmed = interestToAdd.trim();
+    if (!trimmed || interests.includes(trimmed)) return;
+
+    const nextInterests = [...interests, trimmed];
+    setInterests(nextInterests);
+    setNewInterestInput('');
+    setAddingInterest(false);
+
+    const res = await updateInterestsAction(nextInterests);
+    if (res.error) {
+      alert('Failed to save interest: ' + res.error);
+      setInterests(interests); // revert
+    } else {
+      router.refresh();
+    }
+  };
+
+  const handleRemoveInterest = async (interestToRemove: string) => {
+    const nextInterests = interests.filter((i) => i !== interestToRemove);
+    setInterests(nextInterests);
+
+    const res = await updateInterestsAction(nextInterests);
+    if (res.error) {
+      alert('Failed to remove interest: ' + res.error);
+      setInterests(interests); // revert
+    } else {
+      router.refresh();
+    }
+  };
+
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
       <div className="bg-orb bg-orb-1" style={{ width: '600px', height: '600px' }}></div>
@@ -109,10 +173,39 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
           <div className="glass-container anim-header" style={{ padding: 0, overflow: 'hidden' }}>
             {/* Cover Banner */}
             <div style={{
-              height: '130px',
-              background: 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
+              height: '140px',
+              background: coverUrl
+                ? `url(${coverUrl}) center/cover no-repeat`
+                : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
               position: 'relative'
-            }} />
+            }}>
+              <input
+                type="file"
+                ref={coverInputRef}
+                onChange={handleCoverUpload}
+                accept="image/*"
+                style={{ display: 'none' }}
+              />
+              <button
+                onClick={() => coverInputRef.current?.click()}
+                disabled={uploadingCover}
+                className="btn btn-secondary"
+                style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  padding: '6px 12px',
+                  fontSize: '0.78rem',
+                  background: 'rgba(255,255,255,0.85)',
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  border: 'none',
+                  borderRadius: '20px'
+                }}
+              >
+                {uploadingCover ? 'Uploading...' : '🖼 Change Cover'}
+              </button>
+            </div>
 
             {/* Profile Content Container */}
             <div style={{ padding: '0 20px 20px', position: 'relative' }}>
@@ -168,6 +261,109 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
                   <span className="badge" style={{ background: 'rgba(197,160,89,0.15)', color: 'var(--accent)', fontWeight: 700, fontSize: '0.78rem', textTransform: 'capitalize' }}>
                     {profile.role.replace('_', ' ')}
                   </span>
+                </div>
+
+                {/* Interests Section */}
+                <div style={{ marginTop: '16px', borderTop: '1px solid var(--glass-border)', paddingTop: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)' }}>
+                      ✨ Musical Interests & Hobbies
+                    </span>
+                    {!addingInterest && (
+                      <button
+                        onClick={() => setAddingInterest(true)}
+                        style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                      >
+                        + Add Interest
+                      </button>
+                    )}
+                  </div>
+
+                  {addingInterest && (
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+                      <input
+                        type="text"
+                        placeholder="e.g. Sacred Music, Sight Reading, Guitar"
+                        value={newInterestInput}
+                        onChange={(e) => setNewInterestInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleAddInterest(newInterestInput);
+                        }}
+                        style={{ flex: 1, padding: '6px 12px', fontSize: '0.85rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--foreground)' }}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleAddInterest(newInterestInput)}
+                        className="btn btn-primary"
+                        style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setAddingInterest(false)}
+                        className="btn btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Interest Suggestions if empty */}
+                  {interests.length === 0 && !addingInterest && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                      {['Sacred Music', 'A Cappella', 'Sight Reading', 'Youth Choir', 'Liturgical Dance', 'Organ & Piano'].map((sug) => (
+                        <button
+                          key={sug}
+                          onClick={() => handleAddInterest(sug)}
+                          style={{
+                            background: 'rgba(30,58,138,0.05)',
+                            border: '1px stroke var(--border)',
+                            borderRadius: '16px',
+                            padding: '4px 10px',
+                            fontSize: '0.78rem',
+                            color: 'var(--primary)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          + {sug}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Render Interest Badges */}
+                  {interests.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                      {interests.map((interest) => (
+                        <span
+                          key={interest}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: 'rgba(30,58,138,0.08)',
+                            border: '1px solid rgba(30,58,138,0.15)',
+                            color: 'var(--primary)',
+                            borderRadius: '16px',
+                            padding: '4px 10px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600
+                          }}
+                        >
+                          ✨ {interest}
+                          <button
+                            onClick={() => handleRemoveInterest(interest)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '0.85rem', padding: '0 0 0 4px', lineHeight: 1 }}
+                            aria-label={`Remove ${interest}`}
+                          >
+                            &times;
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

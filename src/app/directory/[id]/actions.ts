@@ -17,6 +17,8 @@ export interface DetailedMemberProfile {
   is_address_private: boolean;
   is_birthdate_private: boolean;
   avatar_url: string | null;
+  cover_url: string | null;
+  interests: string[];
   created_at: string;
 }
 
@@ -71,6 +73,8 @@ export async function getMemberProfileWithPhotos(targetUserId: string) {
       is_address_private: targetProfile.is_address_private,
       is_birthdate_private: targetProfile.is_birthdate_private ?? true,
       avatar_url: targetProfile.avatar_url,
+      cover_url: targetProfile.cover_url || null,
+      interests: Array.isArray(targetProfile.interests) ? targetProfile.interests : [],
       created_at: targetProfile.created_at,
     };
 
@@ -124,18 +128,26 @@ export async function uploadProfilePhotoAction(formData: FormData) {
       return { error: 'Photo cap reached (maximum 8 photos per profile).' };
     }
 
-    const fileExt = file.name.split('.').pop() || 'jpeg';
+    const fileExt = file.name ? file.name.split('.').pop() : 'jpeg';
     const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
-    // Upload to storage
-    const { error: uploadErr } = await supabase.storage
+    // Convert Web File to Buffer for reliable Node.js server action upload
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Use admin client for storage upload & db insert to avoid stream or RLS mismatch issues
+    const adminSupabase = createAdminClient();
+
+    const { error: uploadErr } = await adminSupabase.storage
       .from('profile_photos')
-      .upload(filePath, file, { upsert: true });
+      .upload(filePath, buffer, {
+        contentType: file.type || 'image/jpeg',
+        upsert: true
+      });
 
     if (uploadErr) return { error: uploadErr.message };
 
-    // Insert database record (verifying with .select())
-    const { data: inserted, error: dbErr } = await supabase
+    const { data: inserted, error: dbErr } = await adminSupabase
       .from('profile_photos')
       .insert({
         user_id: user.id,
@@ -145,14 +157,85 @@ export async function uploadProfilePhotoAction(formData: FormData) {
       .single();
 
     if (dbErr || !inserted) {
-      // Clean up uploaded storage file if DB insert fails
-      await supabase.storage.from('profile_photos').remove([filePath]);
+      await adminSupabase.storage.from('profile_photos').remove([filePath]);
       return { error: dbErr?.message || 'Database insert failed' };
     }
 
-    return { success: true, photo: inserted };
+    const { data: { publicUrl } } = adminSupabase.storage
+      .from('profile_photos')
+      .getPublicUrl(filePath);
+
+    return { success: true, photo: { ...inserted, publicUrl } };
   } catch (err: any) {
+    console.error('uploadProfilePhotoAction error:', err);
     return { error: err.message || 'Upload failed' };
+  }
+}
+
+export async function uploadCoverPhotoAction(formData: FormData) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: 'Unauthorized' };
+
+    const file = formData.get('file') as File;
+    if (!file) return { error: 'No cover image file provided' };
+
+    const fileExt = file.name ? file.name.split('.').pop() : 'jpeg';
+    const filePath = `covers/${user.id}_${Date.now()}.${fileExt}`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const adminSupabase = createAdminClient();
+
+    const { error: uploadErr } = await adminSupabase.storage
+      .from('avatars')
+      .upload(filePath, buffer, {
+        contentType: file.type || 'image/jpeg',
+        upsert: true
+      });
+
+    if (uploadErr) return { error: uploadErr.message };
+
+    const { data: { publicUrl } } = adminSupabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    const { error: updateErr } = await adminSupabase
+      .from('profiles')
+      .update({ cover_url: publicUrl })
+      .eq('id', user.id);
+
+    if (updateErr) return { error: updateErr.message };
+
+    return { success: true, coverUrl: publicUrl };
+  } catch (err: any) {
+    console.error('uploadCoverPhotoAction error:', err);
+    return { error: err.message || 'Cover upload failed' };
+  }
+}
+
+export async function updateInterestsAction(interests: string[]) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: 'Unauthorized' };
+
+    const adminSupabase = createAdminClient();
+    const { error: updateErr } = await adminSupabase
+      .from('profiles')
+      .update({ interests })
+      .eq('id', user.id);
+
+    if (updateErr) return { error: updateErr.message };
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('updateInterestsAction error:', err);
+    return { error: err.message || 'Failed to update interests' };
   }
 }
 
@@ -163,8 +246,10 @@ export async function deleteProfilePhotoAction(photoId: string, storagePath: str
 
     if (!user) return { error: 'Unauthorized' };
 
+    const adminSupabase = createAdminClient();
+
     // Delete record from DB
-    const { data: deleted, error: dbErr } = await supabase
+    const { data: deleted, error: dbErr } = await adminSupabase
       .from('profile_photos')
       .delete()
       .eq('id', photoId)
@@ -175,7 +260,7 @@ export async function deleteProfilePhotoAction(photoId: string, storagePath: str
     }
 
     // Delete file from storage
-    await supabase.storage.from('profile_photos').remove([storagePath]);
+    await adminSupabase.storage.from('profile_photos').remove([storagePath]);
 
     return { success: true };
   } catch (err: any) {
