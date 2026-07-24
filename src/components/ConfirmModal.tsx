@@ -31,7 +31,7 @@ export const ConfirmModal = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 99998,
+        zIndex: 9999999,
         padding: '20px',
         animation: 'fadeIn 0.2s ease',
       }}
