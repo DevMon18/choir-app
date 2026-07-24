@@ -98,8 +98,10 @@ export async function getConversations(): Promise<{ conversations?: Conversation
       c.participant_one === user.id ? c.participant_two : c.participant_one
     );
 
-    // Fetch profiles of participants
-    const { data: profiles } = await supabase
+    const adminSupabase = createAdminClient();
+
+    // Fetch profiles of participants using adminSupabase to bypass RLS restrictions
+    const { data: profiles } = await adminSupabase
       .from('profiles')
       .select('id, full_name, avatar_url, voice_part, role')
       .in('id', otherUserIds);
@@ -175,12 +177,14 @@ export async function getMessages(conversationId: string) {
 
     const otherId = conv.participant_one === user.id ? conv.participant_two : conv.participant_one;
 
+    const adminSupabase = createAdminClient();
+
     // Fetch otherUser profile and messages concurrently via Promise.all
     const [
       { data: otherUser },
       { data: msgs, error: msgErr },
     ] = await Promise.all([
-      supabase
+      adminSupabase
         .from('profiles')
         .select('id, full_name, avatar_url, voice_part, role')
         .eq('id', otherId)

@@ -39,23 +39,25 @@ export async function getMemberProfileWithPhotos(targetUserId: string) {
 
     if (!user) return { error: 'Unauthorized' };
 
-    // Fetch currentUserProfile, targetProfile, and rawPhotos concurrently via Promise.all
+    const adminSupabase = createAdminClient();
+
+    // Fetch currentUserProfile, targetProfile, and rawPhotos concurrently via Promise.all using admin client to bypass RLS restrictions
     const [
       { data: currentUserProfile },
       { data: targetProfile, error: profileErr },
       { data: rawPhotos, error: photoErr },
     ] = await Promise.all([
-      supabase
+      adminSupabase
         .from('profiles')
         .select('id, role')
         .eq('id', user.id)
         .single(),
-      supabase
+      adminSupabase
         .from('profiles')
         .select('*')
         .eq('id', targetUserId)
         .single(),
-      supabase
+      adminSupabase
         .from('profile_photos')
         .select('*')
         .eq('user_id', targetUserId)

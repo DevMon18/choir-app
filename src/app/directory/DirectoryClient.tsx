@@ -2,8 +2,12 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { logout } from '../actions';
 import { Navbar } from '@/components/Navbar';
+import { getOrCreateConversation } from '@/app/messages/actions';
+import { useToast } from '@/components/Toast';
+import { MessageSquare } from 'lucide-react';
 import gsap from 'gsap';
 
 import { useDebounce } from '@/hooks/useDebounce';
@@ -40,11 +44,31 @@ const VOICE_COLORS: Record<string, string> = {
 };
 
 export const DirectoryClient = ({ profile, members }: Props) => {
+  const router = useRouter();
+  const { addToast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState('');
   const [voiceFilter, setVoiceFilter] = useState('');
+  const [messagingId, setMessagingId] = useState<string | null>(null);
 
   const debouncedSearch = useDebounce(search, 250);
+
+  const handleOpenConversation = async (targetId: string) => {
+    if (targetId === profile.id) return;
+    setMessagingId(targetId);
+    try {
+      const res = await getOrCreateConversation(targetId);
+      if (res.error || !res.conversationId) {
+        addToast({ type: 'error', title: 'Chat Error', message: res.error || 'Failed to open conversation.' });
+      } else {
+        router.push(`/messages/${res.conversationId}`);
+      }
+    } catch (err: any) {
+      addToast({ type: 'error', title: 'Error', message: err.message || 'Server error' });
+    } finally {
+      setMessagingId(null);
+    }
+  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -188,6 +212,29 @@ export const DirectoryClient = ({ profile, members }: Props) => {
                       </div>
                     )}
                   </div>
+
+                  {/* Direct Message Action Button */}
+                  {m.id !== profile.id && (
+                    <button
+                      onClick={() => handleOpenConversation(m.id)}
+                      disabled={messagingId === m.id}
+                      className="btn btn-secondary"
+                      style={{
+                        marginTop: '12px',
+                        width: '100%',
+                        padding: '6px 12px',
+                        fontSize: '0.82rem',
+                        borderRadius: '8px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <MessageSquare size={14} />
+                      {messagingId === m.id ? 'Opening…' : 'Message'}
+                    </button>
+                  )}
 
                   {/* Admin actions */}
                   {isAdmin && (
