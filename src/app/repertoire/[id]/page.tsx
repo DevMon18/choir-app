@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound, redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
 import SongViewerClient from './SongViewerClient';
+import { listPracticeRecordings } from './recordings-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,20 +20,24 @@ const SongDetailPage = async ({ params }: PageProps) => {
 
   const supabase = await createClient();
 
-  // Fetch specific non-archived song with categories
-  const { data: rawSong, error } = await supabase
-    .from('songs')
-    .select(`
-      *,
-      song_category_links (
-        song_categories ( id, name )
-      )
-    `)
-    .eq('id', id)
-    .eq('is_archived', false)
-    .single();
+  // Concurrently fetch song data and practice recordings
+  const [songRes, recordingsRes] = await Promise.all([
+    supabase
+      .from('songs')
+      .select(`
+        *,
+        song_category_links (
+          song_categories ( id, name )
+        )
+      `)
+      .eq('id', id)
+      .eq('is_archived', false)
+      .single(),
+    listPracticeRecordings(id),
+  ]);
 
-  if (error || !rawSong) {
+  const rawSong = songRes.data;
+  if (songRes.error || !rawSong) {
     notFound();
   }
 
@@ -47,8 +52,10 @@ const SongDetailPage = async ({ params }: PageProps) => {
     <SongViewerClient
       currentUserProfile={currentProfile}
       song={mappedSong}
+      initialRecordings={recordingsRes.recordings || []}
     />
   );
 };
 
 export default SongDetailPage;
+

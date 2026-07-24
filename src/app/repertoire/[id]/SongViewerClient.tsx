@@ -5,12 +5,15 @@ import { ChordProRenderer, ChordProControls, usePersistedFontSize } from '@/comp
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { SongCategory } from '@/app/admin/songs/SongForm';
+import { PracticeRecordings } from './PracticeRecordings';
+import { PracticeRecordingItem } from './recordings-actions';
 import gsap from 'gsap';
 
 interface Profile {
   id: string;
   full_name: string;
   role: string;
+  voice_part?: string | null;
 }
 
 interface Song {
@@ -26,9 +29,10 @@ interface Song {
 interface SongViewerClientProps {
   currentUserProfile: Profile;
   song: Song;
+  initialRecordings?: PracticeRecordingItem[];
 }
 
-export const SongViewerClient = ({ currentUserProfile, song }: SongViewerClientProps) => {
+export const SongViewerClient = ({ currentUserProfile, song, initialRecordings = [] }: SongViewerClientProps) => {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -43,6 +47,7 @@ export const SongViewerClient = ({ currentUserProfile, song }: SongViewerClientP
       tl.fromTo('.anim-header', { opacity: 0, y: -15 }, { opacity: 1, y: 0, duration: 0.6 });
       tl.fromTo('.anim-controls', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.3');
       tl.fromTo('.anim-lyrics', { opacity: 0 }, { opacity: 1, duration: 0.8 }, '-=0.2');
+      tl.fromTo('.anim-recordings', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.6 }, '-=0.4');
     }, containerRef);
     return () => ctx.revert();
   }, []);
@@ -148,6 +153,15 @@ export const SongViewerClient = ({ currentUserProfile, song }: SongViewerClientP
           />
         </div>
 
+        {/* Practice Recordings Panel (AT THE TOP, ABOVE LYRICS) */}
+        <div className="anim-recordings" style={{ opacity: 0 }}>
+          <PracticeRecordings
+            songId={song.id}
+            currentUserProfile={currentUserProfile}
+            initialRecordings={initialRecordings}
+          />
+        </div>
+
         {/* Song Lyrics Pane */}
         <div className="glass-container anim-lyrics" style={{ padding: '40px', opacity: 0, overflowX: 'auto' }}>
           {song.lyrics ? (
@@ -169,3 +183,5 @@ export const SongViewerClient = ({ currentUserProfile, song }: SongViewerClientP
 };
 
 export default SongViewerClient;
+
+
