@@ -239,7 +239,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
       console.error('Microphone permission or recording error:', err);
       let errMsg = 'Failed to access microphone. Please check permissions.';
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        errMsg = 'Microphone access was denied. Please allow microphone permissions in your browser/device settings.';
+        errMsg = 'Microphone permission was denied by your browser or Android system settings.';
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
         errMsg = 'No microphone device found on this system.';
       }
@@ -464,7 +464,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
+              <polyline points="12 6 12 16 14" />
             </svg>
             History
           </button>
@@ -715,28 +715,53 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
               </button>
             </div>
 
-            {/* Mic Permission Error Banner */}
+            {/* Enhanced Mobile Microphone Permission Guidance Banner */}
             {micError && (
               <div
                 style={{
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
+                  background: '#fff1f2',
+                  border: '1px solid #fecdd3',
                   borderRadius: '12px',
-                  padding: '12px 14px',
+                  padding: '14px',
                   marginBottom: '18px',
-                  color: '#991b1b',
-                  fontSize: '0.88rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
+                  color: '#9f1239',
+                  fontSize: '0.86rem',
+                  lineHeight: 1.5,
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                <span>{micError}</span>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}>
+                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div style={{ flex: 1 }}>
+                    <strong style={{ color: '#881337', display: 'block', marginBottom: '4px' }}>
+                      Microphone Access Denied
+                    </strong>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '0.82rem' }}>
+                      On Mobile / Android: Go to <strong>Settings &gt; Apps &gt; Choir Collective &gt; Permissions &gt; Microphone</strong> and select <strong>Allow</strong>.
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button
+                        onClick={startRecording}
+                        style={{
+                          background: '#e11d48',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Retry Microphone
+                      </button>
+                      <span style={{ fontSize: '0.78rem', color: '#881337' }}>
+                        or use <strong>Upload Audio File</strong> below!
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
