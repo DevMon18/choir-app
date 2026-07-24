@@ -58,6 +58,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
   const [mounted, setMounted] = useState(false);
 
   const [recordings, setRecordings] = useState<PracticeRecordingItem[]>(initialRecordings);
+  const [isCollapsed, setIsCollapsed] = useState(true); // Minimized by default!
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
@@ -304,6 +305,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
         } else {
           setRecordings((prev) => [res.recording!, ...prev]);
         }
+        setIsCollapsed(false); // Auto-expand list to reveal new recording!
         closeAddModal();
       }
     } catch (err: any) {
@@ -353,6 +355,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
         } else {
           setRecordings((prev) => [res.recording!, ...prev]);
         }
+        setIsCollapsed(false); // Auto-expand list to reveal new upload!
         closeAddModal();
       }
     } catch (err: any) {
@@ -390,7 +393,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
   const isAdminRole = ['super_admin', 'director', 'secretary'].includes(currentUserProfile.role);
 
   return (
-    <div className="glass-container" style={{ padding: '24px 30px', marginBottom: '24px' }}>
+    <div className="glass-container" style={{ padding: '20px 26px', marginBottom: '24px' }}>
       {/* Top Bar Header */}
       <div
         style={{
@@ -399,7 +402,6 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '12px',
-          marginBottom: recordings.length > 0 ? '16px' : '0px',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -423,10 +425,10 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
           </div>
 
           <div>
-            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
               Practice Audio Recordings
             </h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '2px 0 0 0' }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '2px 0 0 0' }}>
               Reference tracks for your song voicing.
             </p>
           </div>
@@ -445,8 +447,8 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
           </span>
         </div>
 
-        {/* Top Action Buttons: "+ Add Recording" and "View History" */}
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        {/* Top Action Buttons: "+ Add Recording", "History", and Minimize/Maximize Toggle */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={handleOpenHistory}
             className="btn btn-secondary"
@@ -454,8 +456,8 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 14px',
-              fontSize: '0.85rem',
+              padding: '8px 12px',
+              fontSize: '0.82rem',
               fontWeight: 600,
               borderRadius: '10px',
             }}
@@ -474,8 +476,8 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 16px',
-              fontSize: '0.88rem',
+              padding: '8px 14px',
+              fontSize: '0.85rem',
               fontWeight: 600,
               borderRadius: '10px',
             }}
@@ -486,126 +488,162 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
             </svg>
             Add Recording
           </button>
+
+          {/* Minimize / Maximize Toggle Button */}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? 'Maximize / Show tracks' : 'Minimize / Hide tracks'}
+            className="btn btn-secondary"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 12px',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              borderRadius: '10px',
+            }}
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                transform: isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+                transition: 'transform 0.25s ease',
+              }}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+            <span>{isCollapsed ? 'Show Tracks' : 'Hide Tracks'}</span>
+          </button>
         </div>
       </div>
 
-      {/* Combined Practice Recordings List (Displayed AT THE TOP, ABOVE LYRICS) */}
-      {recordings.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '20px 16px',
-            marginTop: '16px',
-            background: 'rgba(255, 255, 255, 0.3)',
-            borderRadius: '12px',
-            border: '1px dashed var(--border-color, rgba(0,0,0,0.15))',
-          }}
-        >
-          <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: 0 }}>
-            No practice recordings yet. Click <strong>&quot;+ Add Recording&quot;</strong> above to record or upload a reference track for your voice part!
-          </p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-          {recordings.map((recording) => {
-            const canDelete = currentUserProfile.id === recording.uploaded_by || isAdminRole;
-            const voicePartName = recording.voice_part || 'Member';
+      {/* Combined Practice Recordings List (Collapsible / Default Minimized) */}
+      {!isCollapsed && (
+        <div style={{ marginTop: '16px', animation: 'fadeIn 0.2s ease' }}>
+          {recordings.length === 0 ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '20px 16px',
+                background: 'rgba(255, 255, 255, 0.3)',
+                borderRadius: '12px',
+                border: '1px dashed var(--border-color, rgba(0,0,0,0.15))',
+              }}
+            >
+              <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: 0 }}>
+                No practice recordings yet. Click <strong>&quot;+ Add Recording&quot;</strong> above to record or upload a reference track for your voice part!
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {recordings.map((recording) => {
+                const canDelete = currentUserProfile.id === recording.uploaded_by || isAdminRole;
+                const voicePartName = recording.voice_part || 'Member';
 
-            // Determine badge text and color (Voicing Label takes precedence)
-            const badgeLabel = recording.label || voicePartName;
-            const badgeBgColor = VOICING_LABEL_COLORS[badgeLabel.toUpperCase()] || VOICE_COLORS[voicePartName] || 'var(--primary)';
+                const badgeLabel = recording.label || voicePartName;
+                const badgeBgColor = VOICING_LABEL_COLORS[badgeLabel.toUpperCase()] || VOICE_COLORS[voicePartName] || 'var(--primary)';
 
-            return (
-              <div
-                key={recording.id}
-                style={{
-                  background: 'var(--glass-bg, #fff)',
-                  border: '1px solid var(--glass-border, rgba(255,255,255,0.4))',
-                  borderRadius: '14px',
-                  padding: '14px 18px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '12px',
-                    marginBottom: '10px',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                    {/* Prominent Voicing / Label Badge */}
-                    <span
+                return (
+                  <div
+                    key={recording.id}
+                    style={{
+                      background: 'var(--glass-bg, #fff)',
+                      border: '1px solid var(--glass-border, rgba(255,255,255,0.4))',
+                      borderRadius: '14px',
+                      padding: '14px 18px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                    }}
+                  >
+                    <div
                       style={{
-                        fontSize: '0.75rem',
-                        fontWeight: 800,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                        color: '#ffffff',
-                        backgroundColor: badgeBgColor,
-                        padding: '3px 10px',
-                        borderRadius: '99px',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '12px',
+                        marginBottom: '10px',
+                        flexWrap: 'wrap',
                       }}
                     >
-                      {badgeLabel}
-                    </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        {/* Prominent Voicing / Label Badge */}
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                            color: '#ffffff',
+                            backgroundColor: badgeBgColor,
+                            padding: '3px 10px',
+                            borderRadius: '99px',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                          }}
+                        >
+                          {badgeLabel}
+                        </span>
 
-                    {/* Uploader Name */}
-                    <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--foreground)' }}>
-                      Recorded by {recording.uploader_name || 'Choir Member'}
-                    </span>
+                        {/* Uploader Name */}
+                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--foreground)' }}>
+                          Recorded by {recording.uploader_name || 'Choir Member'}
+                        </span>
 
-                    {/* Date */}
-                    <span style={{ fontSize: '0.76rem', color: 'var(--muted)' }}>
-                      ({new Date(recording.created_at).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })})
-                    </span>
+                        {/* Date */}
+                        <span style={{ fontSize: '0.76rem', color: 'var(--muted)' }}>
+                          ({new Date(recording.created_at).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })})
+                        </span>
+                      </div>
+
+                      {/* Delete Button */}
+                      {canDelete && (
+                        <button
+                          onClick={() => setDeletingId(recording.id)}
+                          title="Delete recording"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--muted)',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            borderRadius: '6px',
+                            transition: 'color 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.color = '#dc2626')}
+                          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--muted)')}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14H6L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                            <path d="M9 6V4h6v2" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Native HTML5 Audio Controls */}
+                    <audio
+                      controls
+                      src={recording.file_url}
+                      style={{ width: '100%', height: '38px', borderRadius: '8px' }}
+                    />
                   </div>
-
-                  {/* Delete Button */}
-                  {canDelete && (
-                    <button
-                      onClick={() => setDeletingId(recording.id)}
-                      title="Delete recording"
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--muted)',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        borderRadius: '6px',
-                        transition: 'color 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = '#dc2626')}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--muted)')}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6l-1 14H6L5 6" />
-                        <path d="M10 11v6M14 11v6" />
-                        <path d="M9 6V4h6v2" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-
-                {/* Native HTML5 Audio Controls */}
-                <audio
-                  controls
-                  src={recording.file_url}
-                  style={{ width: '100%', height: '38px', borderRadius: '8px' }}
-                />
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
