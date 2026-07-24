@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { PushNotificationManager } from '@/components/PushNotificationManager';
 import { PhotoGallery, PhotoItem } from '@/components/PhotoGallery';
-import { uploadProfilePhotoAction, deleteProfilePhotoAction, uploadCoverPhotoAction, updateInterestsAction } from '../directory/[id]/actions';
+import { uploadProfilePhotoAction, deleteProfilePhotoAction, uploadCoverPhotoAction, updateInterestsAction, updateCoverPositionAction } from '../directory/[id]/actions';
 import gsap from 'gsap';
 
 interface AnnouncementItem {
@@ -29,6 +29,7 @@ interface Profile {
   voice_part?: string;
   avatar_url?: string | null;
   cover_url?: string | null;
+  cover_position?: string | null;
   interests?: string[];
   created_at: string;
 }
@@ -48,6 +49,9 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
   const [coverUrl, setCoverUrl] = useState<string | null>(profile.cover_url || null);
+  const [coverPosition, setCoverPosition] = useState<string>(profile.cover_position || '50%');
+  const [repositioningCover, setRepositioningCover] = useState(false);
+  const [tempPosition, setTempPosition] = useState<string>(profile.cover_position || '50%');
   const [interests, setInterests] = useState<string[]>(profile.interests || []);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [addingInterest, setAddingInterest] = useState(false);
@@ -125,6 +129,19 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
     }
   };
 
+  const handleSaveCoverPosition = async (posToSave: string) => {
+    setCoverPosition(posToSave);
+    setRepositioningCover(false);
+
+    const res = await updateCoverPositionAction(posToSave);
+    if (res.error) {
+      alert('Failed to save cover position: ' + res.error);
+      setCoverPosition(coverPosition); // revert
+    } else {
+      router.refresh();
+    }
+  };
+
   const handleAddInterest = async (interestToAdd: string) => {
     const trimmed = interestToAdd.trim();
     if (!trimmed || interests.includes(trimmed)) return;
@@ -173,11 +190,12 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
           <div className="glass-container anim-header" style={{ padding: 0, overflow: 'hidden' }}>
             {/* Cover Banner */}
             <div style={{
-              height: '140px',
+              height: '160px',
               background: coverUrl
-                ? `url(${coverUrl}) center/cover no-repeat`
+                ? `url(${coverUrl}) center ${repositioningCover ? tempPosition : coverPosition} / cover no-repeat`
                 : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
-              position: 'relative'
+              position: 'relative',
+              transition: 'background-position 0.1s ease'
             }}>
               <input
                 type="file"
@@ -186,25 +204,102 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
                 accept="image/*"
                 style={{ display: 'none' }}
               />
-              <button
-                onClick={() => coverInputRef.current?.click()}
-                disabled={uploadingCover}
-                className="btn btn-secondary"
-                style={{
-                  position: 'absolute',
-                  top: '12px',
-                  right: '12px',
-                  padding: '6px 12px',
-                  fontSize: '0.78rem',
-                  background: 'rgba(255,255,255,0.85)',
-                  backdropFilter: 'blur(8px)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  border: 'none',
-                  borderRadius: '20px'
-                }}
-              >
-                {uploadingCover ? 'Uploading...' : '🖼 Change Cover'}
-              </button>
+
+              {/* Cover Action Buttons */}
+              <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '8px', zIndex: 5 }}>
+                {coverUrl && !repositioningCover && (
+                  <button
+                    onClick={() => {
+                      setTempPosition(coverPosition);
+                      setRepositioningCover(true);
+                    }}
+                    className="btn btn-secondary"
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '0.78rem',
+                      background: 'rgba(255,255,255,0.85)',
+                      backdropFilter: 'blur(8px)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      border: 'none',
+                      borderRadius: '20px'
+                    }}
+                  >
+                    🎯 Reposition
+                  </button>
+                )}
+
+                {!repositioningCover && (
+                  <button
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={uploadingCover}
+                    className="btn btn-secondary"
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '0.78rem',
+                      background: 'rgba(255,255,255,0.85)',
+                      backdropFilter: 'blur(8px)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      border: 'none',
+                      borderRadius: '20px'
+                    }}
+                  >
+                    {uploadingCover ? 'Uploading...' : '🖼 Change Cover'}
+                  </button>
+                )}
+              </div>
+
+              {/* Cover Reposition Control Overlay Bar */}
+              {repositioningCover && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 'auto 0 0 0',
+                    background: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(6px)',
+                    padding: '10px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    color: '#fff',
+                    zIndex: 10
+                  }}
+                >
+                  <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>Adjust Position:</span>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, maxWidth: '240px' }}>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={parseInt(tempPosition) || 50}
+                      onChange={(e) => setTempPosition(`${e.target.value}%`)}
+                      style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--accent)' }}
+                    />
+                    <span style={{ fontSize: '0.75rem', width: '36px', textAlign: 'right' }}>{tempPosition}</span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      onClick={() => handleSaveCoverPosition(tempPosition)}
+                      className="btn btn-primary"
+                      style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '12px' }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setTempPosition(coverPosition);
+                        setRepositioningCover(false);
+                      }}
+                      className="btn btn-secondary"
+                      style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '12px', color: '#fff', background: 'rgba(255,255,255,0.2)' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Profile Content Container */}

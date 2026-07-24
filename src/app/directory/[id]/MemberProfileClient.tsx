@@ -108,7 +108,7 @@ export const MemberProfileClient: React.FC<Props> = ({
           <div style={{
             height: '140px',
             background: targetProfile.cover_url
-              ? `url(${targetProfile.cover_url}) center/cover no-repeat`
+              ? `url(${targetProfile.cover_url}) center ${targetProfile.cover_position || '50%'} / cover no-repeat`
               : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
             position: 'relative'
           }} />

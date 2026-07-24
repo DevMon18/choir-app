@@ -18,6 +18,7 @@ export interface DetailedMemberProfile {
   is_birthdate_private: boolean;
   avatar_url: string | null;
   cover_url: string | null;
+  cover_position: string | null;
   interests: string[];
   created_at: string;
 }
@@ -74,6 +75,7 @@ export async function getMemberProfileWithPhotos(targetUserId: string) {
       is_birthdate_private: targetProfile.is_birthdate_private ?? true,
       avatar_url: targetProfile.avatar_url,
       cover_url: targetProfile.cover_url || null,
+      cover_position: targetProfile.cover_position || '50%',
       interests: Array.isArray(targetProfile.interests) ? targetProfile.interests : [],
       created_at: targetProfile.created_at,
     };
@@ -236,6 +238,28 @@ export async function updateInterestsAction(interests: string[]) {
   } catch (err: any) {
     console.error('updateInterestsAction error:', err);
     return { error: err.message || 'Failed to update interests' };
+  }
+}
+
+export async function updateCoverPositionAction(coverPosition: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: 'Unauthorized' };
+
+    const adminSupabase = createAdminClient();
+    const { error: updateErr } = await adminSupabase
+      .from('profiles')
+      .update({ cover_position: coverPosition })
+      .eq('id', user.id);
+
+    if (updateErr) return { error: updateErr.message };
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('updateCoverPositionAction error:', err);
+    return { error: err.message || 'Failed to update cover position' };
   }
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { useToast } from '@/components/Toast';
 
@@ -33,6 +34,11 @@ export const PhotoGallery: React.FC<Props> = ({
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeletePhoto, setConfirmDeletePhoto] = useState<PhotoItem | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -170,78 +176,94 @@ export const PhotoGallery: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Full-Screen Edge-to-Edge Lightbox Modal */}
-      {selectedPhoto && (
+      {/* Full-Screen Edge-to-Edge Lightbox Modal rendered via Portal onto document.body */}
+      {mounted && selectedPhoto && createPortal(
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 9999,
-            background: 'rgba(0, 0, 0, 0.92)',
+            zIndex: 999999,
+            background: 'rgba(0, 0, 0, 0.94)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
             padding: '16px',
-            backdropFilter: 'blur(8px)',
+            backdropFilter: 'blur(10px)',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedPhoto(null);
           }}
         >
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
             <span style={{ color: '#fff', fontSize: '13px', opacity: 0.8 }}>
               {new Date(selectedPhoto.created_at).toLocaleDateString()}
             </span>
             <button
               onClick={() => setSelectedPhoto(null)}
               style={{
-                background: 'rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.25)',
                 border: 'none',
                 color: '#fff',
-                width: '36px',
-                height: '36px',
+                width: '38px',
+                height: '38px',
                 borderRadius: '50%',
-                fontSize: '18px',
+                fontSize: '20px',
                 cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
+              aria-label="Close photo"
             >
               ✕
             </button>
           </div>
 
           {/* Full-bleed Photo View */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 0' }}>
+          <div
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 0' }}
+            onClick={() => setSelectedPhoto(null)}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={selectedPhoto.publicUrl}
               alt="Full view"
+              onClick={(e) => e.stopPropagation()}
               style={{
                 maxWidth: '100%',
-                maxHeight: '80vh',
+                maxHeight: '82vh',
                 objectFit: 'contain',
                 borderRadius: '8px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
               }}
             />
           </div>
 
           {/* Footer Actions */}
           {(isOwner || isAdmin) && (
-            <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '24px', zIndex: 10 }}>
               <button
                 onClick={() => setConfirmDeletePhoto(selectedPhoto)}
                 disabled={deletingId === selectedPhoto.id}
                 className="btn"
                 style={{
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  color: '#ef4444',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                  padding: '8px 18px',
+                  background: 'rgba(239, 68, 68, 0.25)',
+                  color: '#f87171',
+                  border: '1px solid rgba(239, 68, 68, 0.5)',
+                  padding: '10px 20px',
                   fontSize: '14px',
+                  borderRadius: '20px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
                 }}
               >
                 🗑 Delete Photo
               </button>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Delete Confirmation Modal */}
