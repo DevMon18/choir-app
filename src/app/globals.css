@@ -1,7 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
 :root {
-  --font-sans: 'Outfit', sans-serif;
+  --font-sans: var(--font-outfit), 'Outfit', system-ui, -apple-system, sans-serif;
   --bg-gradient: radial-gradient(circle at 50% 0%, #fefdfa 0%, #f6f3e8 60%, #e8e2cf 100%);
   --glass-bg: rgba(255, 254, 252, 0.72);
   --glass-border: rgba(11, 77, 36, 0.08);

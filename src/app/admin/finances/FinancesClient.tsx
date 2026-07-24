@@ -70,15 +70,9 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-      tl.fromTo('.sidebar-item',
-        { opacity: 0, x: -20 },
-        { opacity: 1, x: 0, duration: 0.5, stagger: 0.08 }
-      );
-
       tl.fromTo('.content-anim-item',
         { opacity: 0, y: 25 },
-        { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 },
-        '-=0.3'
+        { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 }
       );
     }, containerRef);
 

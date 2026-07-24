@@ -1,8 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  // Touch to reload dev server cache
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'twjtupwztrndxtvagmca.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
