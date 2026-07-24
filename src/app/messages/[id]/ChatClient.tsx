@@ -68,7 +68,21 @@ export const ChatClient: React.FC<Props> = ({
         (payload) => {
           const newMsg = payload.new as MessageItem;
           setMessages((prev) => {
+            // 1. If exact message ID already exists, ignore
             if (prev.some((m) => m.id === newMsg.id)) return prev;
+
+            // 2. If matching temp message exists (same sender and body), replace it
+            const tempIndex = prev.findIndex(
+              (m) => m.id.startsWith('temp-') && m.sender_id === newMsg.sender_id && m.body === newMsg.body
+            );
+
+            if (tempIndex !== -1) {
+              const updated = [...prev];
+              updated[tempIndex] = newMsg;
+              return updated;
+            }
+
+            // 3. Otherwise append new message
             return [...prev, newMsg];
           });
 
@@ -118,8 +132,15 @@ export const ChatClient: React.FC<Props> = ({
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
         addToast({ type: 'error', title: 'Send Failed', message: res.error });
       } else if (res.message) {
-        // Replace temp message with server returned record
-        setMessages((prev) => prev.map((m) => (m.id === tempId ? res.message! : m)));
+        const realMsg = res.message;
+        setMessages((prev) => {
+          // If Realtime already added realMsg, remove tempId
+          if (prev.some((m) => m.id === realMsg.id)) {
+            return prev.filter((m) => m.id !== tempId);
+          }
+          // Otherwise replace tempId with realMsg
+          return prev.map((m) => (m.id === tempId ? realMsg : m));
+        });
       }
     } catch (err: any) {
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
