@@ -242,8 +242,8 @@ export const PhotoGallery: React.FC<Props> = ({
             />
           </div>
 
-          {/* Footer Actions */}
-          {(isOwner || isAdmin) && (
+          {/* Footer Actions — Only the owner can delete their own uploaded gallery photos */}
+          {isOwner && (
             <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '24px', zIndex: 10 }}>
               <button
                 onClick={() => setConfirmDeletePhoto(selectedPhoto)}

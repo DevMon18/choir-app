@@ -207,7 +207,21 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
           )}
 
           <form action={logout}>
-            <button type="submit" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.85rem', minHeight: '38px', borderRadius: '8px' }}>
+            <button
+              type="submit"
+              className="btn btn-secondary"
+              style={{
+                padding: '8px 14px',
+                fontSize: '0.85rem',
+                minHeight: '38px',
+                borderRadius: '8px',
+                whiteSpace: 'nowrap',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <LogOut size={15} />
               Log Out
             </button>
           </form>

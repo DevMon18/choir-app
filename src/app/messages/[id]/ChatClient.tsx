@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { MessageItem, sendMessage, markMessagesAsRead } from '../actions';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/Toast';
+import { ArrowLeft, Send } from 'lucide-react';
 
 interface OtherUser {
   id: string;
@@ -106,19 +107,19 @@ export const ChatClient: React.FC<Props> = ({
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() || sending) return;
+    const text = inputText.trim();
+    if (!text || sending) return;
 
-    const body = inputText.trim();
     setInputText('');
     setSending(true);
 
-    // Optimistic message append
+    // Optimistic UI insert
     const tempId = `temp-${Date.now()}`;
     const tempMsg: MessageItem = {
       id: tempId,
       conversation_id: conversationId,
       sender_id: currentUserId,
-      body,
+      body: text,
       created_at: new Date().toISOString(),
       read_at: null,
     };
@@ -126,194 +127,230 @@ export const ChatClient: React.FC<Props> = ({
     setMessages((prev) => [...prev, tempMsg]);
 
     try {
-      const res = await sendMessage(conversationId, body);
+      const res = await sendMessage(conversationId, text);
       if (res.error) {
-        // Roll back optimistic message on error
+        addToast({ type: 'error', title: 'Send Error', message: res.error });
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
-        addToast({ type: 'error', title: 'Send Failed', message: res.error });
       } else if (res.message) {
         const realMsg = res.message;
         setMessages((prev) => {
-          // If Realtime already added realMsg, remove tempId
-          if (prev.some((m) => m.id === realMsg.id)) {
-            return prev.filter((m) => m.id !== tempId);
-          }
-          // Otherwise replace tempId with realMsg
+          if (prev.some((m) => m.id === realMsg.id)) return prev.filter((m) => m.id !== tempId);
           return prev.map((m) => (m.id === tempId ? realMsg : m));
         });
       }
     } catch (err: any) {
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
       addToast({ type: 'error', title: 'Error', message: err.message || 'Failed to send' });
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
     } finally {
       setSending(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
       <Navbar profile={currentUserProfile} />
 
-      {/* Top Chat Header Bar */}
-      <div
-        style={{
-          padding: '12px 16px',
-          background: 'rgba(255, 254, 252, 0.9)',
-          backdropFilter: 'blur(10px)',
-          borderBottom: '1px solid var(--glass-border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          zIndex: 10,
-        }}
-      >
-        <Link href="/messages" className="btn btn-secondary" style={{ padding: '6px 10px', fontSize: '13px' }}>
-          ← Inbox
-        </Link>
-
-        <Link
-          href={`/directory/${otherUser.id}`}
-          style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flex: 1, overflow: 'hidden' }}
+      {/* Main Container */}
+      <main style={{ flex: 1, padding: '16px 12px 100px', maxWidth: '860px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div
+          className="glass-container"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: 'calc(100vh - 160px)',
+            minHeight: '480px',
+            padding: 0,
+            overflow: 'hidden',
+            borderRadius: '16px',
+            border: '1px solid var(--glass-border)',
+            boxShadow: 'var(--card-shadow)',
+          }}
         >
-          {/* 36px Header Avatar */}
+          {/* Top Chat Header Bar */}
           <div
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              background: otherUser.avatar_url ? 'none' : 'linear-gradient(135deg, var(--primary), #1e3a8a)',
+              padding: '14px 20px',
+              background: 'rgba(255, 254, 252, 0.95)',
+              borderBottom: '1px solid var(--glass-border)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              overflow: 'hidden',
-              flexShrink: 0,
-              border: '1px solid var(--glass-border)',
+              gap: '14px',
+              zIndex: 10,
             }}
           >
-            {otherUser.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={otherUser.avatar_url} alt={otherUser.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              otherUser.full_name.charAt(0).toUpperCase()
+            <Link
+              href="/messages"
+              className="btn btn-secondary"
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.85rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                borderRadius: '8px',
+                flexShrink: 0
+              }}
+            >
+              <ArrowLeft size={16} />
+              Inbox
+            </Link>
+
+            <Link
+              href={`/directory/${otherUser.id}`}
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', flex: 1, overflow: 'hidden' }}
+            >
+              {/* Avatar */}
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  background: otherUser.avatar_url ? 'none' : 'linear-gradient(135deg, var(--primary), #1e3a8a)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  border: '1px solid var(--glass-border)',
+                }}
+              >
+                {otherUser.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={otherUser.avatar_url} alt={otherUser.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  otherUser.full_name.charAt(0).toUpperCase()
+                )}
+              </div>
+
+              <div>
+                <strong style={{ fontSize: '1.02rem', fontWeight: 600, color: 'var(--primary)', display: 'block', lineHeight: 1.2 }}>
+                  {otherUser.full_name}
+                </strong>
+                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+                  {otherUser.voice_part ? `${otherUser.voice_part} · ` : ''}View Profile →
+                </span>
+              </div>
+            </Link>
+
+            {!isConnected && (
+              <span style={{ fontSize: '11px', color: '#b91c1c', background: '#fee2e2', padding: '3px 10px', borderRadius: '99px', fontWeight: 500 }}>
+                Reconnecting…
+              </span>
             )}
           </div>
 
-          <div>
-            <strong style={{ fontSize: '15px', fontWeight: 600, color: 'var(--foreground)', display: 'block', lineHeight: 1.2 }}>
-              {otherUser.full_name}
-            </strong>
-            <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
-              {otherUser.voice_part ? `${otherUser.voice_part} · ` : ''}View Profile
-            </span>
-          </div>
-        </Link>
-
-        {!isConnected && (
-          <span style={{ fontSize: '11px', color: '#b91c1c', background: '#fee2e2', padding: '2px 8px', borderRadius: '99px' }}>
-            Reconnecting…
-          </span>
-        )}
-      </div>
-
-      {/* Messages Scroll Area */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
-      >
-        {messages.length === 0 ? (
-          <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--muted)', fontSize: '13px' }}>
-            Say hi to {otherUser.full_name}! 👋
-          </div>
-        ) : (
-          messages.map((m) => {
-            const isMe = m.sender_id === currentUserId;
-            return (
-              <div
-                key={m.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: isMe ? 'flex-end' : 'flex-start',
-                  marginBottom: '2px',
-                }}
-              >
-                {/* IG/FB Compact DM Chat Bubble */}
-                <div
-                  style={{
-                    maxWidth: '75%',
-                    padding: '10px 14px',
-                    borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                    background: isMe ? 'var(--primary)' : 'rgba(255, 255, 255, 0.88)',
-                    color: isMe ? '#fff' : 'var(--foreground)',
-                    border: isMe ? 'none' : '1px solid var(--glass-border)',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.4, wordBreak: 'break-word' }}>
-                    {m.body}
-                  </p>
+          {/* Messages Scroll Area */}
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              background: 'rgba(255, 254, 252, 0.4)',
+            }}
+          >
+            {messages.length === 0 ? (
+              <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--muted)', padding: '40px 20px' }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💬</div>
+                <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '4px' }}>
+                  No messages yet
+                </h4>
+                <p style={{ fontSize: '0.88rem', margin: 0 }}>
+                  Say hi to {otherUser.full_name}! 👋
+                </p>
+              </div>
+            ) : (
+              messages.map((m) => {
+                const isMe = m.sender_id === currentUserId;
+                return (
                   <div
+                    key={m.id}
                     style={{
-                      fontSize: '11px',
-                      opacity: 0.7,
-                      textAlign: 'right',
-                      marginTop: '4px',
+                      display: 'flex',
+                      justifyContent: isMe ? 'flex-end' : 'flex-start',
+                      marginBottom: '2px',
                     }}
                   >
-                    {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {/* IG/FB Compact DM Chat Bubble */}
+                    <div
+                      style={{
+                        maxWidth: '75%',
+                        padding: '10px 16px',
+                        borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                        background: isMe ? 'var(--primary)' : 'rgba(255, 255, 255, 0.92)',
+                        color: isMe ? '#fff' : 'var(--foreground)',
+                        border: isMe ? 'none' : '1px solid var(--glass-border)',
+                        boxShadow: isMe ? '0 2px 8px rgba(11, 77, 36, 0.2)' : '0 2px 6px rgba(0,0,0,0.04)',
+                      }}
+                    >
+                      <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: 1.45, wordBreak: 'break-word' }}>
+                        {m.body}
+                      </p>
+                      <div
+                        style={{
+                          fontSize: '0.72rem',
+                          opacity: 0.75,
+                          textAlign: 'right',
+                          marginTop: '4px',
+                        }}
+                      >
+                        {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+                );
+              })
+            )}
+            <div ref={messagesEndRef} />
+          </div>
 
-      {/* Bottom Message Input Bar */}
-      <form
-        onSubmit={handleSend}
-        style={{
-          padding: '12px 16px 32px',
-          background: 'rgba(255, 254, 252, 0.95)',
-          borderTop: '1px solid var(--glass-border)',
-          display: 'flex',
-          gap: '8px',
-          alignItems: 'center',
-        }}
-      >
-        <input
-          type="text"
-          className="input-field"
-          placeholder={`Message ${otherUser.full_name}…`}
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          disabled={sending}
-          style={{ flex: 1, borderRadius: '24px', padding: '10px 16px', fontSize: '14px' }}
-        />
-        <button
-          type="submit"
-          disabled={!inputText.trim() || sending}
-          className="btn btn-primary"
-          style={{
-            minWidth: '48px',
-            minHeight: '44px',
-            borderRadius: '22px',
-            padding: '0 16px',
-            fontSize: '14px',
-          }}
-        >
-          {sending ? '…' : 'Send'}
-        </button>
-      </form>
+          {/* Bottom Message Input Bar */}
+          <form
+            onSubmit={handleSend}
+            style={{
+              padding: '14px 18px',
+              background: 'rgba(255, 254, 252, 0.98)',
+              borderTop: '1px solid var(--glass-border)',
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center',
+            }}
+          >
+            <input
+              type="text"
+              className="input-field"
+              placeholder={`Message ${otherUser.full_name}…`}
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              disabled={sending}
+              style={{ flex: 1, borderRadius: '24px', padding: '10px 18px', fontSize: '0.92rem' }}
+            />
+            <button
+              type="submit"
+              disabled={!inputText.trim() || sending}
+              className="btn btn-primary"
+              style={{
+                minWidth: '48px',
+                height: '42px',
+                borderRadius: '21px',
+                padding: '0 18px',
+                fontSize: '0.9rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <Send size={15} />
+              {sending ? '…' : 'Send'}
+            </button>
+          </form>
+        </div>
+      </main>
     </div>
   );
 };

@@ -25,7 +25,7 @@ export const ProvisioningForm = ({ createLoading, onCreateUser }: ProvisioningFo
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 150px 150px', gap: '20px', alignItems: 'end' }}>
+    <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', alignItems: 'end' }}>
       <div className="input-group" style={{ marginBottom: 0 }}>
         <label className="input-label" htmlFor="createName">Full Name</label>
         <input

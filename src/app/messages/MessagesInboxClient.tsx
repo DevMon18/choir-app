@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { ConversationItem } from './actions';
+import { MessageSquare, Plus } from 'lucide-react';
 
 interface Props {
   currentUserProfile: { id: string; full_name: string; role: string };
@@ -21,19 +22,21 @@ export const MessagesInboxClient: React.FC<Props> = ({
 
       <Navbar profile={currentUserProfile} />
 
-      <main style={{ flex: 1, padding: '24px 16px 120px', maxWidth: '640px', margin: '0 auto', width: '100%' }}>
+      <main style={{ flex: 1, padding: '24px 16px 120px', maxWidth: '760px', margin: '0 auto', width: '100%' }}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div>
-            <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+            <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MessageSquare size={22} />
               Direct Messages
             </h1>
-            <p style={{ color: 'var(--muted)', fontSize: '13px', margin: '2px 0 0 0' }}>
+            <p style={{ color: 'var(--muted)', fontSize: '0.88rem', margin: '4px 0 0 0' }}>
               Private 1-on-1 conversations with choir members.
             </p>
           </div>
-          <Link href="/directory" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>
-            + New Message
+          <Link href="/directory" className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <Plus size={16} />
+            New Message
           </Link>
         </div>
 

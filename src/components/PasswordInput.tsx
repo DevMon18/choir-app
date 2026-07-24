@@ -28,7 +28,9 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             type={showPassword ? 'text' : 'password'}
             className={`input-field ${className}`}
             style={{
-              paddingRight: '48px',
+              width: '100%',
+              boxSizing: 'border-box',
+              paddingRight: '44px',
               ...style,
             }}
           />
@@ -40,7 +42,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             disabled={disabled}
             style={{
               position: 'absolute',
-              right: '6px',
+              right: '8px',
               top: '50%',
               transform: 'translateY(-50%)',
               width: '36px',

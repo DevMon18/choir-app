@@ -303,12 +303,24 @@ body {
   color: var(--primary);
 }
 
+/* Hide native browser password reveal button in Chrome, Edge, Safari, IE */
+input::-ms-reveal,
+input::-ms-clear,
+input::-webkit-credentials-auto-fill-button,
+input::-webkit-contacts-auto-fill-button {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* Navigation bar */
 .nav-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 28px;
+  padding: 12px 24px;
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -316,8 +328,8 @@ body {
   border-radius: 16px;
   box-shadow: var(--card-shadow);
   margin: 16px auto;
-  max-width: 1200px;
-  width: calc(100% - 48px);
+  max-width: 1280px;
+  width: calc(100% - 32px);
   position: sticky;
   top: 16px;
   z-index: 100;
@@ -330,26 +342,29 @@ body {
   color: var(--primary);
   letter-spacing: -0.02em;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .nav-links {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   align-items: center;
+  flex-wrap: nowrap;
 }
 
 .nav-link {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
+  gap: 6px;
+  padding: 8px 10px;
   border-radius: 8px;
   color: var(--muted);
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   text-decoration: none;
   transition: all 0.2s ease;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .nav-link:hover {
