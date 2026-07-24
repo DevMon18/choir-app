@@ -204,18 +204,11 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
           <span>Home</span>
         </Link>
 
-        <Link href="/repertoire" className={`mobile-tab ${pathname.startsWith('/repertoire') ? 'active' : ''}`}>
+        <Link href="/messages" className={`mobile-tab ${pathname.startsWith('/messages') ? 'active' : ''}`}>
           <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
-          <span>Songs</span>
-        </Link>
-
-        <Link href="/live" className={`mobile-tab ${pathname === '/live' ? 'active' : ''}`}>
-          <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-          </svg>
-          <span>Live</span>
+          <span>Messages</span>
         </Link>
 
         <Link href="/calendar" className={`mobile-tab ${pathname === '/calendar' ? 'active' : ''}`}>
@@ -225,7 +218,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
           <span>Calendar</span>
         </Link>
 
-        <Link href="/directory" className={`mobile-tab ${pathname === '/directory' ? 'active' : ''}`}>
+        <Link href="/directory" className={`mobile-tab ${pathname.startsWith('/directory') ? 'active' : ''}`}>
           <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>

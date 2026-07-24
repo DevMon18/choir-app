@@ -26,9 +26,22 @@ const ProfilePage = async () => {
     .eq('id', currentProfile.id)
     .single();
 
-  if (error || !profile) {
-    redirect('/login');
-  }
+  // Fetch user profile photos
+  const { data: rawPhotos } = await supabase
+    .from('profile_photos')
+    .select('*')
+    .eq('user_id', currentProfile.id)
+    .order('created_at', { ascending: false });
+
+  const initialPhotos = (rawPhotos || []).map((p) => {
+    const { data: { publicUrl } } = supabase.storage
+      .from('profile_photos')
+      .getPublicUrl(p.storage_path);
+    return {
+      ...p,
+      publicUrl,
+    };
+  });
 
   return (
     <ProfileClient
@@ -47,6 +60,7 @@ const ProfilePage = async () => {
         avatar_url: profile.avatar_url || null,
         created_at: profile.created_at || '',
       }}
+      initialPhotos={initialPhotos}
       isAdmin={['super_admin', 'director', 'secretary'].includes(profile.role)}
     />
   );

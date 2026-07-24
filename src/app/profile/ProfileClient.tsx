@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { logout } from '../actions';
 import { updatePersonalProfile, changePassword } from './actions';
+import { uploadProfilePhotoAction, deleteProfilePhotoAction } from '../directory/[id]/actions';
+import { PhotoGallery, PhotoItem } from '@/components/PhotoGallery';
 import { createClient } from '@/lib/supabase/client';
 import { Navbar } from '@/components/Navbar';
 import { useToast } from '@/components/Toast';
@@ -29,15 +31,17 @@ interface Profile {
 
 interface ProfileClientProps {
   profile: Profile;
+  initialPhotos?: PhotoItem[];
   isAdmin: boolean;
 }
 
-const ProfileClient = ({ profile, isAdmin }: ProfileClientProps) => {
+const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientProps) => {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
   const { addToast } = useToast();
 
+  const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
   const [fullName, setFullName] = useState(profile.full_name);
   const [birthdate, setBirthdate] = useState(profile.birthdate || '');
   const [phone, setPhone] = useState(profile.phone);
@@ -502,6 +506,29 @@ const ProfileClient = ({ profile, isAdmin }: ProfileClientProps) => {
               </button>
             </div>
           </form>
+          {/* Photo Gallery Management Section */}
+          <div className="glass-container anim-card" style={{ padding: '20px' }}>
+            <PhotoGallery
+              photos={photos}
+              isOwner={true}
+              isAdmin={isAdmin}
+              onUpload={async (file: File) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                const res = await uploadProfilePhotoAction(formData);
+                if (res.success) router.refresh();
+                return res;
+              }}
+              onDelete={async (photoId: string, storagePath: string) => {
+                const res = await deleteProfilePhotoAction(photoId, storagePath);
+                if (res.success) {
+                  setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+                  router.refresh();
+                }
+                return res;
+              }}
+            />
+          </div>
 
         </div>
       </main>

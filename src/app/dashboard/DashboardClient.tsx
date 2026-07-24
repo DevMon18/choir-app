@@ -211,11 +211,39 @@ const DashboardClient = ({ profile, isAdmin, announcements = [] }: DashboardClie
         </svg>
       )
     },
-    // 9. Community Directory (All approved roles)
+    // 9. Direct Messages (All approved roles)
+    {
+      id: 'messages',
+      title: 'Direct Messages',
+      description: 'Private 1-on-1 real-time messaging with choir members. Chat instantly from anywhere.',
+      link: '/messages',
+      buttonText: 'Open Direct Messages',
+      roles: ['super_admin', 'director', 'secretary', 'treasurer', 'member'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      )
+    },
+    // 10. Schedule & Birthday Calendar (All approved roles)
+    {
+      id: 'calendar',
+      title: 'Schedule & Birthdays',
+      description: 'Unified schedule for choir rehearsals, Mass singing engagements, and member birthdays.',
+      link: '/calendar',
+      buttonText: 'Open Calendar',
+      roles: ['super_admin', 'director', 'secretary', 'treasurer', 'member'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      )
+    },
+    // 11. Community Directory (All approved roles)
     {
       id: 'directory',
       title: 'Member Directory',
-      description: 'Access contact listings, phone numbers, emergency details, and rosters of the choir.',
+      description: 'Access contact listings, 8-photo galleries, voice parts, and start direct messages.',
       link: '/directory',
       buttonText: 'Open Directory',
       roles: ['super_admin', 'director', 'secretary', 'treasurer', 'member'],
@@ -225,11 +253,11 @@ const DashboardClient = ({ profile, isAdmin, announcements = [] }: DashboardClie
         </svg>
       )
     },
-    // 10. My Profile settings (All approved roles)
+    // 12. My Profile settings (All approved roles)
     {
       id: 'profile',
-      title: 'My Profile',
-      description: 'Modify directory privacy settings, adjust phone/address details, and upload your profile picture.',
+      title: 'My Profile & Photos',
+      description: 'Modify privacy settings, adjust contact details, and manage your 8-photo gallery.',
       link: '/profile',
       buttonText: 'Manage Profile',
       roles: ['super_admin', 'director', 'secretary', 'treasurer', 'member'],
