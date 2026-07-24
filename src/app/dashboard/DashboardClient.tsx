@@ -487,7 +487,10 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
                 const formData = new FormData();
                 formData.append('file', file);
                 const res = await uploadProfilePhotoAction(formData);
-                if (res.success) router.refresh();
+                if (res.success && res.photo) {
+                  setPhotos((prev) => [res.photo, ...prev]);
+                  router.refresh();
+                }
                 return res;
               }}
               onDelete={async (photoId: string, storagePath: string) => {

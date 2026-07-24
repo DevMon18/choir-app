@@ -51,7 +51,8 @@ export const MemberProfileClient: React.FC<Props> = ({
     formData.append('file', file);
     const res = await uploadProfilePhotoAction(formData);
 
-    if (res.success) {
+    if (res.success && res.photo) {
+      setPhotos((prev) => [res.photo, ...prev]);
       router.refresh();
     }
     return res;

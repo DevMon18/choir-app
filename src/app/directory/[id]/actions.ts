@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -169,6 +170,10 @@ export async function uploadProfilePhotoAction(formData: FormData) {
       .from('profile_photos')
       .getPublicUrl(filePath);
 
+    revalidatePath('/dashboard');
+    revalidatePath('/profile');
+    revalidatePath(`/directory/${user.id}`);
+
     return { success: true, photo: { ...inserted, publicUrl } };
   } catch (err: any) {
     console.error('uploadProfilePhotoAction error:', err);
@@ -214,6 +219,10 @@ export async function uploadCoverPhotoAction(formData: FormData) {
 
     if (updateErr) return { error: updateErr.message };
 
+    revalidatePath('/dashboard');
+    revalidatePath('/profile');
+    revalidatePath(`/directory/${user.id}`);
+
     return { success: true, coverUrl: publicUrl };
   } catch (err: any) {
     console.error('uploadCoverPhotoAction error:', err);
@@ -236,6 +245,10 @@ export async function updateInterestsAction(interests: string[]) {
 
     if (updateErr) return { error: updateErr.message };
 
+    revalidatePath('/dashboard');
+    revalidatePath('/profile');
+    revalidatePath(`/directory/${user.id}`);
+
     return { success: true };
   } catch (err: any) {
     console.error('updateInterestsAction error:', err);
@@ -257,6 +270,10 @@ export async function updateCoverPositionAction(coverPosition: string) {
       .eq('id', user.id);
 
     if (updateErr) return { error: updateErr.message };
+
+    revalidatePath('/dashboard');
+    revalidatePath('/profile');
+    revalidatePath(`/directory/${user.id}`);
 
     return { success: true };
   } catch (err: any) {
@@ -287,6 +304,10 @@ export async function deleteProfilePhotoAction(photoId: string, storagePath: str
 
     // Delete file from storage
     await adminSupabase.storage.from('profile_photos').remove([storagePath]);
+
+    revalidatePath('/dashboard');
+    revalidatePath('/profile');
+    revalidatePath(`/directory/${user.id}`);
 
     return { success: true };
   } catch (err: any) {
