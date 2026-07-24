@@ -191,9 +191,11 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
             {/* Cover Banner */}
             <div style={{
               height: '160px',
-              background: coverUrl
-                ? `url(${coverUrl}) center ${repositioningCover ? tempPosition : coverPosition} / cover no-repeat`
-                : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
+              backgroundImage: coverUrl ? `url(${coverUrl})` : undefined,
+              backgroundPosition: coverUrl ? `center ${repositioningCover ? tempPosition : coverPosition}` : undefined,
+              backgroundSize: coverUrl ? 'cover' : undefined,
+              backgroundRepeat: coverUrl ? 'no-repeat' : undefined,
+              background: coverUrl ? undefined : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
               position: 'relative',
               transition: 'background-position 0.1s ease'
             }}>

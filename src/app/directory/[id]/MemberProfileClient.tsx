@@ -107,9 +107,11 @@ export const MemberProfileClient: React.FC<Props> = ({
           {/* Cover Banner */}
           <div style={{
             height: '140px',
-            background: targetProfile.cover_url
-              ? `url(${targetProfile.cover_url}) center ${targetProfile.cover_position || '50%'} / cover no-repeat`
-              : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
+            backgroundImage: targetProfile.cover_url ? `url(${targetProfile.cover_url})` : undefined,
+            backgroundPosition: targetProfile.cover_url ? `center ${targetProfile.cover_position || '50%'}` : undefined,
+            backgroundSize: targetProfile.cover_url ? 'cover' : undefined,
+            backgroundRepeat: targetProfile.cover_url ? 'no-repeat' : undefined,
+            background: targetProfile.cover_url ? undefined : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
             position: 'relative'
           }} />
 
