@@ -225,61 +225,76 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
           <span>Directory</span>
         </Link>
 
-        {/* 5th tab: Admin for privileged roles, Profile for members */}
-        {hasAdminAccess(profile.role) ? (
-          <button
-            className={`mobile-tab ${isAdminPage ? 'active' : ''}`}
-            onClick={() => setAdminSheetOpen(true)}
-            aria-label="Open admin menu"
-          >
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span>Admin</span>
-          </button>
-        ) : (
-          <Link href="/profile" className={`mobile-tab ${pathname === '/profile' ? 'active' : ''}`}>
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span>Profile</span>
-          </Link>
-        )}
+        {/* 5th tab: Menu for all users */}
+        <button
+          className={`mobile-tab ${adminSheetOpen ? 'active' : ''}`}
+          onClick={() => setAdminSheetOpen(true)}
+          aria-label="Open navigation menu"
+        >
+          <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <span>Menu</span>
+        </button>
       </nav>
 
-      {/* ── Mobile Admin Bottom Sheet ── */}
+      {/* ── Mobile Navigation Menu Drawer ── */}
       {adminSheetOpen && (
         <div className="mobile-sheet-overlay" onClick={() => setAdminSheetOpen(false)}>
           <div className="mobile-sheet-panel" onClick={e => e.stopPropagation()}>
             <div className="mobile-sheet-handle" />
             <div className="mobile-sheet-header">
-              <span>⚙ Admin Panel</span>
+              <span>☰ Menu & Settings</span>
               <span className="mobile-sheet-role">{profile.role.replace('_', ' ')}</span>
             </div>
             <div className="mobile-sheet-links">
-              {adminItems.map(item => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`mobile-sheet-link ${pathname.startsWith(item.href) ? 'active' : ''}`}
-                  onClick={() => setAdminSheetOpen(false)}
-                >
-                  <span className="mobile-sheet-link-icon">{item.icon}</span>
-                  <span>{item.label}</span>
-                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              ))}
+              <Link href="/profile" className={`mobile-sheet-link ${pathname === '/profile' ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
+                <span className="mobile-sheet-link-icon">👤</span>
+                <span>My Profile & Settings</span>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+
+              <Link href="/repertoire" className={`mobile-sheet-link ${pathname.startsWith('/repertoire') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
+                <span className="mobile-sheet-link-icon">🎶</span>
+                <span>Repertoire & Songbook</span>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+
+              <Link href="/live" className={`mobile-sheet-link ${pathname === '/live' ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
+                <span className="mobile-sheet-link-icon">🎙</span>
+                <span>Live Session Sync</span>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+
+              <Link href={hasAdminAccess(profile.role) ? '/admin/finances' : '/dues'} className={`mobile-sheet-link ${pathname === '/dues' || pathname.startsWith('/admin/finances') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
+                <span className="mobile-sheet-link-icon">💳</span>
+                <span>My Dues & Finances</span>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+
+              {hasAdminAccess(profile.role) && (
+                <>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginTop: '12px', marginBottom: '4px' }}>
+                    Admin Controls
+                  </div>
+                  {adminItems.map(item => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`mobile-sheet-link ${pathname.startsWith(item.href) ? 'active' : ''}`}
+                      onClick={() => setAdminSheetOpen(false)}
+                    >
+                      <span className="mobile-sheet-link-icon">{item.icon}</span>
+                      <span>{item.label}</span>
+                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  ))}
+                </>
+              )}
+
               <div style={{ borderTop: '1px solid var(--glass-border)', marginTop: '8px', paddingTop: '8px' }}>
-                <Link href="/profile" className="mobile-sheet-link" onClick={() => setAdminSheetOpen(false)}>
-                  <span className="mobile-sheet-link-icon">👤</span>
-                  <span>My Profile</span>
-                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
                 <form action={logout} style={{ width: '100%' }}>
                   <button type="submit" className="mobile-sheet-link" style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--error)', fontFamily: 'inherit' }}>
                     <span className="mobile-sheet-link-icon" style={{ background: '#fee2e2' }}>🚪</span>
