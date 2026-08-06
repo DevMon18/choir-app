@@ -21,14 +21,16 @@ const LoginPage = () => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       
-      tl.from(cardRef.current, 
-        { opacity: 0, y: 30, scale: 0.98, duration: 0.8 }
+      tl.fromTo(cardRef.current, 
+        { opacity: 0, y: 30, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, clearProps: 'opacity,transform' }
       );
 
-      tl.from(
+      tl.fromTo(
         '.stagger-item',
-        { opacity: 0, y: 15, duration: 0.5, stagger: 0.08 },
-        '-=0.4'
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, clearProps: 'opacity,transform' },
+        '-=0.3'
       );
     });
 
