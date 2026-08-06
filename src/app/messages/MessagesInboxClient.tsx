@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { ConversationItem, deleteConversation } from './actions';
 import { useToast } from '@/components/Toast';
 import { MessageSquare, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { useClientCache } from '@/context/ClientCacheContext';
 
 interface Props {
   currentUserProfile: { id: string; full_name: string; role: string };
@@ -20,7 +21,7 @@ export const MessagesInboxClient: React.FC<Props> = ({
   const router = useRouter();
   const { addToast } = useToast();
 
-  const [convs, setConvs] = useState<ConversationItem[]>(initialConversations);
+  const { data: convs, updateData: setConvs } = useClientCache('messages_conversations', initialConversations);
   const [deleteTarget, setDeleteTarget] = useState<ConversationItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 

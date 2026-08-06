@@ -11,6 +11,7 @@ import { MessageSquare } from 'lucide-react';
 import gsap from 'gsap';
 
 import { useDebounce } from '@/hooks/useDebounce';
+import { useClientCache } from '@/context/ClientCacheContext';
 
 interface DirectoryMember {
   id: string;
@@ -43,7 +44,8 @@ const VOICE_COLORS: Record<string, string> = {
   Bass: '#0b4d24',
 };
 
-export const DirectoryClient = ({ profile, members }: Props) => {
+export const DirectoryClient = ({ profile, members: initialMembers }: Props) => {
+  const { data: members } = useClientCache('directory_members', initialMembers);
   const router = useRouter();
   const { addToast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);

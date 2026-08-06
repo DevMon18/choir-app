@@ -10,6 +10,7 @@ import { useToast } from '@/components/Toast';
 import { uploadProfilePhotoAction, deleteProfilePhotoAction, uploadCoverPhotoAction, updateInterestsAction, updateCoverPositionAction } from '../directory/[id]/actions';
 import gsap from 'gsap';
 import { Camera, Move, Check, X, Plus, Tag, Megaphone, UserCheck, Shield } from 'lucide-react';
+import { useClientCache } from '@/context/ClientCacheContext';
 
 interface AnnouncementItem {
   id: string;
@@ -43,7 +44,9 @@ interface DashboardClientProps {
   announcements?: AnnouncementItem[];
 }
 
-const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements = [] }: DashboardClientProps) => {
+const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin, announcements: initialAnnouncements = [] }: DashboardClientProps) => {
+  const { data: profile } = useClientCache(`dashboard_profile_${initialProfile.id}`, initialProfile);
+  const { data: announcements } = useClientCache('dashboard_announcements', initialAnnouncements);
   const router = useRouter();
   const { addToast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);

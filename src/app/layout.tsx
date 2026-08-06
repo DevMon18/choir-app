@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 import { CapacitorManager } from "@/components/CapacitorManager";
+import { ClientCacheProvider } from "@/context/ClientCacheContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,10 +34,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable}`}>
       <body>
-        <ToastProvider>
-          <CapacitorManager />
-          {children}
-        </ToastProvider>
+        <ClientCacheProvider>
+          <ToastProvider>
+            <CapacitorManager />
+            {children}
+          </ToastProvider>
+        </ClientCacheProvider>
       </body>
     </html>
   );
