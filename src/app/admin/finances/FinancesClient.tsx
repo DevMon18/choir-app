@@ -197,16 +197,16 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
             {/* Segmented Tab Buttons */}
             <div className="content-anim-item" style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px', flexWrap: 'wrap', opacity: 0 }}>
               <button
-                className={`btn ${activeTab === 'dues' ? 'btn-primary' : 'btn-secondary'}`}
+                className={`btn finances-tab-btn ${activeTab === 'dues' ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => setActiveTab('dues')}
-                style={{ padding: '8px 20px', minHeight: '42px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                style={{ padding: '8px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
               >
                 📁 Annual Membership Dues
               </button>
               <button
-                className={`btn ${activeTab === 'sinking' ? 'btn-primary' : 'btn-secondary'}`}
+                className={`btn finances-tab-btn ${activeTab === 'sinking' ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => setActiveTab('sinking')}
-                style={{ padding: '8px 20px', minHeight: '42px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                style={{ padding: '8px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
               >
                 📊 Sunday Sinking Fund Tally
               </button>
@@ -293,7 +293,7 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
                         className="input-field"
-                        style={{ padding: '8px 12px', minHeight: '38px', borderRadius: '10px', fontSize: '0.9rem', width: '160px' }}
+                        style={{ padding: '8px 12px', borderRadius: '10px', fontSize: '0.9rem', width: '160px' }}
                       />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -303,7 +303,7 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
                         value={defaultAmount}
                         onChange={(e) => setDefaultAmount(Number(e.target.value))}
                         className="input-field"
-                        style={{ padding: '8px 12px', minHeight: '38px', borderRadius: '10px', fontSize: '0.9rem', width: '110px' }}
+                        style={{ padding: '8px 12px', borderRadius: '10px', fontSize: '0.9rem', width: '110px' }}
                       />
                     </div>
                   </div>
@@ -350,6 +350,7 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
                       return (
                         <div
                           key={member.id}
+                          className="finances-sinking-row"
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -359,6 +360,8 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
                             border: hasPaid ? '1px solid #bbf7d0' : '1px solid var(--glass-border)',
                             borderRadius: '18px',
                             transition: 'all 0.25s ease',
+                            flexWrap: 'wrap',
+                            gap: '12px',
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -399,7 +402,6 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
                                   textAlign: 'right',
                                   background: hasPaid ? '#e2e8f0' : '#ffffff',
                                   color: hasPaid ? 'var(--muted)' : 'var(--foreground)',
-                                  minHeight: '38px',
                                 }}
                               />
                             </div>
@@ -430,7 +432,8 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
                                     color: 'var(--error)',
                                     fontSize: '0.85rem',
                                     cursor: 'pointer',
-                                    padding: '4px 8px',
+                                    padding: '8px 12px',
+                                    minHeight: '44px',
                                     fontWeight: 600,
                                   }}
                                 >
@@ -442,7 +445,7 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
                                 disabled={tallyLoadingId === member.id}
                                 onClick={() => handleToggleSinkingFund(member.id, 'unpaid')}
                                 className="btn btn-primary"
-                                style={{ padding: '8px 16px', fontSize: '0.85rem', minHeight: '38px', borderRadius: '12px' }}
+                                style={{ padding: '8px 16px', fontSize: '0.85rem', borderRadius: '12px' }}
                               >
                                 {tallyLoadingId === member.id ? 'Recording...' : 'Mark Paid'}
                               </button>

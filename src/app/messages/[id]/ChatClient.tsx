@@ -175,37 +175,14 @@ export const ChatClient: React.FC<Props> = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+    <div className="chat-page-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
       <Navbar profile={currentUserProfile} />
 
       {/* Main Container */}
-      <main style={{ flex: 1, padding: '16px 12px 100px', maxWidth: '860px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column' }}>
-        <div
-          className="glass-container"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            height: 'calc(100vh - 160px)',
-            minHeight: '480px',
-            padding: 0,
-            overflow: 'hidden',
-            borderRadius: '16px',
-            border: '1px solid var(--glass-border)',
-            boxShadow: 'var(--card-shadow)',
-          }}
-        >
+      <main className="chat-main-container">
+        <div className="glass-container chat-glass-card">
           {/* Top Chat Header Bar */}
-          <div
-            style={{
-              padding: '14px 20px',
-              background: 'rgba(255, 254, 252, 0.95)',
-              borderBottom: '1px solid var(--glass-border)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '14px',
-              zIndex: 10,
-            }}
-          >
+          <div className="chat-header-bar">
             <Link
               href="/messages"
               className="btn btn-secondary"
@@ -325,17 +302,7 @@ export const ChatClient: React.FC<Props> = ({
           </div>
 
           {/* Messages Scroll Area */}
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              background: 'rgba(255, 254, 252, 0.4)',
-            }}
-          >
+          <div className="chat-messages-area">
             {messages.length === 0 ? (
               <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--muted)', padding: '40px 20px' }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💬</div>
@@ -387,24 +354,24 @@ export const ChatClient: React.FC<Props> = ({
                     {/* Chat Bubble */}
                     <div
                       style={{
-                        maxWidth: '75%',
-                        padding: '10px 16px',
-                        borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                        background: isMe ? 'var(--primary)' : 'rgba(255, 255, 255, 0.92)',
+                        maxWidth: '78%',
+                        padding: '9px 14px',
+                        borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                        background: isMe ? 'var(--primary)' : 'rgba(255, 255, 255, 0.95)',
                         color: isMe ? '#fff' : 'var(--foreground)',
                         border: isMe ? 'none' : '1px solid var(--glass-border)',
                         boxShadow: isMe ? '0 2px 8px rgba(11, 77, 36, 0.2)' : '0 2px 6px rgba(0,0,0,0.04)',
                       }}
                     >
-                      <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: 1.45, wordBreak: 'break-word' }}>
+                      <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.4, wordBreak: 'break-word' }}>
                         {m.body}
                       </p>
                       <div
                         style={{
-                          fontSize: '0.72rem',
+                          fontSize: '0.7rem',
                           opacity: 0.75,
                           textAlign: 'right',
-                          marginTop: '4px',
+                          marginTop: '3px',
                         }}
                       >
                         {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -418,17 +385,7 @@ export const ChatClient: React.FC<Props> = ({
           </div>
 
           {/* Bottom Message Input Bar */}
-          <form
-            onSubmit={handleSend}
-            style={{
-              padding: '14px 18px',
-              background: 'rgba(255, 254, 252, 0.98)',
-              borderTop: '1px solid var(--glass-border)',
-              display: 'flex',
-              gap: '10px',
-              alignItems: 'center',
-            }}
-          >
+          <form onSubmit={handleSend} className="chat-input-bar">
             <input
               type="text"
               className="input-field"

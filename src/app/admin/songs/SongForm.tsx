@@ -133,7 +133,7 @@ export const SongForm = ({
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: showPreview && lyrics ? '1fr 1fr' : '1fr', gap: '30px', alignItems: 'start' }}>
+      <div className={`song-form-grid ${showPreview && lyrics ? 'has-preview' : ''}`}>
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="input-group" style={{ marginBottom: 0 }}>
@@ -183,17 +183,7 @@ export const SongForm = ({
 
             {/* Inline Add Category Form */}
             {showAddCatInput && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '8px',
-                  marginBottom: '12px',
-                  padding: '8px 12px',
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  borderRadius: '10px',
-                  border: '1px solid var(--primary)',
-                }}
-              >
+              <div className="song-form-cat-add-bar">
                 <input
                   type="text"
                   className="input-field"
@@ -286,7 +276,7 @@ export const SongForm = ({
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="song-form-row-2col">
             <div className="input-group" style={{ marginBottom: 0 }}>
               <label className="input-label" htmlFor="songComposer">Composer</label>
               <input
@@ -335,18 +325,17 @@ export const SongForm = ({
                 fontFamily: '"Courier New", Courier, monospace',
                 fontSize: '0.9rem',
                 resize: 'vertical',
-                minHeight: '260px',
+                minHeight: '200px',
               }}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '4px' }}>
+          <div className="song-form-actions">
             <button
               type="button"
               onClick={onCancel}
               className="btn btn-secondary"
               disabled={loading}
-              style={{ padding: '10px 20px' }}
             >
               Cancel
             </button>
@@ -354,7 +343,6 @@ export const SongForm = ({
               type="submit"
               className={`btn btn-primary ${loading ? 'btn-disabled' : ''}`}
               disabled={loading}
-              style={{ padding: '10px 24px' }}
             >
               {loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Song'}
             </button>
@@ -363,16 +351,7 @@ export const SongForm = ({
 
         {/* Live ChordPro Preview */}
         {showPreview && lyrics && (
-          <div
-            style={{
-              background: 'rgba(255,255,255,0.6)',
-              border: '1px solid var(--glass-border)',
-              borderRadius: '12px',
-              padding: '20px',
-              maxHeight: '520px',
-              overflowY: 'auto',
-            }}
-          >
+          <div className="song-form-preview-box">
             <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.06em' }}>
               Live Preview
             </p>

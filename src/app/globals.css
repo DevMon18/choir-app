@@ -680,8 +680,32 @@ input::-webkit-contacts-auto-fill-button {
 }
 
 /* ──────────────────────────────────────────────
-   TABLET  ≤ 1024px
+   TABLET  ≤ 1024px & MEDIUM DESKTOP ≤ 1200px
 ────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .nav-bar {
+    padding: 10px 18px;
+  }
+  .nav-links {
+    gap: 3px;
+  }
+  .nav-link {
+    padding: 7px 8px;
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+  .nav-dropdown-trigger {
+    padding: 7px 10px;
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+  .nav-logout-btn {
+    padding: 6px 10px !important;
+    font-size: 0.8rem !important;
+    min-height: 34px !important;
+  }
+}
+
 @media (max-width: 1024px) {
   .admin-sidebar {
     width: 220px;
@@ -696,6 +720,49 @@ input::-webkit-contacts-auto-fill-button {
   .glass-container {
     padding: 28px 24px;
     border-radius: 16px;
+  }
+
+  /* Responsive Top Navbar for Tablets (iPad) */
+  .nav-bar {
+    padding: 8px 14px;
+  }
+  .nav-links {
+    gap: 3px;
+  }
+  /* Inactive links show icon-only on tablet to fit cleanly without overflow */
+  .nav-link:not(.active) .nav-link-text {
+    display: none;
+  }
+  .nav-link {
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+  .nav-link.active {
+    padding: 8px 12px;
+  }
+  .nav-link.active .nav-link-text {
+    display: inline;
+    font-size: 0.8rem;
+  }
+  .nav-dropdown-text {
+    display: none;
+  }
+  .nav-dropdown-trigger {
+    padding: 8px 10px;
+  }
+  .nav-logout-text {
+    display: none;
+  }
+  .nav-logout-btn {
+    padding: 8px 10px !important;
+    min-height: 36px !important;
+  }
+}
+
+@media (max-width: 880px) and (min-width: 769px) {
+  /* On narrow tablet widths (e.g. iPad portrait 810px), hide brand text to prioritize nav icons */
+  .nav-brand span {
+    display: none;
   }
 }
 
@@ -1185,4 +1252,372 @@ input::-webkit-contacts-auto-fill-button {
   border-radius: 50%;
   display: inline-block;
 }
+
+
+/* ──────────────────────────────────────────────
+   MOBILE UX FIXES — Admin screens
+   Applied per mobile-ux-retention-skill.md §2, §6
+────────────────────────────────────────────── */
+
+/* Announcements: primary action FAB (thumb-reachable, ≤768px only) */
+.ann-mobile-fab {
+  display: none; /* hidden on desktop */
+}
+
+/* Announcements: desktop header "Create" button */
+.ann-desktop-create {
+  display: flex; /* visible on desktop */
+}
+
+@media (max-width: 768px) {
+  /* Show FAB on mobile, hide desktop-header button */
+  .ann-mobile-fab {
+    display: flex;
+    position: fixed;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px)); /* above the bottom tab bar */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 150;
+    min-height: 52px;
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 99px;
+    box-shadow: 0 8px 24px rgba(11, 77, 36, 0.35);
+    white-space: nowrap;
+    align-items: center;
+    justify-content: center;
+  }
+  .ann-desktop-create {
+    display: none;
+  }
+
+  /* Sequence manager: song-row control buttons (move up/down/remove, set-active)
+     These are bare <button> elements styled inline — enforce 44px tap target on mobile
+     using the descendant selector so we don't touch their desktop sizing. */
+  .seq-song-row button {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  /* Sequence manager: role-in-mass <select> — enforce 48px touch target */
+  .seq-song-row select {
+    min-height: 48px !important;
+    padding: 8px 10px !important;
+    font-size: 0.85rem !important;
+    max-width: 100% !important;
+  }
+
+  /* Songs/Finances tab switcher buttons — ensure 48px even when padding is small */
+  .songs-tab-btn,
+  .finances-tab-btn {
+    min-height: 48px !important;
+  }
+
+  /* Sequences: "Go Live" / "Edit" / "Delete" per-sequence row buttons 
+     These have minHeight:'44px' inline — bump to 48px on mobile */
+  .seq-card-actions .btn {
+    min-height: 48px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Announcements modal: Priority + Expiry Date — stack to single column */
+  .ann-modal-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Admin content full — correct padding at ≤480px */
+  .admin-content-full {
+    padding: 12px 10px calc(112px + env(safe-area-inset-bottom, 0px)) 10px !important;
+  }
+}
+
+/* Songs manager FAB (matches Announcements pattern) */
+.songs-mobile-fab {
+  display: none;
+}
+.songs-desktop-create {
+  display: inline-flex;
+}
+
+@media (max-width: 768px) {
+  .songs-mobile-fab {
+    display: flex;
+    position: fixed;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 150;
+    min-height: 52px;
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 99px;
+    box-shadow: 0 8px 24px rgba(11, 77, 36, 0.35);
+    white-space: nowrap;
+    align-items: center;
+    justify-content: center;
+  }
+  .songs-desktop-create {
+    display: none !important;
+  }
+}
+
+/* Sequences manager: "+ New Sequence" header button 
+   Already has min-height:48px inline but it's at top-right on mobile.
+   Per skill §2, we keep it in place for now (it's a less-frequent action
+   than Songs/Announcements create — the sequence list is short and the 
+   button wraps below the heading on narrow screens due to flex-wrap).
+   No FAB needed here; the existing flexWrap:'wrap' layout drops it 
+   to a second line which is acceptable. */
+
+/* Finances tab-btn class (already declared in ≤768px block, this is base reset) */
+.finances-tab-btn {
+  /* Base is already styled via .btn classes; the min-height enforcement
+     is inside the @media (max-width: 768px) block above */
+}
+
+/* Attendance: 4-count summary grid — collapse to 2x2 on mobile */
+@media (max-width: 768px) {
+  .attendance-counter-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+@media (max-width: 480px) {
+  .attendance-counter-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Finances: sinking fund member row — wrap action side on small screens */
+@media (max-width: 600px) {
+  .finances-sinking-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  .finances-sinking-row > div:last-child {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Fix fixed-width inputs inside collapsed table cells on mobile */
+@media (max-width: 480px) {
+  .table-container input,
+  .table-container select {
+    max-width: 100%;
+    width: 100% !important;
+  }
+}
+
+/* ──────────────────────────────────────────────
+   SONG FORM MOBILE & TABLET RESPONSIVE STYLING
+────────────────────────────────────────────── */
+.song-form-card {
+  padding: 32px;
+}
+
+.song-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .song-form-grid.has-preview {
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+}
+
+.song-form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.song-form-cat-add-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  border: 1px solid var(--primary);
+  flex-wrap: wrap;
+}
+
+.song-form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.song-form-preview-box {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 20px;
+  max-height: 520px;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .song-form-card {
+    padding: 20px 14px !important;
+  }
+  .song-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+  }
+  .song-form-row-2col {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  .song-form-actions {
+    flex-direction: column-reverse;
+    width: 100%;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .song-form-actions .btn {
+    width: 100% !important;
+    min-height: 48px !important;
+    justify-content: center;
+  }
+  .song-form-cat-add-bar {
+    flex-direction: column;
+  }
+  .song-form-cat-add-bar input {
+    width: 100% !important;
+  }
+  .song-form-cat-add-bar .btn {
+    width: 100% !important;
+  }
+}
+
+/* ──────────────────────────────────────────────
+   CHAT / MESSAGES MOBILE RESPONSIVE LAYOUT
+────────────────────────────────────────────── */
+.chat-main-container {
+  flex: 1;
+  padding: 24px 16px 100px;
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-glass-card {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 170px);
+  min-height: 480px;
+  padding: 0 !important;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow);
+}
+
+.messages-inbox-container {
+  flex: 1;
+  padding: 24px 16px 120px;
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.chat-header-bar {
+  padding: 12px 18px;
+  background: rgba(255, 254, 252, 0.96);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.chat-messages-area {
+  flex: 1;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(255, 254, 252, 0.4);
+}
+
+.chat-input-bar {
+  padding: 10px 14px;
+  background: rgba(255, 254, 252, 0.98);
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  /* Lock outer screen height so page does not scroll outside on mobile */
+  .chat-page-wrapper {
+    position: fixed !important;
+    inset: 0 !important;
+    overflow: hidden !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
+
+  .chat-main-container {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    padding: 76px 10px calc(82px + env(safe-area-inset-bottom, 0px)) 10px !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    height: 100% !important;
+  }
+
+  .chat-glass-card {
+    flex: 1 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    border-radius: 16px;
+  }
+
+  .messages-inbox-container {
+    padding: 76px 12px calc(112px + env(safe-area-inset-bottom, 0px)) 12px !important;
+  }
+
+  .chat-header-bar {
+    padding: 10px 12px !important;
+    gap: 10px !important;
+  }
+
+  .chat-messages-area {
+    padding: 12px 10px !important;
+    gap: 6px !important;
+  }
+
+  .chat-input-bar {
+    padding: 8px 10px !important;
+    gap: 6px !important;
+  }
+}
+
+
 

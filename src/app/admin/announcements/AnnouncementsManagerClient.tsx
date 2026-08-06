@@ -179,7 +179,12 @@ export const AnnouncementsManagerClient = ({
               Broadcast choir news, rehearsal alerts, and mass updates. Urgent announcements send instant push alerts.
             </p>
           </div>
-          <button onClick={handleOpenCreate} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Desktop-only primary action — hidden on mobile, replaced by sticky FAB below */}
+          <button
+            onClick={handleOpenCreate}
+            className="btn btn-primary ann-desktop-create"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
             <span>+ Create Announcement</span>
           </button>
         </div>
@@ -239,10 +244,10 @@ export const AnnouncementsManagerClient = ({
                     </td>
                     <td data-label="Actions">
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={() => handleOpenEdit(item)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', minHeight: '32px' }}>
+                        <button onClick={() => handleOpenEdit(item)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
                           Edit
                         </button>
-                        <button onClick={() => handleDeleteClick(item.id)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', minHeight: '32px', color: 'var(--error)', borderColor: 'var(--error)' }}>
+                        <button onClick={() => handleDeleteClick(item.id)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', color: 'var(--error)', borderColor: 'var(--error)' }}>
                           Delete
                         </button>
                       </div>
@@ -299,7 +304,7 @@ export const AnnouncementsManagerClient = ({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="ann-modal-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '6px' }}>
                     Priority
@@ -362,6 +367,15 @@ export const AnnouncementsManagerClient = ({
           onCancel={() => setConfirmDeleteId(null)}
         />
       )}
+
+      {/* Mobile sticky bottom FAB — thumb-reachable primary action on ≤768px */}
+      <button
+        onClick={handleOpenCreate}
+        className="btn btn-primary ann-mobile-fab"
+        aria-label="Create new announcement"
+      >
+        + Create Announcement
+      </button>
     </div>
   );
 };

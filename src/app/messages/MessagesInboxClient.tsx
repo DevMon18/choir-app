@@ -71,7 +71,7 @@ export const MessagesInboxClient: React.FC<Props> = ({
 
       <Navbar profile={currentUserProfile} />
 
-      <main style={{ flex: 1, padding: '24px 16px 120px', maxWidth: '760px', margin: '0 auto', width: '100%' }}>
+      <main className="messages-inbox-container">
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div>

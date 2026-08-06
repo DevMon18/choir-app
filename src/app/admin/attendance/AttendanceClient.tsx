@@ -305,7 +305,6 @@ export const AttendanceClient = ({
                             fontSize: '0.8rem',
                             borderRadius: '20px',
                             fontWeight: 600,
-                            minHeight: '32px',
                             background: isSelected ? 'var(--primary)' : 'rgba(11, 77, 36, 0.05)',
                             color: isSelected ? '#fff' : 'var(--primary)',
                             border: isSelected ? '1px solid var(--primary)' : '1px solid rgba(11, 77, 36, 0.15)',
@@ -386,7 +385,7 @@ export const AttendanceClient = ({
 
                 {/* Summary counters */}
                 {activeSession && roster.length > 0 && (
-                  <div className="content-anim-item" style={{ opacity: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+                  <div className="content-anim-item attendance-counter-grid" style={{ opacity: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
                     {[
                       { label: 'Present', count: presentCount, color: '#0b4d24', bg: 'rgba(11,77,36,0.07)' },
                       { label: 'Absent',  count: absentCount,  color: '#9f1c1c', bg: 'rgba(159,28,28,0.06)' },
@@ -425,7 +424,7 @@ export const AttendanceClient = ({
                             className="input-field"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            style={{ paddingLeft: '30px', height: '36px', minHeight: '36px', fontSize: '0.85rem', width: '180px' }}
+                            style={{ paddingLeft: '30px', fontSize: '0.85rem', width: '180px' }}
                           />
                         </div>
                         {/* Quick mark all present */}
@@ -516,7 +515,7 @@ export const AttendanceClient = ({
                                       }}
                                       style={{
                                         flex: 1,
-                                        padding: '4px 0',
+                                        padding: '6px 0',
                                         fontSize: '0.65rem',
                                         fontWeight: 800,
                                         borderRadius: '6px',
@@ -526,7 +525,7 @@ export const AttendanceClient = ({
                                         color: isActive ? '#fff' : '#6b7280',
                                         transition: 'all 0.15s ease',
                                         textAlign: 'center',
-                                        minHeight: '24px',
+                                        minHeight: '36px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',

@@ -364,7 +364,7 @@ export const UsersManagerClient = ({
                       type="text"
                       placeholder="Search users..."
                       className="input-field"
-                      style={{ paddingLeft: '36px', height: '38px', minHeight: '38px', fontSize: '0.9rem', width: '100%' }}
+                      style={{ paddingLeft: '36px', fontSize: '0.9rem', width: '100%' }}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -408,14 +408,14 @@ export const UsersManagerClient = ({
                                 <button
                                   onClick={() => handleOpenEditModal(u)}
                                   className="btn btn-secondary"
-                                  style={{ padding: '6px 12px', fontSize: '0.8rem', minHeight: '32px' }}
+                                  style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                                 >
                                   Edit
                                 </button>
                                 <button
                                   onClick={() => handleDeleteUser(u.id, u.full_name)}
                                   className="btn btn-secondary"
-                                  style={{ padding: '6px 12px', fontSize: '0.8rem', minHeight: '32px', color: 'var(--error)', borderColor: 'var(--error)' }}
+                                  style={{ padding: '6px 12px', fontSize: '0.8rem', color: 'var(--error)', borderColor: 'var(--error)' }}
                                   disabled={u.id === currentUserProfile.id || loadingId === u.id}
                                 >
                                   {loadingId === u.id ? 'Deleting...' : 'Delete'}

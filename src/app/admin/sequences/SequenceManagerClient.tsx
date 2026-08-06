@@ -356,7 +356,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
                           {seq.sequence_items.length} song{seq.sequence_items.length !== 1 ? 's' : ''}
                         </p>
                       </div>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <div className="seq-card-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {isDirector && (
                           <button
                             onClick={() => {
@@ -406,7 +406,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
                         ) : (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
                             {sorted.map((item, idx) => (
-                              <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(30,58,138,0.03)', borderRadius: '10px', padding: '12px 14px', flexWrap: 'wrap' }}>
+                              <div key={item.id} className="seq-song-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(30,58,138,0.03)', borderRadius: '10px', padding: '12px 14px', flexWrap: 'wrap' }}>
                                 <span style={{ color: 'var(--muted)', fontSize: '0.8rem', fontWeight: 700, minWidth: '24px' }}>{idx + 1}</span>
                                 <div style={{ flex: 1, minWidth: '180px' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -433,7 +433,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
                                     style={{
                                       background: 'none', border: '1px solid var(--border)', borderRadius: '6px',
                                       padding: '4px 8px', fontSize: '0.78rem', outline: 'none', color: 'var(--muted)',
-                                      maxWidth: '160px', minHeight: '32px'
+                                      maxWidth: '160px'
                                     }}
                                   >
                                     <option value="">-- Label Song --</option>
@@ -447,7 +447,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
                                     onClick={() => handleSetActiveSong(item.songs.id)}
                                     className="btn"
                                     style={{
-                                      minHeight: '36px', padding: '4px 12px', fontSize: '0.75rem',
+                                      minHeight: '44px', padding: '4px 12px', fontSize: '0.75rem',
                                       background: activeSession.active_song_id === item.songs.id ? 'var(--success)' : 'var(--primary)',
                                       color: '#fff', border: 'none',
                                     }}
@@ -458,9 +458,9 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
                                 )}
                                 {canManage && (
                                   <div style={{ display: 'flex', gap: '4px' }}>
-                                    <button onClick={() => handleMoveItem(seq, item.id, 'up')} disabled={idx === 0 || isPending} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '0.8rem' }} aria-label="Move up">↑</button>
-                                    <button onClick={() => handleMoveItem(seq, item.id, 'down')} disabled={idx === sorted.length - 1 || isPending} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '0.8rem' }} aria-label="Move down">↓</button>
-                                    <button onClick={() => handleRemoveSong(item.id)} disabled={isPending} style={{ background: 'none', border: '1px solid var(--error)', borderRadius: '6px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--error)' }} aria-label="Remove">×</button>
+                                    <button onClick={() => handleMoveItem(seq, item.id, 'up')} disabled={idx === 0 || isPending} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', width: '44px', height: '44px', minHeight: '44px', cursor: 'pointer', fontSize: '0.8rem' }} aria-label="Move up">↑</button>
+                                    <button onClick={() => handleMoveItem(seq, item.id, 'down')} disabled={idx === sorted.length - 1 || isPending} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', width: '44px', height: '44px', minHeight: '44px', cursor: 'pointer', fontSize: '0.8rem' }} aria-label="Move down">↓</button>
+                                    <button onClick={() => handleRemoveSong(item.id)} disabled={isPending} style={{ background: 'none', border: '1px solid var(--error)', borderRadius: '6px', width: '44px', height: '44px', minHeight: '44px', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--error)' }} aria-label="Remove">×</button>
                                   </div>
                                 )}
                               </div>
@@ -486,7 +486,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
                                     className="input-field"
                                     value={songSearchQuery}
                                     onChange={(e) => setSongSearchQuery(e.target.value)}
-                                    style={{ paddingLeft: '30px', height: '36px', minHeight: '36px', fontSize: '0.85rem', width: '100%' }}
+                                    style={{ paddingLeft: '30px', fontSize: '0.85rem', width: '100%' }}
                                   />
                                 </div>
 

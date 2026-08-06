@@ -143,8 +143,9 @@ export const SongsManagerClient = ({
               paddingBottom: '12px',
             }}
           >
-            <button
+          <button
               onClick={() => setActiveTab('songs')}
+              className="songs-tab-btn"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -165,6 +166,7 @@ export const SongsManagerClient = ({
             </button>
             <button
               onClick={() => setActiveTab('categories')}
+              className="songs-tab-btn"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -205,9 +207,10 @@ export const SongsManagerClient = ({
                     >
                       {showArchived ? 'Show Active' : 'Show Archived'}
                     </button>
+                    {/* Desktop-only — hidden on mobile, replaced by sticky FAB below */}
                     <button
                       onClick={() => setViewMode('create')}
-                      className="btn btn-primary"
+                      className="btn btn-primary songs-desktop-create"
                       style={{ padding: '8px 18px', fontSize: '0.85rem' }}
                     >
                       + Add Song
@@ -324,7 +327,7 @@ export const SongsManagerClient = ({
             )}
 
             {(viewMode === 'create' || viewMode === 'edit') && (
-              <div className="glass-container content-anim-item" style={{ padding: '32px' }}>
+              <div className="glass-container content-anim-item song-form-card">
                 <SongForm
                   song={editingSong ?? undefined}
                   availableCategories={categoriesList}
@@ -367,6 +370,17 @@ export const SongsManagerClient = ({
           onConfirm={() => handlePerformArchiveOrRestore(archiveConfirmSong)}
           onCancel={() => setArchiveConfirmSong(null)}
         />
+      )}
+
+      {/* Mobile sticky FAB — thumb-reachable primary action on ≤768px */}
+      {viewMode === 'list' && activeTab === 'songs' && (
+        <button
+          onClick={() => setViewMode('create')}
+          className="btn btn-primary songs-mobile-fab"
+          aria-label="Add new song"
+        >
+          + Add Song
+        </button>
       )}
     </div>
   );
