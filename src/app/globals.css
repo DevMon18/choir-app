@@ -334,6 +334,7 @@ input::-webkit-contacts-auto-fill-button {
   top: 16px;
   z-index: 100;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
 }
 
 .nav-brand {
@@ -343,24 +344,27 @@ input::-webkit-contacts-auto-fill-button {
   letter-spacing: -0.02em;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-links {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   align-items: center;
   flex-wrap: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .nav-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
+  gap: 5px;
+  padding: 6px 8px;
   border-radius: 8px;
   color: var(--muted);
   font-weight: 500;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   text-decoration: none;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -376,6 +380,43 @@ input::-webkit-contacts-auto-fill-button {
   background: rgba(30, 58, 138, 0.06);
   color: var(--primary);
   font-weight: 600;
+}
+
+@media (max-width: 1360px) {
+  .nav-bar {
+    padding: 10px 14px;
+  }
+  .nav-brand span {
+    font-size: 1.1rem;
+  }
+  .nav-link {
+    padding: 6px 6px;
+    font-size: 0.8rem;
+    gap: 3px;
+  }
+  .nav-dropdown-trigger {
+    padding: 6px 7px !important;
+    font-size: 0.8rem !important;
+  }
+  .nav-logout-text {
+    display: none;
+  }
+  .nav-logout-btn {
+    padding: 8px 10px !important;
+    gap: 0 !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .nav-link-text {
+    display: none;
+  }
+  .nav-link {
+    padding: 8px 10px;
+  }
+  .nav-dropdown-text {
+    display: none;
+  }
 }
 
 .nav-user {

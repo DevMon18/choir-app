@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { checkRateLimitUpload } from '@/lib/ratelimit';
+import { delCache } from '@/lib/cache';
 
 export interface DetailedMemberProfile {
   id: string;
@@ -178,8 +179,10 @@ export async function uploadProfilePhotoAction(formData: FormData) {
       .from('profile_photos')
       .getPublicUrl(filePath);
 
+    await delCache('directory:all_members');
     revalidatePath('/dashboard');
     revalidatePath('/profile');
+    revalidatePath('/directory');
     revalidatePath(`/directory/${user.id}`);
 
     return { success: true, photo: { ...inserted, publicUrl } };

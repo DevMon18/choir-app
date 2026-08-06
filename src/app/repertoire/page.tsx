@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
 import { RepertoireClient } from './RepertoireClient';
 import { listCategories } from '@/app/admin/categories/actions';
+import { getCache, setCache } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,47 +21,47 @@ const RepertoirePage = async ({ searchParams }: PageProps) => {
   if (!currentProfile) redirect('/login');
   if (['pending', 'rejected'].includes(currentProfile.role)) redirect('/dashboard');
 
-  const supabase = await createClient();
+  const cacheKey = `repertoire:all_songs${query ? `:${query}` : ''}`;
+  let mappedSongs = await getCache<any[]>(cacheKey);
 
-  const [
-    { categories: availableCategories },
-    rawSongsRes,
-  ] = await Promise.all([
-    listCategories(),
-    (() => {
-      let songsQuery = supabase
-        .from('songs')
-        .select(`
-          id, title, composer, category, lyrics,
-          song_category_links (
-            song_categories ( id, name )
-          )
-        `)
-        .eq('is_archived', false)
-        .order('title');
+  if (!mappedSongs) {
+    const supabase = await createClient();
+    let songsQuery = supabase
+      .from('songs')
+      .select(`
+        id, title, composer, category, lyrics,
+        song_category_links (
+          song_categories ( id, name )
+        )
+      `)
+      .eq('is_archived', false)
+      .order('title');
 
-      if (query) {
-        songsQuery = songsQuery.textSearch('lyrics_tsv', query, {
-          type: 'plain',
-          config: 'english',
-        });
-      }
-      return songsQuery;
-    })(),
-  ]);
+    if (query) {
+      songsQuery = songsQuery.textSearch('lyrics_tsv', query, {
+        type: 'plain',
+        config: 'english',
+      });
+    }
 
-  if (rawSongsRes.error) console.error('Error fetching songs:', rawSongsRes.error);
+    const rawSongsRes = await songsQuery;
+    if (rawSongsRes.error) console.error('Error fetching songs:', rawSongsRes.error);
 
-  const mappedSongs = (rawSongsRes.data || []).map((s: any) => ({
-    id: s.id,
-    title: s.title,
-    composer: s.composer,
-    category: s.category,
-    lyrics: s.lyrics,
-    categories: (s.song_category_links || [])
-      .map((l: any) => l.song_categories)
-      .filter(Boolean),
-  }));
+    mappedSongs = (rawSongsRes.data || []).map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      composer: s.composer,
+      category: s.category,
+      lyrics: s.lyrics,
+      categories: (s.song_category_links || [])
+        .map((l: any) => l.song_categories)
+        .filter(Boolean),
+    }));
+
+    await setCache(cacheKey, mappedSongs, 120);
+  }
+
+  const { categories: availableCategories } = await listCategories();
 
   return (
     <Suspense>

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { checkRateLimitMutation } from '@/lib/ratelimit';
+import { delCache } from '@/lib/cache';
 
 const getAdminClient = async () => {
   const supabase = await createClient();
@@ -100,6 +101,7 @@ export const createSong = async (formData: FormData, categoryIds?: string[]) => 
   const linkRes = await setSongCategories(data.id, catIds);
   if (linkRes.error) return { error: linkRes.error };
 
+  await delCache('repertoire:all_songs');
   revalidatePath('/admin/songs');
   revalidatePath('/repertoire');
   return { success: true, id: data.id };
@@ -150,6 +152,7 @@ export const updateSong = async (id: string, formData: FormData, categoryIds?: s
   const linkRes = await setSongCategories(id, catIds);
   if (linkRes.error) return { error: linkRes.error };
 
+  await delCache('repertoire:all_songs');
   revalidatePath('/admin/songs');
   revalidatePath('/repertoire');
   revalidatePath(`/repertoire/${id}`);
@@ -169,6 +172,7 @@ export const archiveSong = async (id: string) => {
   if (dbErr) return { error: dbErr.message };
   if (!data || data.length === 0) return { error: 'Failed to archive song (write unconfirmed).' };
 
+  await delCache('repertoire:all_songs');
   revalidatePath('/admin/songs');
   revalidatePath('/repertoire');
   return { success: true };
@@ -187,6 +191,7 @@ export const restoreSong = async (id: string) => {
   if (dbErr) return { error: dbErr.message };
   if (!data || data.length === 0) return { error: 'Failed to restore song (write unconfirmed).' };
 
+  await delCache('repertoire:all_songs');
   revalidatePath('/admin/songs');
   return { success: true };
 };
