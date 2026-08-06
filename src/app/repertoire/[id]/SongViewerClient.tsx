@@ -44,10 +44,10 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-      tl.fromTo('.anim-header', { opacity: 0, y: -15 }, { opacity: 1, y: 0, duration: 0.6 });
-      tl.fromTo('.anim-controls', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.3');
-      tl.fromTo('.anim-lyrics', { opacity: 0 }, { opacity: 1, duration: 0.8 }, '-=0.2');
-      tl.fromTo('.anim-recordings', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.6 }, '-=0.4');
+      tl.from('.anim-header', { opacity: 0, y: -15, duration: 0.6 });
+      tl.from('.anim-controls', { opacity: 0, y: 15, duration: 0.5 }, '-=0.3');
+      tl.from('.anim-lyrics', { opacity: 0, duration: 0.8 }, '-=0.2');
+      tl.from('.anim-recordings', { opacity: 0, y: 15, duration: 0.6 }, '-=0.4');
     }, containerRef);
     return () => ctx.revert();
   }, []);
@@ -94,7 +94,7 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
         </button>
 
         {/* Header card info */}
-        <div className="glass-container anim-header" style={{ padding: '30px', marginBottom: '24px', opacity: 0 }}>
+        <div className="glass-container anim-header" style={{ padding: '30px', marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               {tags.length > 0 && (
@@ -142,7 +142,7 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
         </div>
 
         {/* View Customizer Controls */}
-        <div className="anim-controls" style={{ opacity: 0 }}>
+        <div className="anim-controls">
           <ChordProControls
             semitones={semitones}
             onSemitonesChange={setSemitones}
@@ -154,7 +154,7 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
         </div>
 
         {/* Practice Recordings Panel (AT THE TOP, ABOVE LYRICS) */}
-        <div className="anim-recordings" style={{ opacity: 0 }}>
+        <div className="anim-recordings">
           <PracticeRecordings
             songId={song.id}
             currentUserProfile={currentUserProfile}
@@ -163,7 +163,7 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
         </div>
 
         {/* Song Lyrics Pane */}
-        <div className="glass-container anim-lyrics" style={{ padding: '40px', opacity: 0, overflowX: 'auto' }}>
+        <div className="glass-container anim-lyrics" style={{ padding: '40px', overflowX: 'auto' }}>
           {song.lyrics ? (
             <ChordProRenderer
               lyrics={song.lyrics}

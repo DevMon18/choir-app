@@ -21,15 +21,13 @@ export const JoinPage = () => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       
-      tl.fromTo(cardRef.current, 
-        { opacity: 0, y: 30, scale: 0.98 }, 
-        { opacity: 1, y: 0, scale: 1, duration: 0.8 }
+      tl.from(cardRef.current, 
+        { opacity: 0, y: 30, scale: 0.98, duration: 0.8 }
       );
 
-      tl.fromTo(
+      tl.from(
         '.stagger-item',
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.06 },
+        { opacity: 0, y: 15, duration: 0.5, stagger: 0.06 },
         '-=0.4'
       );
     });
@@ -126,7 +124,7 @@ export const JoinPage = () => {
         className="auth-card glass-container"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        style={{ opacity: 0, width: '100%', maxWidth: '640px', padding: '40px' }}
+        style={{ width: '100%', maxWidth: '640px', padding: '40px' }}
       >
         <div className="auth-header stagger-item">
           <h1 className="auth-title" style={{ fontSize: '2rem' }}>Join Choir Collective</h1>

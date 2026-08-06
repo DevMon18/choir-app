@@ -70,9 +70,8 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-      tl.fromTo('.content-anim-item',
-        { opacity: 0, y: 25 },
-        { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 }
+      tl.from('.content-anim-item',
+        { opacity: 0, y: 25, duration: 0.6, stagger: 0.1 }
       );
     }, containerRef);
 
@@ -189,13 +188,13 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
 
       <main className="admin-content-full">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            <div className="content-anim-item" style={{ opacity: 0 }}>
+            <div className="content-anim-item">
               <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '8px', color: 'var(--primary)' }}>Finances Management</h2>
               <p style={{ color: 'var(--muted)' }}>Manage choir dues invoicing and weekly Sunday Sinking Fund tally collection</p>
             </div>
 
             {/* Segmented Tab Buttons */}
-            <div className="content-anim-item" style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px', flexWrap: 'wrap', opacity: 0 }}>
+            <div className="content-anim-item" style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px', flexWrap: 'wrap' }}>
               <button
                 className={`btn finances-tab-btn ${activeTab === 'dues' ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => setActiveTab('dues')}
@@ -215,7 +214,7 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
 
             {/* TAB 1: Annual Membership Dues */}
             {activeTab === 'dues' && (
-              <div className="glass-container content-anim-item" style={{ padding: '30px', opacity: 0 }}>
+              <div className="glass-container content-anim-item" style={{ padding: '30px' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: 'var(--primary)' }}>Annual Membership Dues Invoices</h3>
                 
                 {invoices.filter(inv => !inv.period_label?.startsWith('Sinking Fund')).length === 0 ? (
@@ -278,7 +277,7 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
 
             {/* TAB 2: Sunday Sinking Fund Tally */}
             {activeTab === 'sinking' && (
-              <div className="glass-container content-anim-item" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '24px', opacity: 0 }}>
+              <div className="glass-container content-anim-item" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '4px' }}>Sunday Sinking Fund Collection</h3>

@@ -74,7 +74,7 @@ export const DirectoryClient = ({ profile, members }: Props) => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       tl.fromTo('.anim-header', { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.5 });
-      tl.fromTo('.member-card', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.06 }, '-=0.2');
+      tl.from('.member-card', { opacity: 0, y: 20, duration: 0.5, stagger: 0.06 }, '-=0.2');
     }, containerRef);
     return () => ctx.revert();
   }, []);
@@ -154,7 +154,7 @@ export const DirectoryClient = ({ profile, members }: Props) => {
                 <div
                   key={m.id}
                   className="member-card glass-container"
-                  style={{ padding: '16px 20px', opacity: 0, transition: 'transform 0.2s, box-shadow 0.2s' }}
+                  style={{ padding: '16px 20px', transition: 'transform 0.2s, box-shadow 0.2s' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; }}
                 >

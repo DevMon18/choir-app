@@ -22,15 +22,13 @@ const SignupPage = () => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       
-      tl.fromTo(cardRef.current, 
-        { opacity: 0, y: 30, scale: 0.98 }, 
-        { opacity: 1, y: 0, scale: 1, duration: 0.8 }
+      tl.from(cardRef.current, 
+        { opacity: 0, y: 30, scale: 0.98, duration: 0.8 }
       );
 
-      tl.fromTo(
+      tl.from(
         '.stagger-item',
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 },
+        { opacity: 0, y: 15, duration: 0.5, stagger: 0.08 },
         '-=0.4'
       );
     });
@@ -39,38 +37,18 @@ const SignupPage = () => {
   }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = cardRef.current;
-    if (!card) return;
-
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-
-    const tiltX = (y / (rect.height / 2)) * -6;
-    const tiltY = (x / (rect.width / 2)) * 6;
-
-    gsap.to(card, {
-      rotateX: tiltX,
-      rotateY: tiltY,
-      y: -6,
-      duration: 0.3,
-      ease: 'power2.out',
-      overwrite: 'auto',
-    });
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    cardRef.current.style.setProperty('--mouse-x', `${x}px`);
+    cardRef.current.style.setProperty('--mouse-y', `${y}px`);
   };
 
   const handleMouseLeave = () => {
-    const card = cardRef.current;
-    if (!card) return;
-
-    gsap.to(card, {
-      rotateX: 0,
-      rotateY: 0,
-      y: 0,
-      duration: 0.5,
-      ease: 'power3.out',
-      overwrite: 'auto',
-    });
+    if (!cardRef.current) return;
+    cardRef.current.style.removeProperty('--mouse-x');
+    cardRef.current.style.removeProperty('--mouse-y');
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -124,7 +102,6 @@ const SignupPage = () => {
         className="auth-card glass-container"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        style={{ opacity: 0 }}
       >
         <div className="auth-header stagger-item">
           <h1 className="auth-title">Join the Choir</h1>

@@ -21,15 +21,13 @@ const LoginPage = () => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       
-      tl.fromTo(cardRef.current, 
-        { opacity: 0, y: 30, scale: 0.98 }, 
-        { opacity: 1, y: 0, scale: 1, duration: 0.8 }
+      tl.from(cardRef.current, 
+        { opacity: 0, y: 30, scale: 0.98, duration: 0.8 }
       );
 
-      tl.fromTo(
+      tl.from(
         '.stagger-item',
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 },
+        { opacity: 0, y: 15, duration: 0.5, stagger: 0.08 },
         '-=0.4'
       );
     });
@@ -118,7 +116,6 @@ const LoginPage = () => {
         className="auth-card glass-container"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        style={{ opacity: 0 }}
       >
         <div className="auth-header stagger-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
           <img src="/logo.png" alt="Choir Collective Logo" style={{ width: '84px', height: '84px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)', boxShadow: 'var(--card-shadow)' }} />

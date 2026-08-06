@@ -1468,6 +1468,82 @@ input::-webkit-contacts-auto-fill-button {
   box-sizing: border-box;
 }
 
+.songs-tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 12px;
+}
+
+.cat-create-form {
+  display: flex;
+  gap: 12px;
+}
+
+.cat-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.4);
+  transition: background 0.15s ease;
+}
+
+.cat-item-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cat-move-handles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cat-title-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.cat-name-text {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--primary);
+  word-break: break-word;
+}
+
+.cat-count-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(30, 58, 138, 0.08);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.cat-edit-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 320px;
+}
+
+.cat-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 @media (max-width: 768px) {
   .song-form-card {
     padding: 20px 14px !important;
@@ -1499,6 +1575,65 @@ input::-webkit-contacts-auto-fill-button {
   }
   .song-form-cat-add-bar .btn {
     width: 100% !important;
+  }
+
+  /* Songs tab bar on mobile */
+  .songs-tab-bar {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    width: 100%;
+  }
+  .songs-tab-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 10px 8px !important;
+    font-size: 0.82rem !important;
+    white-space: nowrap;
+  }
+
+  /* Create Category form on mobile */
+  .cat-create-form {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+  .cat-create-input {
+    width: 100% !important;
+  }
+  .cat-create-btn {
+    width: 100% !important;
+    min-height: 44px !important;
+    justify-content: center;
+  }
+
+  /* Category Item row on mobile */
+  .cat-item-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+  }
+  .cat-item-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .cat-edit-bar {
+    max-width: 100% !important;
+    width: 100%;
+  }
+  .cat-item-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+  .cat-action-btn {
+    width: 100% !important;
+    min-height: 44px !important;
+    justify-content: center !important;
+    padding: 8px 12px !important;
+    font-size: 0.85rem !important;
   }
 }
 

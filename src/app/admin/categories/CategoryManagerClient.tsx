@@ -154,10 +154,10 @@ export const CategoryManagerClient: React.FC<Props> = ({ initialCategories, onCa
         <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '12px', marginTop: 0 }}>
           Create New Category
         </h4>
-        <form onSubmit={handleCreate} style={{ display: 'flex', gap: '12px' }}>
+        <form onSubmit={handleCreate} className="cat-create-form">
           <input
             type="text"
-            className="input-field"
+            className="input-field cat-create-input"
             placeholder="e.g. Marian, Offertory, Choral..."
             value={newCatName}
             onChange={(e) => setNewCatName(e.target.value)}
@@ -167,7 +167,7 @@ export const CategoryManagerClient: React.FC<Props> = ({ initialCategories, onCa
           <button
             type="submit"
             disabled={creating || !newCatName.trim()}
-            className="btn btn-primary"
+            className="btn btn-primary cat-create-btn"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px', whiteSpace: 'nowrap' }}
           >
             <Plus size={16} />
@@ -191,19 +191,15 @@ export const CategoryManagerClient: React.FC<Props> = ({ initialCategories, onCa
               return (
                 <div
                   key={cat.id}
+                  className="cat-item-row"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '14px 20px',
                     borderBottom: idx < categories.length - 1 ? '1px solid var(--glass-border)' : 'none',
                     background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.4)' : 'transparent',
-                    transition: 'background 0.15s ease',
                   }}
                 >
                   {/* Left: Move handles & Category Name */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <div className="cat-item-left">
+                    <div className="cat-move-handles">
                       <button
                         onClick={() => handleMove(idx, 'up')}
                         disabled={idx === 0 || reordering}
@@ -237,14 +233,14 @@ export const CategoryManagerClient: React.FC<Props> = ({ initialCategories, onCa
                     </div>
 
                     {isEditing ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, maxWidth: '320px' }}>
+                      <div className="cat-edit-bar">
                         <input
                           type="text"
                           className="input-field"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
                           disabled={updating}
-                          style={{ padding: '6px 12px', fontSize: '0.9rem' }}
+                          style={{ padding: '6px 12px', fontSize: '0.9rem', flex: 1 }}
                           autoFocus
                         />
                         <button
@@ -265,20 +261,11 @@ export const CategoryManagerClient: React.FC<Props> = ({ initialCategories, onCa
                         </button>
                       </div>
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--primary)' }}>
+                      <div className="cat-title-box">
+                        <span className="cat-name-text">
                           {cat.name}
                         </span>
-                        <span
-                          style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            background: 'rgba(30, 58, 138, 0.08)',
-                            color: 'var(--muted)',
-                          }}
-                        >
+                        <span className="cat-count-badge">
                           {cat.song_count ?? 0} {cat.song_count === 1 ? 'song' : 'songs'}
                         </span>
                       </div>
@@ -287,24 +274,18 @@ export const CategoryManagerClient: React.FC<Props> = ({ initialCategories, onCa
 
                   {/* Right: Edit & Delete Actions */}
                   {!isEditing && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="cat-item-actions">
                       <button
                         onClick={() => handleStartEdit(cat)}
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 12px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        className="btn btn-secondary cat-action-btn"
                       >
                         <Edit2 size={13} />
                         <span>Rename</span>
                       </button>
                       <button
                         onClick={() => setDeleteTarget(cat)}
-                        className="btn btn-secondary"
+                        className="btn btn-secondary cat-action-btn cat-delete-btn"
                         style={{
-                          padding: '6px 12px',
-                          fontSize: '0.82rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
                           color: 'var(--error)',
                           borderColor: 'rgba(239, 68, 68, 0.3)',
                           background: 'rgba(239, 68, 68, 0.05)',

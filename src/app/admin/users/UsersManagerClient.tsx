@@ -91,9 +91,8 @@ export const UsersManagerClient = ({
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-      tl.fromTo('.content-anim-item',
-        { opacity: 0, y: 25 },
-        { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 }
+      tl.from('.content-anim-item',
+        { opacity: 0, y: 25, duration: 0.6, stagger: 0.1 }
       );
     }, containerRef);
 
@@ -255,7 +254,7 @@ export const UsersManagerClient = ({
 
       <main className="admin-content-full">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            <div className="content-anim-item" style={{ opacity: 0 }}>
+            <div className="content-anim-item">
               <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '8px', color: 'var(--primary)' }}>User Operations Dashboard</h2>
               <p style={{ color: 'var(--muted)' }}>Approve pending signups and manage system accounts</p>
             </div>
@@ -263,7 +262,7 @@ export const UsersManagerClient = ({
             {tempPassword && (
               <div className="alert alert-success content-anim-item">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1-1.414L9 10.586 7.707 9.293a1 1 0 00-1-1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 <div>
                   <p style={{ fontWeight: 600 }}>New account created — share this temporary password with the user:</p>
@@ -275,7 +274,7 @@ export const UsersManagerClient = ({
             )}
 
             {/* Recruitment section (Join Requests) */}
-            <div className="glass-container content-anim-item" style={{ padding: '30px', opacity: 0 }}>
+            <div className="glass-container content-anim-item" style={{ padding: '30px' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: 'var(--primary)' }}>Recruitment Applications</h3>
               
               {joinRequests.length === 0 ? (
@@ -328,7 +327,7 @@ export const UsersManagerClient = ({
             </div>
 
             {/* Account Signups (profiles) */}
-            <div className="glass-container content-anim-item" style={{ padding: '30px', opacity: 0 }}>
+            <div className="glass-container content-anim-item" style={{ padding: '30px' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: 'var(--primary)' }}>Pending Direct Account Signups</h3>
               <PendingUsersTable
                 pendingUsers={pendingUsers}
@@ -338,7 +337,7 @@ export const UsersManagerClient = ({
             </div>
 
             {currentUserProfile.role === 'super_admin' && (
-              <div className="glass-container content-anim-item" style={{ padding: '30px', opacity: 0 }}>
+              <div className="glass-container content-anim-item" style={{ padding: '30px' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '8px', color: 'var(--primary)' }}>Direct User Provisioning</h3>
                 <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
                   Directly register accounts bypassing signups. Email verification will be skipped automatically.
@@ -351,7 +350,7 @@ export const UsersManagerClient = ({
             )}
 
             {currentUserProfile.role === 'super_admin' && (
-              <div className="glass-container content-anim-item" style={{ padding: '30px', opacity: 0 }}>
+              <div className="glass-container content-anim-item" style={{ padding: '30px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--primary)' }}>System User Directory</h3>
                   

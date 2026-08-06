@@ -105,7 +105,7 @@ export const AttendanceClient = ({
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-      tl.fromTo('.content-anim-item', { opacity: 0, y: 25 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 });
+      tl.from('.content-anim-item', { opacity: 0, y: 25, duration: 0.6, stagger: 0.1 });
     }, containerRef);
     return () => ctx.revert();
   }, []);
@@ -256,7 +256,7 @@ export const AttendanceClient = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
             {/* Header */}
-            <div className="content-anim-item" style={{ opacity: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px' }}>
+            <div className="content-anim-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '6px', color: 'var(--primary)' }}>Attendance Tally</h2>
                 <p style={{ color: 'var(--muted)' }}>Tap a member card to cycle their status. Save when done.</p>
@@ -282,7 +282,7 @@ export const AttendanceClient = ({
             {viewMode === 'tally' ? (
               <>
                 {/* Date + Type Picker */}
-                <div className="glass-container content-anim-item" style={{ opacity: 0, padding: '24px' }}>
+                <div className="glass-container content-anim-item" style={{ padding: '24px' }}>
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '12px' }}>
                     📅 Quick Select Date & Session Type
                   </h3>
@@ -385,7 +385,7 @@ export const AttendanceClient = ({
 
                 {/* Summary counters */}
                 {activeSession && roster.length > 0 && (
-                  <div className="content-anim-item attendance-counter-grid" style={{ opacity: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+                  <div className="content-anim-item attendance-counter-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
                     {[
                       { label: 'Present', count: presentCount, color: '#0b4d24', bg: 'rgba(11,77,36,0.07)' },
                       { label: 'Absent',  count: absentCount,  color: '#9f1c1c', bg: 'rgba(159,28,28,0.06)' },
@@ -402,7 +402,7 @@ export const AttendanceClient = ({
 
                 {/* Member tally cards */}
                 {activeSession ? (
-                  <div className="glass-container content-anim-item" style={{ opacity: 0, padding: '24px' }}>
+                  <div className="glass-container content-anim-item" style={{ padding: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
                       <div>
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--primary)' }}>
@@ -556,7 +556,7 @@ export const AttendanceClient = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="glass-container content-anim-item" style={{ opacity: 0, padding: '48px', textAlign: 'center' }}>
+                  <div className="glass-container content-anim-item" style={{ padding: '48px', textAlign: 'center' }}>
                     <p style={{ fontSize: '3rem', marginBottom: '16px' }}>📋</p>
                     <p style={{ fontWeight: 600, color: 'var(--primary)', marginBottom: '8px' }}>No session loaded</p>
                     <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>Pick a date above and click "Start Tally" to begin recording.</p>
@@ -565,7 +565,7 @@ export const AttendanceClient = ({
               </>
             ) : (
               /* History / all sessions view */
-              <div className="glass-container content-anim-item" style={{ opacity: 0, padding: '28px' }}>
+              <div className="glass-container content-anim-item" style={{ padding: '28px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
                   <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--primary)' }}>Session History</h3>
                   {uniqueSessions.length > 0 && (

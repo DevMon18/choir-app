@@ -93,14 +93,12 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-      tl.fromTo('.anim-header', 
-        { opacity: 0, y: -20 }, 
-        { opacity: 1, y: 0, duration: 0.7 }
+      tl.from('.anim-header', 
+        { opacity: 0, y: -20, duration: 0.7 }
       );
 
-      tl.fromTo('.anim-card', 
-        { opacity: 0, y: 30, scale: 0.97 }, 
-        { opacity: 1, y: 0, scale: 1, duration: 0.6, stagger: 0.08 },
+      tl.from('.anim-card', 
+        { opacity: 0, y: 30, scale: 0.97, duration: 0.6, stagger: 0.08 },
         '-=0.3'
       );
     });
@@ -196,13 +194,15 @@ const DashboardClient = ({ profile, initialPhotos = [], isAdmin, announcements =
             {/* Cover Banner */}
             <div style={{
               height: '160px',
-              backgroundImage: coverUrl ? `url(${coverUrl})` : undefined,
-              backgroundPosition: coverUrl ? `center ${repositioningCover ? tempPosition : coverPosition}` : undefined,
-              backgroundSize: coverUrl ? 'cover' : undefined,
-              backgroundRepeat: coverUrl ? 'no-repeat' : undefined,
-              background: coverUrl ? undefined : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
+              backgroundImage: coverUrl
+                ? `url(${coverUrl})`
+                : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
+              backgroundPosition: `center ${repositioningCover ? tempPosition : coverPosition}`,
+              backgroundSize: 'cover',
+              backgroundRepeat: 'no-repeat',
+              backgroundColor: 'var(--primary)',
               position: 'relative',
-              transition: 'background-position 0.1s ease'
+              transition: repositioningCover ? 'none' : 'background-position 0.15s ease'
             }}>
               <input
                 type="file"

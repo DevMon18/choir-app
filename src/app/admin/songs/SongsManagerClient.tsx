@@ -63,7 +63,7 @@ export const SongsManagerClient = ({
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-      tl.fromTo('.content-anim-item', { opacity: 0, y: 25 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 });
+      tl.from('.content-anim-item', { opacity: 0, y: 25, duration: 0.6, stagger: 0.1 });
     }, containerRef);
     return () => ctx.revert();
   }, []);
@@ -133,16 +133,7 @@ export const SongsManagerClient = ({
 
         {/* Tab Switcher */}
         {viewMode === 'list' && (
-          <div
-            className="content-anim-item"
-            style={{
-              display: 'flex',
-              gap: '8px',
-              marginBottom: '20px',
-              borderBottom: '1px solid var(--glass-border)',
-              paddingBottom: '12px',
-            }}
-          >
+          <div className="content-anim-item songs-tab-bar">
           <button
               onClick={() => setActiveTab('songs')}
               className="songs-tab-btn"
@@ -194,7 +185,7 @@ export const SongsManagerClient = ({
             {viewMode === 'list' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 {/* Header */}
-                <div className="content-anim-item" style={{ opacity: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px' }}>
+                <div className="content-anim-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px' }}>
                   <div>
                     <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '6px' }}>Song Library</h2>
                     <p style={{ color: 'var(--muted)' }}>Manage ChordPro lyrics and song catalogue</p>
@@ -219,7 +210,7 @@ export const SongsManagerClient = ({
                 </div>
 
                 {/* Search */}
-                <div className="content-anim-item" style={{ opacity: 0 }}>
+                <div className="content-anim-item">
                   <input
                     type="search"
                     className="input-field"
@@ -231,7 +222,7 @@ export const SongsManagerClient = ({
                 </div>
 
                 {/* Table */}
-                <div className="glass-container content-anim-item" style={{ padding: '24px', opacity: 0 }}>
+                <div className="glass-container content-anim-item" style={{ padding: '24px' }}>
                   {filteredSongs.length === 0 ? (
                     <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '40px 0' }}>
                       {showArchived ? 'No archived songs.' : searchQuery ? 'No songs match your search.' : 'No songs yet — click "+ Add Song" to get started.'}

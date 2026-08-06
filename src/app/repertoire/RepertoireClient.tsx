@@ -52,7 +52,7 @@ export const RepertoireClient = ({
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-      tl.fromTo('.content-anim-item', { opacity: 0, y: 25 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.06 });
+      tl.from('.content-anim-item', { opacity: 0, y: 25, duration: 0.6, stagger: 0.06 });
     }, containerRef);
     return () => ctx.revert();
   }, []);
@@ -79,6 +79,7 @@ export const RepertoireClient = ({
   };
 
   const isAdmin = ['super_admin', 'director', 'secretary'].includes(currentUserProfile.role);
+  const categoriesList = availableCategories;
 
   // Filter songs by selected categories
   const filteredSongs = songs.filter((song) => {
@@ -97,7 +98,7 @@ export const RepertoireClient = ({
 
       <main style={{ flex: 1, padding: '48px 20px', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
         {/* Page header */}
-        <div className="content-anim-item" style={{ opacity: 0, marginBottom: '32px' }}>
+        <div className="content-anim-item" style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '8px' }}>
             Song Repertoire
           </h1>
@@ -107,7 +108,7 @@ export const RepertoireClient = ({
         </div>
 
         {/* Search & Category Filter Controls */}
-        <div className="content-anim-item" style={{ opacity: 0, marginBottom: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="content-anim-item" style={{ marginBottom: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Search bar */}
           <div style={{ position: 'relative', maxWidth: '480px' }}>
             <svg
@@ -119,56 +120,35 @@ export const RepertoireClient = ({
             <input
               type="search"
               className="input-field"
-              placeholder="Search songs, composers, lyrics…"
+              placeholder="Search by title or composer…"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              style={{ paddingLeft: '42px', opacity: isPending ? 0.7 : 1, transition: 'opacity 0.2s' }}
-              aria-label="Search songs"
+              style={{ paddingLeft: '40px', width: '100%' }}
             />
           </div>
 
-          {/* Category Tags Filter Row */}
-          {availableCategories.length > 0 && (
+          {/* Category filter pills */}
+          {categoriesList && categoriesList.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '4px', marginRight: '4px' }}>
-                <Tag size={14} />
-                <span>Filter by tag:</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 600, marginRight: '4px' }}>
+                Filter by tag:
               </span>
-
-              <button
-                type="button"
-                onClick={() => setSelectedCatIds([])}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: '20px',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: selectedCatIds.length === 0 ? '1px solid var(--primary)' : '1px solid var(--border)',
-                  background: selectedCatIds.length === 0 ? 'var(--primary)' : 'rgba(255, 255, 255, 0.7)',
-                  color: selectedCatIds.length === 0 ? '#ffffff' : 'var(--foreground)',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                All
-              </button>
-
-              {availableCategories.map((cat) => {
-                const selected = selectedCatIds.includes(cat.id);
+              {categoriesList.map((cat) => {
+                const isSelected = selectedCatIds.includes(cat.id);
                 return (
                   <button
                     key={cat.id}
-                    type="button"
                     onClick={() => toggleCategoryFilter(cat.id)}
                     style={{
-                      padding: '5px 12px',
+                      padding: '6px 14px',
                       borderRadius: '20px',
-                      fontSize: '0.8rem',
+                      fontSize: '0.82rem',
                       fontWeight: 600,
                       cursor: 'pointer',
-                      border: selected ? '1px solid var(--primary)' : '1px solid var(--glass-border)',
-                      background: selected ? 'rgba(30, 58, 138, 0.12)' : 'rgba(255, 255, 255, 0.7)',
-                      color: selected ? 'var(--primary)' : 'var(--foreground)',
+                      border: '1px solid',
+                      borderColor: isSelected ? 'var(--primary)' : 'var(--glass-border)',
+                      background: isSelected ? 'var(--primary)' : 'rgba(255,255,255,0.7)',
+                      color: isSelected ? '#ffffff' : 'var(--foreground)',
                       transition: 'all 0.15s ease',
                     }}
                   >
@@ -176,13 +156,30 @@ export const RepertoireClient = ({
                   </button>
                 );
               })}
+              {selectedCatIds.length > 0 && (
+                <button
+                  onClick={() => setSelectedCatIds([])}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '20px',
+                    fontSize: '0.8rem',
+                    color: 'var(--muted)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
         </div>
 
         {/* Song grid */}
         {filteredSongs.length === 0 ? (
-          <div className="glass-container content-anim-item" style={{ textAlign: 'center', padding: '60px 20px', opacity: 0 }}>
+          <div className="glass-container content-anim-item" style={{ textAlign: 'center', padding: '60px 20px' }}>
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5" style={{ margin: '0 auto 16px' }}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.1-1.34 2-3 2s-3-.9-3-2 1.34-2 3-2 3 .9 3 2zm12-3c0 1.1-1.34 2-3 2s-3-.9-3-2 1.34-2 3-2 3 .9 3 2zM9 10l12-3" />
             </svg>
@@ -212,7 +209,6 @@ export const RepertoireClient = ({
                   href={`/repertoire/${song.id}`}
                   className="glass-container content-anim-item"
                   style={{
-                    opacity: 0,
                     padding: '24px',
                     textDecoration: 'none',
                     color: 'inherit',

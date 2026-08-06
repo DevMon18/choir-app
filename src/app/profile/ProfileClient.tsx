@@ -68,14 +68,12 @@ const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientPr
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-      tl.fromTo('.anim-header', 
-        { opacity: 0, y: -20 }, 
-        { opacity: 1, y: 0, duration: 0.7 }
+      tl.from('.anim-header', 
+        { opacity: 0, y: -20, duration: 0.7 }
       );
 
-      tl.fromTo('.anim-card', 
-        { opacity: 0, y: 30 }, 
-        { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 },
+      tl.from('.anim-card', 
+        { opacity: 0, y: 30, duration: 0.6, stagger: 0.1 },
         '-=0.3'
       );
     }, containerRef);

@@ -217,13 +217,11 @@ const ResetPasswordInner = () => {
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-      tl.fromTo(cardRef.current,
-        { opacity: 0, y: 30, scale: 0.98 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.8 }
+      tl.from(cardRef.current,
+        { opacity: 0, y: 30, scale: 0.98, duration: 0.8 }
       );
-      tl.fromTo('.stagger-item',
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 },
+      tl.from('.stagger-item',
+        { opacity: 0, y: 15, duration: 0.5, stagger: 0.08 },
         '-=0.4'
       );
     });
@@ -258,7 +256,6 @@ const ResetPasswordInner = () => {
       className="auth-card glass-container"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      style={{ opacity: 0 }}
     >
       {hasResetCode ? <UpdatePasswordForm /> : <RequestResetForm />}
     </div>

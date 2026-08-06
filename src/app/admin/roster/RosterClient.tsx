@@ -24,9 +24,8 @@ export const RosterClient = ({ currentUserProfile, roster }: RosterClientProps) 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-      tl.fromTo('.content-anim-item',
-        { opacity: 0, y: 25 },
-        { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 }
+      tl.from('.content-anim-item',
+        { opacity: 0, y: 25, duration: 0.6, stagger: 0.1 }
       );
     }, containerRef);
 
@@ -42,12 +41,12 @@ export const RosterClient = ({ currentUserProfile, roster }: RosterClientProps) 
 
       <main className="admin-content-full">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            <div className="content-anim-item" style={{ opacity: 0 }}>
+            <div className="content-anim-item">
               <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '8px', color: 'var(--primary)' }}>Choir Roster</h2>
               <p style={{ color: 'var(--muted)' }}>List of active choir members and their administration roles</p>
             </div>
 
-            <div className="glass-container content-anim-item" style={{ padding: '30px', opacity: 0 }}>
+            <div className="glass-container content-anim-item" style={{ padding: '30px' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: 'var(--primary)' }}>Active Roster ({roster.length})</h3>
               
               <div className="table-container">
