@@ -303,6 +303,60 @@ body {
   color: var(--primary);
 }
 
+/* Premium Skeleton Shimmer Design System */
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-box,
+.skeleton-text,
+.skeleton-circle,
+.skeleton-pill {
+  background: linear-gradient(
+    90deg,
+    rgba(226, 232, 240, 0.5) 0%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(226, 232, 240, 0.5) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.8s ease-in-out infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.skeleton-box {
+  border-radius: 12px;
+}
+
+.skeleton-text {
+  height: 14px;
+  border-radius: 6px;
+}
+
+.skeleton-circle {
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-pill {
+  border-radius: 9999px;
+}
+
+.skeleton-glass-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  padding: 20px;
+}
+
 /* Hide native browser password reveal button in Chrome, Edge, Safari, IE */
 input::-ms-reveal,
 input::-ms-clear,
