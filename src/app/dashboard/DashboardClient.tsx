@@ -2,15 +2,27 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import dynamicImport from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
-import { PushNotificationManager } from '@/components/PushNotificationManager';
-import { PhotoGallery, PhotoItem } from '@/components/PhotoGallery';
 import { useToast } from '@/components/Toast';
 import { uploadProfilePhotoAction, deleteProfilePhotoAction, uploadCoverPhotoAction, updateInterestsAction, updateCoverPositionAction } from '../directory/[id]/actions';
 import gsap from 'gsap';
 import { Camera, Move, Check, X, Plus, Tag, Megaphone, UserCheck, Shield } from 'lucide-react';
 import { useClientCache } from '@/context/ClientCacheContext';
+
+const PushNotificationManager = dynamicImport(
+  () => import('@/components/PushNotificationManager').then((m) => m.PushNotificationManager),
+  { ssr: false }
+);
+
+const PhotoGallery = dynamicImport(
+  () => import('@/components/PhotoGallery').then((m) => m.PhotoGallery),
+  { ssr: false }
+);
+
+import type { PhotoItem } from '@/components/PhotoGallery';
 
 interface AnnouncementItem {
   id: string;
@@ -197,16 +209,29 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
             {/* Cover Banner */}
             <div style={{
               height: '160px',
-              backgroundImage: coverUrl
-                ? `url(${coverUrl})`
+              background: coverUrl
+                ? 'none'
                 : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
-              backgroundPosition: `center ${repositioningCover ? tempPosition : coverPosition}`,
-              backgroundSize: 'cover',
-              backgroundRepeat: 'no-repeat',
               backgroundColor: 'var(--primary)',
               position: 'relative',
-              transition: repositioningCover ? 'none' : 'background-position 0.15s ease'
+              overflow: 'hidden',
             }}>
+              {coverUrl && (
+                <Image
+                  src={coverUrl}
+                  alt="Cover Banner"
+                  fill
+                  priority
+                  fetchPriority="high"
+                  sizes="(max-width: 800px) 100vw, 800px"
+                  style={{
+                    objectFit: 'cover',
+                    objectPosition: `center ${repositioningCover ? tempPosition : coverPosition}`,
+                    transition: repositioningCover ? 'none' : 'object-position 0.15s ease',
+                    zIndex: 0,
+                  }}
+                />
+              )}
               <input
                 type="file"
                 ref={coverInputRef}

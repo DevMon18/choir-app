@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { PhotoGallery, PhotoItem } from '@/components/PhotoGallery';
@@ -108,15 +109,29 @@ export const MemberProfileClient: React.FC<Props> = ({
           {/* Cover Banner */}
           <div style={{
             height: '140px',
-            backgroundImage: targetProfile.cover_url
-              ? `url(${targetProfile.cover_url})`
+            background: targetProfile.cover_url
+              ? 'none'
               : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
-            backgroundPosition: `center ${targetProfile.cover_position || '50%'}`,
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat',
             backgroundColor: 'var(--primary)',
-            position: 'relative'
-          }} />
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {targetProfile.cover_url && (
+              <Image
+                src={targetProfile.cover_url}
+                alt="Profile Cover Banner"
+                fill
+                priority
+                fetchPriority="high"
+                sizes="(max-width: 720px) 100vw, 720px"
+                style={{
+                  objectFit: 'cover',
+                  objectPosition: `center ${targetProfile.cover_position || '50%'}`,
+                  zIndex: 0,
+                }}
+              />
+            )}
+          </div>
 
           {/* Profile Details Container */}
           <div style={{ padding: '0 20px 20px', position: 'relative' }}>
