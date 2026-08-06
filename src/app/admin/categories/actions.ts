@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { checkRateLimitMutation } from '@/lib/ratelimit';
 
 export interface CategoryItem {
   id: string;
@@ -15,6 +16,11 @@ const getAdminClient = async () => {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { supabase, user: null, profile: null, error: 'Not authenticated' };
+
+  const rateLimit = await checkRateLimitMutation(user.id);
+  if (!rateLimit.success) {
+    return { supabase, user, profile: null, error: 'Rate limit exceeded. Please slow down.' };
+  }
 
   const { data: profile } = await supabase
     .from('profiles')

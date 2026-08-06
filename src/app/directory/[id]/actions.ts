@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { checkRateLimitUpload } from '@/lib/ratelimit';
 
 export interface DetailedMemberProfile {
   id: string;
@@ -122,6 +123,11 @@ export async function uploadProfilePhotoAction(formData: FormData) {
 
     if (!user) return { error: 'Unauthorized' };
 
+    const rateLimit = await checkRateLimitUpload(user.id);
+    if (!rateLimit.success) {
+      return { error: 'Upload rate limit exceeded. Please wait a minute before uploading again.' };
+    }
+
     const file = formData.get('file') as File;
     if (!file) return { error: 'No file provided' };
 
@@ -189,6 +195,11 @@ export async function uploadCoverPhotoAction(formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return { error: 'Unauthorized' };
+
+    const rateLimit = await checkRateLimitUpload(user.id);
+    if (!rateLimit.success) {
+      return { error: 'Upload rate limit exceeded. Please wait a minute before uploading again.' };
+    }
 
     const file = formData.get('file') as File;
     if (!file) return { error: 'No cover image file provided' };

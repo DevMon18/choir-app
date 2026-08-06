@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { checkRateLimitMessage } from '@/lib/ratelimit';
 
 export interface ConversationItem {
   id: string;
@@ -216,6 +217,12 @@ export async function sendMessage(conversationId: string, body: string) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return { error: 'Unauthorized' };
+
+    const rateLimit = await checkRateLimitMessage(user.id);
+    if (!rateLimit.success) {
+      return { error: 'Messaging rate limit exceeded. Please wait a moment before sending another message.' };
+    }
+
     if (!body.trim()) return { error: 'Message cannot be empty' };
 
     // Insert message verifying with .select()

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { checkRateLimitAuth, checkRateLimitGlobal } from '@/lib/ratelimit';
 
 export const proxy = async (request: NextRequest) => {
   let supabaseResponse = NextResponse.next({
@@ -57,6 +58,38 @@ export const proxy = async (request: NextRequest) => {
     path === '/join' ||
     path === '/auth/reset-password' ||
     path.startsWith('/auth/');
+
+  // Extract client IP address for rate limiting
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request.headers.get('x-real-ip') ||
+    '127.0.0.1';
+
+  // Tier 1: Auth Rate Limiting (Strict 5 reqs/min per IP)
+  if (isPublicPage) {
+    const authRes = await checkRateLimitAuth(ip);
+    if (!authRes.success) {
+      return new NextResponse('Too many authentication attempts. Please wait a minute and try again.', {
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil((authRes.reset - Date.now()) / 1000).toString(),
+          'Content-Type': 'text/plain',
+        },
+      });
+    }
+  } else {
+    // Tier 4: Global Route Rate Limiting (120 reqs/min per IP)
+    const globalRes = await checkRateLimitGlobal(ip);
+    if (!globalRes.success) {
+      return new NextResponse('Too many requests. Please slow down and try again in a minute.', {
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil((globalRes.reset - Date.now()) / 1000).toString(),
+          'Content-Type': 'text/plain',
+        },
+      });
+    }
+  }
 
   if (!user) {
     // If not authenticated and not on a public page, redirect to login
