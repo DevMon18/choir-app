@@ -70,7 +70,7 @@ const memoryLimiter = new MemoryRateLimiter();
 const authRatelimit = redis
   ? new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(5, '1 m'),
+      limiter: Ratelimit.slidingWindow(30, '1 m'),
       analytics: true,
       prefix: '@ratelimit/auth',
     })
@@ -121,7 +121,7 @@ export async function checkRateLimitAuth(identifier: string) {
   if (authRatelimit) {
     return await authRatelimit.limit(identifier);
   }
-  return await memoryLimiter.check(`auth:${identifier}`, 5, 60 * 1000);
+  return await memoryLimiter.check(`auth:${identifier}`, 30, 60 * 1000);
 }
 
 /** Tier 2: Media Uploads (Moderate: 15 requests / 1 min per User ID) */

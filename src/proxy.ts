@@ -22,10 +22,11 @@ export const proxy = async (request: NextRequest) => {
           });
           cookiesToSet.forEach(({ name, value, options }) => {
             const cookieOptions = { ...options };
-            if (name.includes('sb-') || name.includes('supabase')) {
-              cookieOptions.maxAge = 60 * 60 * 24 * 365; // 1 year
-              cookieOptions.expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
-            }
+            // Ensure ALL Supabase session cookies have 1-year maxAge for permanent sign-in persistence until explicit logout!
+            cookieOptions.maxAge = 60 * 60 * 24 * 365; // 1 year (31,536,000 seconds)
+            cookieOptions.expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
+            cookieOptions.sameSite = 'lax';
+            cookieOptions.path = '/';
             supabaseResponse.cookies.set(name, value, cookieOptions);
           });
         },
@@ -65,8 +66,8 @@ export const proxy = async (request: NextRequest) => {
     request.headers.get('x-real-ip') ||
     '127.0.0.1';
 
-  // Tier 1: Auth Rate Limiting (Strict 5 reqs/min per IP)
-  if (isPublicPage) {
+  // Tier 1: Auth Rate Limiting (Apply ONLY on POST submissions to prevent GET lockout on mobile phones)
+  if (isPublicPage && request.method === 'POST') {
     const authRes = await checkRateLimitAuth(ip);
     if (!authRes.success) {
       return new NextResponse('Too many authentication attempts. Please wait a minute and try again.', {
@@ -77,7 +78,7 @@ export const proxy = async (request: NextRequest) => {
         },
       });
     }
-  } else {
+  } else if (!isPublicPage) {
     // Tier 4: Global Route Rate Limiting (120 reqs/min per IP)
     const globalRes = await checkRateLimitGlobal(ip);
     if (!globalRes.success) {
