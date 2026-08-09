@@ -124,6 +124,18 @@ export const RepertoireClient = ({
   // Multi-select category tags state (array of active tag names)
   const [selectedCategoryTags, setSelectedCategoryTags] = useState<string[]>([]);
 
+  // Card-level pagination state: mapping card section ID to current page (1-indexed, 5 items per page)
+  const [cardPages, setCardPages] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    setCardPages({});
+  }, [searchValue, selectedCategoryTags, selectedCategoryFilter, activeTab]);
+
+  const getCardPage = (cardId: string): number => cardPages[cardId] || 1;
+  const setCardPage = (cardId: string, page: number) => {
+    setCardPages((prev) => ({ ...prev, [cardId]: page }));
+  };
+
   // Helper to check if a category name corresponds to a Mass Part section
   const isMassPartName = (name: string): boolean => {
     const n = name.toLowerCase();
@@ -315,105 +327,108 @@ export const RepertoireClient = ({
           (e.currentTarget as HTMLElement).style.borderColor = 'var(--glass-border)';
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1, minWidth: 0 }}>
           <div
             style={{
-              width: '34px',
-              height: '34px',
-              borderRadius: '8px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
               background: 'rgba(30,58,138,0.08)',
               color: 'var(--primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
+              marginTop: '2px',
             }}
           >
-            <Music size={16} />
+            <Music size={17} />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          
+          {/* Main Title & Meta Sub-row */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
             <h4
               style={{
-                fontSize: '0.95rem',
+                fontSize: '0.96rem',
                 fontWeight: 700,
                 color: 'var(--primary)',
                 margin: 0,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                lineHeight: 1.35,
+                wordBreak: 'break-word',
               }}
             >
               {song.title}
             </h4>
-            {song.composer && (
-              <p
-                style={{
-                  fontSize: '0.8rem',
-                  color: 'var(--muted)',
-                  margin: '2px 0 0 0',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {song.composer}
-              </p>
-            )}
-          </div>
-        </div>
 
-        {/* Right side info: Badges & Indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          {tags.length > 0 && (
-            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              {tags.slice(0, 2).map((tag) => (
+            {/* Sub-row: Composer & Category Badges */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
+              {song.composer && (
                 <span
-                  key={tag.id}
                   style={{
-                    fontSize: '0.68rem',
+                    fontSize: '0.78rem',
+                    color: 'var(--muted)',
+                    fontWeight: 500,
+                    marginRight: '4px',
+                  }}
+                >
+                  {song.composer}
+                </span>
+              )}
+
+              {tags.length > 0 && (
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {tags.slice(0, 3).map((tag) => (
+                    <span
+                      key={tag.id}
+                      style={{
+                        fontSize: '0.66rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.03em',
+                        color: 'var(--primary)',
+                        background: 'rgba(30,58,138,0.08)',
+                        padding: '1px 7px',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(30,58,138,0.12)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                  {tags.length > 3 && (
+                    <span style={{ fontSize: '0.66rem', color: 'var(--muted)', fontWeight: 600 }}>
+                      +{tags.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {song.lyrics && (
+                <span
+                  title="ChordPro lyrics available"
+                  style={{
+                    fontSize: '0.66rem',
                     fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    color: 'var(--primary)',
-                    background: 'rgba(30,58,138,0.08)',
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(30,58,138,0.12)',
+                    color: 'var(--accent)',
+                    background: 'rgba(217,119,6,0.08)',
+                    padding: '1px 7px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(217,119,6,0.15)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {tag.name}
-                </span>
-              ))}
-              {tags.length > 2 && (
-                <span style={{ fontSize: '0.68rem', color: 'var(--muted)', alignSelf: 'center' }}>
-                  +{tags.length - 2}
+                  Chords
                 </span>
               )}
             </div>
-          )}
-
-          {song.lyrics && (
-            <span
-              title="ChordPro lyrics available"
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                color: 'var(--accent)',
-                background: 'rgba(217,119,6,0.08)',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '3px',
-              }}
-            >
-              Chords
-            </span>
-          )}
-
-          <ChevronRight size={18} style={{ color: 'var(--muted)' }} />
+          </div>
         </div>
+
+        <ChevronRight size={18} style={{ color: 'var(--muted)', flexShrink: 0, alignSelf: 'center' }} />
       </Link>
     );
   };
@@ -712,6 +727,14 @@ export const RepertoireClient = ({
 
               // Filter songs by multi-select category tags
               const tagFilteredPartSongs = partSongs.filter((s) => songMatchesSelectedTags(s, selectedCategoryTags));
+              const ITEMS_PER_PAGE = 5;
+              const totalPartSongs = tagFilteredPartSongs.length;
+              const totalPartPages = Math.ceil(totalPartSongs / ITEMS_PER_PAGE) || 1;
+              const currentPartPage = Math.min(getCardPage(part.id), totalPartPages);
+              const paginatedPartSongs = tagFilteredPartSongs.slice(
+                (currentPartPage - 1) * ITEMS_PER_PAGE,
+                currentPartPage * ITEMS_PER_PAGE
+              );
 
               return (
                 <div
@@ -906,8 +929,88 @@ export const RepertoireClient = ({
                         </div>
                       </div>
 
-                      {tagFilteredPartSongs.length > 0 ? (
-                        tagFilteredPartSongs.map((song) => renderSongRow(song))
+                      {paginatedPartSongs.length > 0 ? (
+                        <>
+                          {paginatedPartSongs.map((song) => renderSongRow(song))}
+
+                          {/* Card Pagination Bar */}
+                          {totalPartPages > 1 && (
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                marginTop: '8px',
+                                paddingTop: '10px',
+                                borderTop: '1px solid rgba(0,0,0,0.06)',
+                                gap: '8px',
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 600 }}>
+                                Showing {(currentPartPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPartPage * ITEMS_PER_PAGE, totalPartSongs)} of {totalPartSongs}
+                              </span>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <button
+                                  type="button"
+                                  disabled={currentPartPage <= 1}
+                                  onClick={() => setCardPage(part.id, currentPartPage - 1)}
+                                  style={{
+                                    padding: '3px 10px',
+                                    borderRadius: '8px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    border: '1px solid rgba(0,0,0,0.12)',
+                                    background: currentPartPage <= 1 ? 'rgba(0,0,0,0.03)' : '#ffffff',
+                                    color: currentPartPage <= 1 ? 'var(--muted)' : 'var(--foreground)',
+                                    cursor: currentPartPage <= 1 ? 'not-allowed' : 'pointer',
+                                  }}
+                                >
+                                  Prev
+                                </button>
+
+                                {Array.from({ length: totalPartPages }, (_, i) => i + 1).map((pageNum) => (
+                                  <button
+                                    key={pageNum}
+                                    type="button"
+                                    onClick={() => setCardPage(part.id, pageNum)}
+                                    style={{
+                                      padding: '3px 8px',
+                                      borderRadius: '8px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: pageNum === currentPartPage ? 700 : 500,
+                                      border: pageNum === currentPartPage ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.12)',
+                                      background: pageNum === currentPartPage ? 'var(--primary)' : '#ffffff',
+                                      color: pageNum === currentPartPage ? '#ffffff' : 'var(--foreground)',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    {pageNum}
+                                  </button>
+                                ))}
+
+                                <button
+                                  type="button"
+                                  disabled={currentPartPage >= totalPartPages}
+                                  onClick={() => setCardPage(part.id, currentPartPage + 1)}
+                                  style={{
+                                    padding: '3px 10px',
+                                    borderRadius: '8px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    border: '1px solid rgba(0,0,0,0.12)',
+                                    background: currentPartPage >= totalPartPages ? 'rgba(0,0,0,0.03)' : '#ffffff',
+                                    color: currentPartPage >= totalPartPages ? 'var(--muted)' : 'var(--foreground)',
+                                    cursor: currentPartPage >= totalPartPages ? 'not-allowed' : 'pointer',
+                                  }}
+                                >
+                                  Next
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <p style={{ fontSize: '0.82rem', color: 'var(--muted)', margin: 0, fontStyle: 'italic', padding: '4px 0' }}>
                           No songs match the selected tag filter.
@@ -930,6 +1033,14 @@ export const RepertoireClient = ({
                 )
               );
               const tagFilteredOtherSongs = otherSongs.filter((s) => songMatchesSelectedTags(s, selectedCategoryTags));
+              const ITEMS_PER_PAGE = 5;
+              const totalOtherSongs = tagFilteredOtherSongs.length;
+              const totalOtherPages = Math.ceil(totalOtherSongs / ITEMS_PER_PAGE) || 1;
+              const currentOtherPage = Math.min(getCardPage('other-songs'), totalOtherPages);
+              const paginatedOtherSongs = tagFilteredOtherSongs.slice(
+                (currentOtherPage - 1) * ITEMS_PER_PAGE,
+                currentOtherPage * ITEMS_PER_PAGE
+              );
               const isCollapsed = !!collapsedSections['other-songs'];
 
               return (
@@ -1120,8 +1231,88 @@ export const RepertoireClient = ({
                         </div>
                       </div>
 
-                      {tagFilteredOtherSongs.length > 0 ? (
-                        tagFilteredOtherSongs.map((song) => renderSongRow(song))
+                      {paginatedOtherSongs.length > 0 ? (
+                        <>
+                          {paginatedOtherSongs.map((song) => renderSongRow(song))}
+
+                          {/* Card Pagination Bar */}
+                          {totalOtherPages > 1 && (
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                marginTop: '8px',
+                                paddingTop: '10px',
+                                borderTop: '1px solid rgba(0,0,0,0.06)',
+                                gap: '8px',
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 600 }}>
+                                Showing {(currentOtherPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentOtherPage * ITEMS_PER_PAGE, totalOtherSongs)} of {totalOtherSongs}
+                              </span>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <button
+                                  type="button"
+                                  disabled={currentOtherPage <= 1}
+                                  onClick={() => setCardPage('other-songs', currentOtherPage - 1)}
+                                  style={{
+                                    padding: '3px 10px',
+                                    borderRadius: '8px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    border: '1px solid rgba(0,0,0,0.12)',
+                                    background: currentOtherPage <= 1 ? 'rgba(0,0,0,0.03)' : '#ffffff',
+                                    color: currentOtherPage <= 1 ? 'var(--muted)' : 'var(--foreground)',
+                                    cursor: currentOtherPage <= 1 ? 'not-allowed' : 'pointer',
+                                  }}
+                                >
+                                  Prev
+                                </button>
+
+                                {Array.from({ length: totalOtherPages }, (_, i) => i + 1).map((pageNum) => (
+                                  <button
+                                    key={pageNum}
+                                    type="button"
+                                    onClick={() => setCardPage('other-songs', pageNum)}
+                                    style={{
+                                      padding: '3px 8px',
+                                      borderRadius: '8px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: pageNum === currentOtherPage ? 700 : 500,
+                                      border: pageNum === currentOtherPage ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.12)',
+                                      background: pageNum === currentOtherPage ? 'var(--primary)' : '#ffffff',
+                                      color: pageNum === currentOtherPage ? '#ffffff' : 'var(--foreground)',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    {pageNum}
+                                  </button>
+                                ))}
+
+                                <button
+                                  type="button"
+                                  disabled={currentOtherPage >= totalOtherPages}
+                                  onClick={() => setCardPage('other-songs', currentOtherPage + 1)}
+                                  style={{
+                                    padding: '3px 10px',
+                                    borderRadius: '8px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    border: '1px solid rgba(0,0,0,0.12)',
+                                    background: currentOtherPage >= totalOtherPages ? 'rgba(0,0,0,0.03)' : '#ffffff',
+                                    color: currentOtherPage >= totalOtherPages ? 'var(--muted)' : 'var(--foreground)',
+                                    cursor: currentOtherPage >= totalOtherPages ? 'not-allowed' : 'pointer',
+                                  }}
+                                >
+                                  Next
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <p style={{ fontSize: '0.82rem', color: 'var(--muted)', margin: 0, fontStyle: 'italic', padding: '4px 0' }}>
                           No songs match the selected tag filter.
