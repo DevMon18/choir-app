@@ -35,43 +35,60 @@ const transposeChord = (chord: string, semitones: number): string => {
 
 // ---------------------------------------------------------------------------
 // ChordPro parser
-// Each token on a line is either a { chord, lyric } pair or a plain lyric.
+// Converts a ChordPro line into an exact monospace chordLine and lyricLine
+// without splitting words or inserting artificial spaces inside lyrics.
 // ---------------------------------------------------------------------------
 
-interface Token {
-  chord: string;
-  lyric: string;
+interface ParsedLine {
+  chordLine: string;
+  lyricLine: string;
+  hasChords: boolean;
 }
 
-const parseLine = (line: string): Token[] => {
-  const tokens: Token[] = [];
-  // Match [Chord]lyric pairs or trailing text
-  const re = /\[([^\]]*)\]([^\[]*)/g;
-  let lastIndex = 0;
+const processChordProLine = (line: string, semitones: number): ParsedLine => {
+  let lyricLine = '';
+  let chordLine = '';
+  let hasChords = false;
+
+  let lyricPos = 0;
+  let chordPos = 0;
+
+  // Regex matches bracketed chords [Gb] or lyric segments
+  const re = /\[([^\]]*)\]|([^\[]+)/g;
   let match: RegExpExecArray | null;
 
-  // Handle any text before the first chord
-  const firstBracket = line.indexOf('[');
-  if (firstBracket > 0) {
-    tokens.push({ chord: '', lyric: line.slice(0, firstBracket) });
-    lastIndex = firstBracket;
-  }
-
   while ((match = re.exec(line)) !== null) {
-    tokens.push({ chord: match[1], lyric: match[2] });
-    lastIndex = re.lastIndex;
+    if (match[1] !== undefined) {
+      // Bracketed chord: e.g. [Gb], [Bbm], [F#m7]
+      const rawChord = match[1];
+      if (rawChord.trim()) {
+        hasChords = true;
+        const transposed = transposeChord(rawChord.trim(), semitones);
+
+        // Position chord at Math.max(lyricPos, chordPos) in the monospace grid
+        const targetPos = Math.max(lyricPos, chordPos);
+        while (chordLine.length < targetPos) {
+          chordLine += ' ';
+        }
+
+        chordLine += transposed;
+        chordPos = chordLine.length + 1; // Keep at least 1 space before next chord
+      }
+    } else if (match[2] !== undefined) {
+      // Plain lyric text segment
+      const text = match[2];
+      lyricLine += text;
+      lyricPos += text.length;
+    }
   }
 
-  // Trailing text with no chord
-  if (lastIndex < line.length && firstBracket === -1) {
-    tokens.push({ chord: '', lyric: line.slice(lastIndex) });
+  // Pad chordLine if lyricLine is longer for clean alignment
+  while (chordLine.length < lyricLine.length) {
+    chordLine += ' ';
   }
 
-  return tokens.length > 0 ? tokens : [{ chord: '', lyric: line }];
+  return { chordLine, lyricLine, hasChords };
 };
-
-const isChordLine = (tokens: Token[]): boolean =>
-  tokens.some((t) => t.chord !== '');
 
 // ---------------------------------------------------------------------------
 // Component props
@@ -111,7 +128,7 @@ export const ChordProRenderer = ({
 
         // Blank line — spacer
         if (trimmed === '') {
-          return <div key={lineIdx} style={{ height: `${fontSize * 1.6}px` }} />;
+          return <div key={lineIdx} style={{ height: `${fontSize * 1.2}px` }} />;
         }
 
         // ChordPro directive lines like {comment: Verse 1} — render as section label
@@ -121,13 +138,13 @@ export const ChordProRenderer = ({
             <div
               key={lineIdx}
               style={{
-                fontSize: `${fontSize * 0.8}px`,
+                fontSize: `${fontSize * 0.82}px`,
                 fontWeight: 700,
                 color: 'var(--accent)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                marginTop: `${fontSize}px`,
-                marginBottom: `${fontSize * 0.25}px`,
+                marginTop: `${fontSize * 0.8}px`,
+                marginBottom: `${fontSize * 0.3}px`,
                 fontFamily: 'var(--font-sans)',
               }}
             >
@@ -136,59 +153,41 @@ export const ChordProRenderer = ({
           );
         }
 
-        // Regular lyric/chord line
-        const tokens = parseLine(line);
-        const hasChords = isChordLine(tokens);
+        // Regular lyric/chord line parsed via monospace character alignment
+        const { chordLine, lyricLine, hasChords } = processChordProLine(line, semitones);
 
         return (
-          <div key={lineIdx} style={{ marginBottom: hasChords && showChords ? 0 : 2 }}>
+          <div key={lineIdx} style={{ marginBottom: hasChords && showChords ? '8px' : '3px' }}>
             {/* Chord row */}
             {hasChords && showChords && (
-              <div style={{ display: 'flex', flexWrap: 'nowrap', color: 'var(--primary)', fontWeight: 700 }}>
-                {tokens.map((token, i) => {
-                  const chord = token.chord
-                    ? transposeChord(token.chord, semitones)
-                    : '';
-                  // Width matches the lyric segment so chords align above text
-                  const lyricWidth = token.lyric.length || 1;
-                  return (
-                    <span
-                      key={i}
-                      style={{
-                        minWidth: `${Math.max(chord.length, lyricWidth) * 0.6}em`,
-                        paddingRight: '0.3em',
-                        display: 'inline-block',
-                      }}
-                    >
-                      {chord}
-                    </span>
-                  );
-                })}
+              <div
+                style={{
+                  fontFamily: '"Courier New", Courier, monospace',
+                  fontSize: `${fontSize}px`,
+                  fontWeight: 700,
+                  color: 'var(--primary)',
+                  whiteSpace: 'pre',
+                  lineHeight: 1.2,
+                  overflowX: 'auto',
+                }}
+              >
+                {chordLine}
               </div>
             )}
 
             {/* Lyric row */}
-            <div style={{ display: 'flex', flexWrap: 'nowrap', color: 'var(--foreground)' }}>
-              {tokens.map((token, i) => {
-                const chord = token.chord
-                  ? transposeChord(token.chord, semitones)
-                  : '';
-                const lyricWidth = token.lyric.length || 1;
-                return (
-                  <span
-                    key={i}
-                    style={{
-                      minWidth: showChords
-                        ? `${Math.max(chord.length, lyricWidth) * 0.6}em`
-                        : undefined,
-                      paddingRight: '0.3em',
-                      display: 'inline-block',
-                    }}
-                  >
-                    {token.lyric || '\u00a0'}
-                  </span>
-                );
-              })}
+            <div
+              style={{
+                fontFamily: '"Courier New", Courier, monospace',
+                fontSize: `${fontSize}px`,
+                fontWeight: 500,
+                color: 'var(--foreground)',
+                whiteSpace: 'pre-wrap',
+                lineHeight: 1.35,
+                wordBreak: 'break-word',
+              }}
+            >
+              {lyricLine || '\u00a0'}
             </div>
           </div>
         );
