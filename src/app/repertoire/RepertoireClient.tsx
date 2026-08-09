@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { SongCategory } from '@/app/admin/songs/SongForm';
 import { CategoryItem } from '@/app/admin/categories/actions';
-import { Music, Search, ChevronRight, ChevronDown, ChevronUp, X, BookOpen, SortAsc, Layers, ListFilter } from 'lucide-react';
+import { Music, Search, ChevronRight, ChevronDown, ChevronUp, X, BookOpen, SortAsc, Layers, ListFilter, Filter } from 'lucide-react';
 import gsap from 'gsap';
 import { useClientCache } from '@/context/ClientCacheContext';
 
@@ -40,14 +40,14 @@ const MASS_PART_SECTIONS = [
   { id: 'gloria', name: 'Gloria', matchKeywords: ['gloria', 'glory to god'] },
   { id: 'responsorial-psalm', name: 'Responsorial Psalm', matchKeywords: ['responsorial psalm', 'psalm'] },
   { id: 'gospel-acclamation', name: 'Gospel Acclamation', matchKeywords: ['gospel acclamation', 'gospel acclamation (alleluia or praise to you)', 'gospel', 'alleluia', 'praise to you'] },
-  { id: 'offertory-presentation', name: 'Offertory / Presentation', matchKeywords: ['offertory / presentation song', 'offertory', 'presentation song', 'offertory song'] },
+  { id: 'offertory-presentation', name: 'Offertory / Presentation Song', matchKeywords: ['offertory / presentation song', 'offertory / presentation', 'offertory', 'presentation song', 'offertory song'] },
   { id: 'sanctus', name: 'Sanctus', matchKeywords: ['sanctus', 'holy, holy, holy', 'holy holy holy'] },
   { id: 'memorial-acclamation', name: 'Memorial Acclamation', matchKeywords: ['memorial acclamation'] },
   { id: 'great-amen', name: 'Great Amen', matchKeywords: ['great amen', 'amen'] },
   { id: 'lords-prayer', name: "Lord's Prayer", matchKeywords: ["lord's prayer", 'lords prayer', 'our father'] },
   { id: 'lamb-of-god', name: 'Lamb of God', matchKeywords: ['lamb of god', 'agnus dei'] },
   { id: 'communion-song', name: 'Communion Song', matchKeywords: ['communion song', 'communion'] },
-  { id: 'recessional-closing', name: 'Recessional / Closing', matchKeywords: ['recessional / closing song', 'recessional', 'closing song', 'sending forth'] },
+  { id: 'recessional-closing', name: 'Recessional / Closing Song', matchKeywords: ['recessional / closing song', 'recessional / closing', 'recessional', 'closing song', 'sending forth'] },
 ];
 
 const matchesMassPart = (song: Song, targetName: string, keywords: string[]): boolean => {
@@ -57,8 +57,8 @@ const matchesMassPart = (song: Song, targetName: string, keywords: string[]): bo
   const targetLower = targetName.toLowerCase();
 
   return songCatNames.some((cat) => {
-    if (cat === targetLower) return true;
-    return keywords.some((kw) => cat.includes(kw));
+    if (cat === targetLower || cat.includes(targetLower) || targetLower.includes(cat)) return true;
+    return keywords.some((kw) => cat.includes(kw) || kw.includes(cat));
   });
 };
 
@@ -118,11 +118,59 @@ export const RepertoireClient = ({
     setActiveTab(tabId);
   };
 
+  // Filter popover state
+  const [openFilterCardId, setOpenFilterCardId] = useState<string | null>(null);
+
+  // Multi-select category tags state (array of active tag names)
+  const [selectedCategoryTags, setSelectedCategoryTags] = useState<string[]>([]);
+
+  // Helper to check if a category name corresponds to a Mass Part section
+  const isMassPartName = (name: string): boolean => {
+    const n = name.toLowerCase();
+    return MASS_PART_SECTIONS.some(
+      (part) => part.name.toLowerCase() === n || part.id === n || part.matchKeywords.includes(n)
+    );
+  };
+
+  // Collect all non-Mass Part category tag names across all songs and availableCategories
+  const tagCategoryNames = Array.from(
+    new Set([
+      ...availableCategories.map((c) => c.name),
+      ...songs.flatMap((s) => [
+        ...(s.categories || []).map((c) => c.name),
+        ...(s.category ? [s.category] : []),
+      ]),
+    ])
+  ).filter((name): name is string => Boolean(name) && !isMassPartName(name));
+
+  const toggleCategoryTag = (tagName: string) => {
+    setSelectedCategoryTags((prev) =>
+      prev.includes(tagName)
+        ? prev.filter((t) => t !== tagName)
+        : [...prev, tagName]
+    );
+  };
+
+  const clearCategoryTags = () => {
+    setSelectedCategoryTags([]);
+  };
+
+  const songMatchesSelectedTags = (song: Song, selectedTags: string[]): boolean => {
+    if (selectedTags.length === 0) return true;
+    const songCatNames = (song.categories || []).map((c) => c.name.toLowerCase());
+    if (song.category) songCatNames.push(song.category.toLowerCase());
+
+    return selectedTags.some((tag) =>
+      songCatNames.some((cat) => cat === tag.toLowerCase() || cat.includes(tag.toLowerCase()) || tag.toLowerCase().includes(cat))
+    );
+  };
+
   // 2-Way Synchronized Handler: Clear all filters
   const handleClearAllFilters = () => {
     setSearchValue('');
     setSelectedCategoryFilter('ALL');
     setActiveTab('ALL');
+    setSelectedCategoryTags([]);
   };
 
   useEffect(() => {
@@ -195,15 +243,23 @@ export const RepertoireClient = ({
     }
 
     if (selectedCategoryFilter && selectedCategoryFilter !== 'ALL') {
-      const songCatIds = (song.categories || []).map((c) => c.id);
-      const songCatNames = (song.categories || []).map((c) => c.name.toLowerCase());
-      if (song.category) songCatNames.push(song.category.toLowerCase());
+      const massPart = MASS_PART_SECTIONS.find(
+        (p) => p.name.toLowerCase() === selectedCategoryFilter.toLowerCase() || p.id === selectedCategoryFilter
+      );
 
-      const targetLower = selectedCategoryFilter.toLowerCase();
-      const matchById = songCatIds.includes(selectedCategoryFilter);
-      const matchByName = songCatNames.includes(targetLower);
+      if (massPart) {
+        if (!matchesMassPart(song, massPart.name, massPart.matchKeywords)) return false;
+      } else {
+        const songCatIds = (song.categories || []).map((c) => c.id);
+        const songCatNames = (song.categories || []).map((c) => c.name.toLowerCase());
+        if (song.category) songCatNames.push(song.category.toLowerCase());
 
-      if (!matchById && !matchByName) return false;
+        const targetLower = selectedCategoryFilter.toLowerCase();
+        const matchById = songCatIds.includes(selectedCategoryFilter);
+        const matchByName = songCatNames.some((cat) => cat === targetLower || cat.includes(targetLower) || targetLower.includes(cat));
+
+        if (!matchById && !matchByName) return false;
+      }
     }
 
     return true;
@@ -488,10 +544,8 @@ export const RepertoireClient = ({
                 <X size={16} />
               </button>
             )}
-          </div>
-
-          {/* Category Dropdown */}
-          <div style={{ position: 'relative', flex: '0 0 auto', minWidth: '200px' }}>
+          </div>          {/* Category Dropdown (Mass Parts Only) */}
+          <div style={{ position: 'relative', flex: '0 0 auto', minWidth: '220px' }}>
             <select
               className="input-field"
               value={selectedCategoryFilter}
@@ -505,28 +559,17 @@ export const RepertoireClient = ({
                 cursor: 'pointer',
               }}
             >
-              <option value="ALL">All Repertoire Categories ({songs.length})</option>
-              <optgroup label="Mass Parts">
-                {MASS_PART_SECTIONS.map((part) => (
-                  <option key={part.id} value={part.name}>
-                    {part.name}
-                  </option>
-                ))}
-              </optgroup>
-              {availableCategories.length > 0 && (
-                <optgroup label="Other Tags">
-                  {availableCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name} ({cat.song_count ?? 0})
-                    </option>
-                  ))}
-                </optgroup>
-              )}
+              <option value="ALL">All Mass Parts ({songs.length} songs)</option>
+              {MASS_PART_SECTIONS.map((part) => (
+                <option key={part.id} value={part.name}>
+                  {part.name}
+                </option>
+              ))}
             </select>
           </div>
 
           {/* Clear Filters Button if active */}
-          {(searchValue || selectedCategoryFilter !== 'ALL' || activeTab !== 'ALL') && (
+          {(searchValue || selectedCategoryFilter !== 'ALL' || selectedCategoryTags.length > 0) && (
             <button
               onClick={handleClearAllFilters}
               style={{
@@ -546,7 +589,7 @@ export const RepertoireClient = ({
           )}
 
           {/* Quick Collapse / Expand All Buttons */}
-          {viewMode === 'MASS_PARTS' && activeTab === 'ALL' && !isSearching && (
+          {viewMode === 'MASS_PARTS' && selectedCategoryFilter === 'ALL' && !isSearching && (
             <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto' }}>
               <button
                 onClick={collapseAllSections}
@@ -583,121 +626,6 @@ export const RepertoireClient = ({
             </div>
           )}
         </div>
-
-        {/* 📖 SONGBOOK MASS PART INDEX TABS (Page-by-Page Songbook Strip) */}
-        {viewMode === 'MASS_PARTS' && !isSearching && (
-          <div
-            className="anim-header"
-            style={{
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              overflowX: 'auto',
-              paddingBottom: '8px',
-              scrollbarWidth: 'thin',
-              WebkitOverflowScrolling: 'touch',
-            }}
-          >
-            <button
-              onClick={() => handleSelectTab('ALL')}
-              style={{
-                padding: '8px 14px',
-                borderRadius: '20px',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                border: activeTab === 'ALL' ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.1)',
-                background: activeTab === 'ALL' ? 'var(--primary)' : 'rgba(255,255,255,0.7)',
-                color: activeTab === 'ALL' ? '#ffffff' : 'var(--foreground)',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-                boxShadow: activeTab === 'ALL' ? '0 2px 8px rgba(30,58,138,0.25)' : 'none',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              All Pages ({filteredSongs.length})
-            </button>
-
-            {MASS_PART_SECTIONS.map((part) => {
-              const count = filteredSongs.filter((s) => matchesMassPart(s, part.name, part.matchKeywords)).length;
-              const isActive = activeTab === part.id;
-              return (
-                <button
-                  key={part.id}
-                  onClick={() => handleSelectTab(part.id)}
-                  style={{
-                    padding: '8px 14px',
-                    borderRadius: '20px',
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    border: isActive ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.08)',
-                    background: isActive ? 'var(--primary)' : 'rgba(255,255,255,0.7)',
-                    color: isActive ? '#ffffff' : 'var(--foreground)',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    boxShadow: isActive ? '0 2px 8px rgba(30,58,138,0.25)' : 'none',
-                    transition: 'all 0.15s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
-                  <span>{part.name}</span>
-                  <span
-                    style={{
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      padding: '1px 6px',
-                      borderRadius: '10px',
-                      background: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(30,58,138,0.08)',
-                      color: isActive ? '#ffffff' : 'var(--primary)',
-                    }}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-
-            {otherSongs.length > 0 && (
-              <button
-                onClick={() => setActiveTab('other-songs')}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: '20px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  border: activeTab === 'other-songs' ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.08)',
-                  background: activeTab === 'other-songs' ? 'var(--primary)' : 'rgba(255,255,255,0.7)',
-                  color: activeTab === 'other-songs' ? '#ffffff' : 'var(--foreground)',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  transition: 'all 0.15s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <span>Other Repertoire</span>
-                <span
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    padding: '1px 6px',
-                    borderRadius: '10px',
-                    background: activeTab === 'other-songs' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.08)',
-                    color: activeTab === 'other-songs' ? '#ffffff' : 'var(--muted)',
-                  }}
-                >
-                  {otherSongs.length}
-                </span>
-              </button>
-            )}
-          </div>
-        )}
 
         {/* Results Counter Banner when searching */}
         {isSearching && (
@@ -772,6 +700,19 @@ export const RepertoireClient = ({
 
               const isCollapsed = isSearching ? false : !!collapsedSections[part.id];
 
+              // Collect all unique category tags for songs in this section
+              const sectionCategoryTags = Array.from(
+                new Set(
+                  partSongs.flatMap((s) => [
+                    ...(s.categories || []).map((c) => c.name),
+                    ...(s.category ? [s.category] : []),
+                  ])
+                )
+              );
+
+              // Filter songs by multi-select category tags
+              const tagFilteredPartSongs = partSongs.filter((s) => songMatchesSelectedTags(s, selectedCategoryTags));
+
               return (
                 <div
                   key={part.id}
@@ -779,7 +720,9 @@ export const RepertoireClient = ({
                   className="glass-container anim-section"
                   style={{
                     borderRadius: '14px',
-                    overflow: 'hidden',
+                    overflow: 'visible',
+                    position: 'relative',
+                    zIndex: openFilterCardId === part.id ? 100 : 1,
                     border: '1px solid var(--glass-border)',
                     boxShadow: 'var(--card-shadow)',
                   }}
@@ -795,6 +738,7 @@ export const RepertoireClient = ({
                       cursor: 'pointer',
                       background: 'rgba(255, 255, 255, 0.75)',
                       userSelect: 'none',
+                      borderRadius: isCollapsed ? '14px' : '14px 14px 0 0',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -809,26 +753,164 @@ export const RepertoireClient = ({
                         style={{
                           fontSize: '0.78rem',
                           fontWeight: 600,
-                          background: partSongs.length > 0 ? 'rgba(30,58,138,0.1)' : 'rgba(0,0,0,0.05)',
-                          color: partSongs.length > 0 ? 'var(--primary)' : 'var(--muted)',
+                          background: tagFilteredPartSongs.length > 0 ? 'rgba(30,58,138,0.1)' : 'rgba(0,0,0,0.05)',
+                          color: tagFilteredPartSongs.length > 0 ? 'var(--primary)' : 'var(--muted)',
                           padding: '2px 10px',
                           borderRadius: '12px',
                         }}
                       >
-                        {partSongs.length} {partSongs.length === 1 ? 'song' : 'songs'}
+                        {tagFilteredPartSongs.length} {tagFilteredPartSongs.length === 1 ? 'song' : 'songs'}
                       </span>
                       {isCollapsed ? <ChevronDown size={18} style={{ color: 'var(--muted)' }} /> : <ChevronUp size={18} style={{ color: 'var(--muted)' }} />}
                     </div>
                   </div>
 
-                  {/* Section Songs List */}
+                  {/* Section Songs List & Category Tags with Filter Funnel Button */}
                   {!isCollapsed && (
-                    <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.25)' }}>
-                      {partSongs.length > 0 ? (
-                        partSongs.map((song) => renderSongRow(song))
+                    <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.25)', borderRadius: '0 0 14px 14px' }}>
+                      {/* Category Tags Line with Funnel Filter Button (Rendered on ALL Mass Part Cards) */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '6px', paddingBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            CATEGORY TAGS:
+                          </span>
+                          {sectionCategoryTags.length > 0 ? (
+                            sectionCategoryTags.map((tag) => (
+                              <span
+                                key={tag}
+                                style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  padding: '2px 8px',
+                                  borderRadius: '10px',
+                                  background: 'rgba(30,58,138,0.06)',
+                                  color: 'var(--primary)',
+                                  letterSpacing: '0.02em',
+                                  cursor: 'default',
+                                  userSelect: 'none',
+                                }}
+                              >
+                                {tag}
+                              </span>
+                            ))
+                          ) : (
+                            <span style={{ fontSize: '0.72rem', fontStyle: 'italic', color: 'var(--muted)' }}>None</span>
+                          )}
+                        </div>
+
+                        {/* Funnel Filter Button on ALL Mass Part Cards */}
+                        <div style={{ position: 'relative', flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenFilterCardId((prev) => (prev === part.id ? null : part.id));
+                            }}
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: '10px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              border: selectedCategoryTags.length > 0 ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.12)',
+                              background: selectedCategoryTags.length > 0 ? 'rgba(30,58,138,0.1)' : '#ffffff',
+                              color: selectedCategoryTags.length > 0 ? 'var(--primary)' : 'var(--foreground)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                            }}
+                            title="Filter card by multiple category tags"
+                          >
+                            <Filter size={13} style={{ color: selectedCategoryTags.length > 0 ? 'var(--primary)' : 'var(--muted)' }} />
+                            <span>Filter</span>
+                            {selectedCategoryTags.length > 0 && (
+                              <span style={{ fontSize: '0.68rem', fontWeight: 700, background: 'var(--primary)', color: '#ffffff', padding: '0 5px', borderRadius: '8px' }}>
+                                {selectedCategoryTags.length}
+                              </span>
+                            )}
+                          </button>
+
+                          {/* Multi-Select Category Tags Popover inside Card listing ALL System Categories */}
+                          {openFilterCardId === part.id && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                position: 'absolute',
+                                top: 'calc(100% + 6px)',
+                                right: 0,
+                                zIndex: 9999,
+                                width: '230px',
+                                background: '#ffffff',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(0,0,0,0.12)',
+                                boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+                                padding: '10px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '4px' }}>
+                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--foreground)' }}>Filter Categories</span>
+                                {selectedCategoryTags.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={clearCategoryTags}
+                                    style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                                  >
+                                    Reset
+                                  </button>
+                                )}
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '180px', overflowY: 'auto' }}>
+                                {tagCategoryNames.length > 0 ? (
+                                  tagCategoryNames.map((catName) => {
+                                    const isChecked = selectedCategoryTags.includes(catName);
+                                    return (
+                                      <label
+                                        key={catName}
+                                        style={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '8px',
+                                          fontSize: '0.78rem',
+                                          fontWeight: 500,
+                                          color: 'var(--foreground)',
+                                          cursor: 'pointer',
+                                          padding: '3px 6px',
+                                          borderRadius: '6px',
+                                          userSelect: 'none',
+                                          background: isChecked ? 'rgba(30,58,138,0.06)' : 'transparent',
+                                        }}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={isChecked}
+                                          onChange={() => toggleCategoryTag(catName)}
+                                          style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
+                                        />
+                                        <span>{catName}</span>
+                                      </label>
+                                    );
+                                  })
+                                ) : (
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontStyle: 'italic', padding: '4px 6px' }}>
+                                    No non-Mass Part category tags created yet.
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {tagFilteredPartSongs.length > 0 ? (
+                        tagFilteredPartSongs.map((song) => renderSongRow(song))
                       ) : (
                         <p style={{ fontSize: '0.82rem', color: 'var(--muted)', margin: 0, fontStyle: 'italic', padding: '4px 0' }}>
-                          No songs tagged for {part.name} yet.
+                          No songs match the selected tag filter.
                         </p>
                       )}
                     </div>
@@ -838,58 +920,218 @@ export const RepertoireClient = ({
             })}
 
             {/* Other Repertoire Songs Section */}
-            {(activeTab === 'ALL' || activeTab === 'other-songs') && otherSongs.length > 0 && (
-              <div
-                className="glass-container anim-section"
-                style={{
-                  borderRadius: '14px',
-                  overflow: 'hidden',
-                  border: '1px solid var(--glass-border)',
-                  boxShadow: 'var(--card-shadow)',
-                }}
-              >
+            {(activeTab === 'ALL' || activeTab === 'other-songs') && otherSongs.length > 0 && (() => {
+              const otherCategoryTags = Array.from(
+                new Set(
+                  otherSongs.flatMap((s) => [
+                    ...(s.categories || []).map((c) => c.name),
+                    ...(s.category ? [s.category] : []),
+                  ])
+                )
+              );
+              const tagFilteredOtherSongs = otherSongs.filter((s) => songMatchesSelectedTags(s, selectedCategoryTags));
+              const isCollapsed = !!collapsedSections['other-songs'];
+
+              return (
                 <div
-                  onClick={() => toggleSection('other-songs')}
+                  className="glass-container anim-section"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '14px 18px',
-                    cursor: 'pointer',
-                    background: 'rgba(255, 255, 255, 0.75)',
-                    userSelect: 'none',
+                    borderRadius: '14px',
+                    overflow: 'visible',
+                    position: 'relative',
+                    zIndex: openFilterCardId === 'other-songs' ? 100 : 1,
+                    border: '1px solid var(--glass-border)',
+                    boxShadow: 'var(--card-shadow)',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <Music size={18} style={{ color: 'var(--foreground)' }} />
-                    <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
-                      Other Repertoire Songs
-                    </h2>
+                  <div
+                    onClick={() => toggleSection('other-songs')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '14px 18px',
+                      cursor: 'pointer',
+                      background: 'rgba(255, 255, 255, 0.75)',
+                      userSelect: 'none',
+                      borderRadius: isCollapsed ? '14px' : '14px 14px 0 0',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Music size={18} style={{ color: 'var(--foreground)' }} />
+                      <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                        Other Repertoire Songs
+                      </h2>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span
+                        style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          background: tagFilteredOtherSongs.length > 0 ? 'rgba(30,58,138,0.1)' : 'rgba(0,0,0,0.05)',
+                          color: tagFilteredOtherSongs.length > 0 ? 'var(--primary)' : 'var(--muted)',
+                          padding: '2px 10px',
+                          borderRadius: '12px',
+                        }}
+                      >
+                        {tagFilteredOtherSongs.length} {tagFilteredOtherSongs.length === 1 ? 'song' : 'songs'}
+                      </span>
+                      {isCollapsed ? <ChevronDown size={18} style={{ color: 'var(--muted)' }} /> : <ChevronUp size={18} style={{ color: 'var(--muted)' }} />}
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span
-                      style={{
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        background: 'rgba(0,0,0,0.05)',
-                        color: 'var(--muted)',
-                        padding: '2px 10px',
-                        borderRadius: '12px',
-                      }}
-                    >
-                      {otherSongs.length} {otherSongs.length === 1 ? 'song' : 'songs'}
-                    </span>
-                    {collapsedSections['other-songs'] ? <ChevronDown size={18} style={{ color: 'var(--muted)' }} /> : <ChevronUp size={18} style={{ color: 'var(--muted)' }} />}
-                  </div>
-                </div>
 
-                {!collapsedSections['other-songs'] && (
-                  <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.25)' }}>
-                    {otherSongs.map((song) => renderSongRow(song))}
-                  </div>
-                )}
-              </div>
-            )}
+                  {!isCollapsed && (
+                    <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.25)', borderRadius: '0 0 14px 14px' }}>
+                      {/* Category Tags Line with Funnel Filter Button */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '6px', paddingBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            CATEGORY TAGS:
+                          </span>
+                          {otherCategoryTags.length > 0 ? (
+                            otherCategoryTags.map((tag) => (
+                              <span
+                                key={tag}
+                                style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  padding: '2px 8px',
+                                  borderRadius: '10px',
+                                  background: 'rgba(30,58,138,0.06)',
+                                  color: 'var(--primary)',
+                                  letterSpacing: '0.02em',
+                                  cursor: 'default',
+                                  userSelect: 'none',
+                                }}
+                              >
+                                {tag}
+                              </span>
+                            ))
+                          ) : (
+                            <span style={{ fontSize: '0.72rem', fontStyle: 'italic', color: 'var(--muted)' }}>None</span>
+                          )}
+                        </div>
+
+                        {/* Funnel Filter Button inside Card */}
+                        <div style={{ position: 'relative', flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenFilterCardId((prev) => (prev === 'other-songs' ? null : 'other-songs'));
+                            }}
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: '10px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              border: selectedCategoryTags.length > 0 ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.12)',
+                              background: selectedCategoryTags.length > 0 ? 'rgba(30,58,138,0.1)' : '#ffffff',
+                              color: selectedCategoryTags.length > 0 ? 'var(--primary)' : 'var(--foreground)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                            }}
+                            title="Filter card by multiple category tags"
+                          >
+                            <Filter size={13} style={{ color: selectedCategoryTags.length > 0 ? 'var(--primary)' : 'var(--muted)' }} />
+                            <span>Filter</span>
+                            {selectedCategoryTags.length > 0 && (
+                              <span style={{ fontSize: '0.68rem', fontWeight: 700, background: 'var(--primary)', color: '#ffffff', padding: '0 5px', borderRadius: '8px' }}>
+                                {selectedCategoryTags.length}
+                              </span>
+                            )}
+                          </button>
+
+                          {/* Multi-Select Category Tags Popover */}
+                          {openFilterCardId === 'other-songs' && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                position: 'absolute',
+                                top: 'calc(100% + 6px)',
+                                right: 0,
+                                zIndex: 9999,
+                                width: '230px',
+                                background: '#ffffff',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(0,0,0,0.12)',
+                                boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+                                padding: '10px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '4px' }}>
+                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--foreground)' }}>Filter Categories</span>
+                                {selectedCategoryTags.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={clearCategoryTags}
+                                    style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                                  >
+                                    Reset
+                                  </button>
+                                )}
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '180px', overflowY: 'auto' }}>
+                                {tagCategoryNames.length > 0 ? (
+                                  tagCategoryNames.map((catName) => {
+                                    const isChecked = selectedCategoryTags.includes(catName);
+                                    return (
+                                      <label
+                                        key={catName}
+                                        style={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '8px',
+                                          fontSize: '0.78rem',
+                                          fontWeight: 500,
+                                          color: 'var(--foreground)',
+                                          cursor: 'pointer',
+                                          padding: '3px 6px',
+                                          borderRadius: '6px',
+                                          userSelect: 'none',
+                                          background: isChecked ? 'rgba(30,58,138,0.06)' : 'transparent',
+                                        }}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={isChecked}
+                                          onChange={() => toggleCategoryTag(catName)}
+                                          style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
+                                        />
+                                        <span>{catName}</span>
+                                      </label>
+                                    );
+                                  })
+                                ) : (
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontStyle: 'italic', padding: '4px 6px' }}>
+                                    No non-Mass Part category tags created yet.
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {tagFilteredOtherSongs.length > 0 ? (
+                        tagFilteredOtherSongs.map((song) => renderSongRow(song))
+                      ) : (
+                        <p style={{ fontSize: '0.82rem', color: 'var(--muted)', margin: 0, fontStyle: 'italic', padding: '4px 0' }}>
+                          No songs match the selected tag filter.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
       </main>
