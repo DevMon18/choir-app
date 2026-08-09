@@ -320,32 +320,40 @@ export const ChordProControls = ({
           {/* Divider */}
           <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--muted)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              WEIGHT
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>BOLD</span>
+            <button
+              type="button"
+              onClick={() => onFontWeightChange(Math.max(500, fontWeight - 100))}
+              style={controlBtnStyle}
+              aria-label="Decrease font boldness"
+              title="Thinner lyrics text"
+            >
+              B−
+            </button>
+            <span
+              style={{
+                minWidth: '28px',
+                textAlign: 'center',
+                fontSize: '0.92rem',
+                color: 'var(--primary)',
+                fontWeight: fontWeight,
+                fontFamily: 'serif',
+                userSelect: 'none',
+              }}
+              title={`Current weight: ${fontWeight}`}
+            >
+              B
             </span>
-            {[
-              { label: 'Normal', val: 600 },
-              { label: 'Bold', val: 700 },
-              { label: 'Extra Bold', val: 800 },
-            ].map(({ label, val }) => (
-              <button
-                key={val}
-                type="button"
-                onClick={() => onFontWeightChange(val)}
-                style={{
-                  ...controlBtnStyle,
-                  fontWeight: val,
-                  padding: '4px 9px',
-                  fontSize: '0.78rem',
-                  background: fontWeight === val ? 'var(--primary)' : 'rgba(255,255,255,0.85)',
-                  color: fontWeight === val ? '#ffffff' : 'var(--primary)',
-                  borderColor: fontWeight === val ? 'var(--primary)' : 'var(--glass-border)',
-                }}
-              >
-                {label}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => onFontWeightChange(Math.min(900, fontWeight + 100))}
+              style={controlBtnStyle}
+              aria-label="Increase font boldness"
+              title="Bolder lyrics text"
+            >
+              B+
+            </button>
           </div>
         </>
       )}
@@ -409,7 +417,7 @@ export const usePersistedFontWeight = (key: string, defaultWeight = 600) => {
     const stored = localStorage.getItem(key);
     if (stored) {
       const n = parseInt(stored, 10);
-      if (!isNaN(n) && (n === 600 || n === 700 || n === 800)) setFontWeight(n);
+      if (!isNaN(n) && n >= 400 && n <= 900) setFontWeight(n);
     }
   }, [key]);
 
