@@ -85,11 +85,27 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
   const prevItem = currentIndex > 0 ? activeSequenceItems[currentIndex - 1] : null;
   const nextItem = currentIndex !== -1 && currentIndex < activeSequenceItems.length - 1 ? activeSequenceItems[currentIndex + 1] : null;
 
-  const handleNavigateToSong = async (songId: string | null) => {
+  const pendingNavTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleNavigateToSong = (songId: string | null) => {
     if (!session || !songId) return;
-    const newSong = songs.find(s => s.id === songId) || null;
+    const newSong = songs.find((s) => s.id === songId) || null;
+    
+    // 1. Optimistic Local Update (Instant feedback for director)
     setActiveSong(newSong);
-    await updateLiveSession(session.id, { active_song_id: songId });
+
+    // 2. Debounce backend update to prevent HTTP 429 Rate Limit error on rapid clicks
+    if (pendingNavTimerRef.current) {
+      clearTimeout(pendingNavTimerRef.current);
+    }
+
+    pendingNavTimerRef.current = setTimeout(async () => {
+      try {
+        await updateLiveSession(session.id, { active_song_id: songId });
+      } catch (err) {
+        console.error('Error updating live session song:', err);
+      }
+    }, 250); // 250ms debounce delay
   };
 
   // ── Wake Lock ──────────────────────────────────────────
