@@ -75,18 +75,55 @@ export const RepertoireClient = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [searchValue, setSearchValue] = useState(initialQuery);
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>(categoriesParam || 'ALL');
+
+  // Initial Category & Tab State
+  const initialCategory = categoriesParam || 'ALL';
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>(initialCategory);
+
+  // Helper functions for 2-way synchronization between Tabs and Dropdown
+  const getTabIdFromCategory = (catName: string): string => {
+    if (!catName || catName === 'ALL') return 'ALL';
+    const found = MASS_PART_SECTIONS.find((p) => p.name.toLowerCase() === catName.toLowerCase());
+    return found ? found.id : 'ALL';
+  };
+
+  const getCategoryNameFromTabId = (tabId: string): string => {
+    if (!tabId || tabId === 'ALL' || tabId === 'other-songs') return 'ALL';
+    const found = MASS_PART_SECTIONS.find((p) => p.id === tabId);
+    return found ? found.name : 'ALL';
+  };
 
   // Songbook Display Mode: 'MASS_PARTS' (Grouped by Mass Parts) vs 'AZ_INDEX' (Alphabetical Songbook Index)
   const [viewMode, setViewMode] = useState<'MASS_PARTS' | 'AZ_INDEX'>('MASS_PARTS');
 
   // Selected Mass Part Page Tab ('ALL' or section id like 'communion-song')
-  const [activeTab, setActiveTab] = useState<string>('ALL');
+  const [activeTab, setActiveTab] = useState<string>(() => getTabIdFromCategory(initialCategory));
 
   // Collapsed sections state
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
   const [isPending, startTransition] = useTransition();
+
+  // 2-Way Synchronized Handler: Tapping a Tab pill updates Dropdown value
+  const handleSelectTab = (tabId: string) => {
+    setActiveTab(tabId);
+    const catName = getCategoryNameFromTabId(tabId);
+    setSelectedCategoryFilter(catName);
+  };
+
+  // 2-Way Synchronized Handler: Selecting a Dropdown option updates Tab pill
+  const handleSelectDropdownCategory = (val: string) => {
+    setSelectedCategoryFilter(val);
+    const tabId = getTabIdFromCategory(val);
+    setActiveTab(tabId);
+  };
+
+  // 2-Way Synchronized Handler: Clear all filters
+  const handleClearAllFilters = () => {
+    setSearchValue('');
+    setSelectedCategoryFilter('ALL');
+    setActiveTab('ALL');
+  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -458,7 +495,7 @@ export const RepertoireClient = ({
             <select
               className="input-field"
               value={selectedCategoryFilter}
-              onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+              onChange={(e) => handleSelectDropdownCategory(e.target.value)}
               style={{
                 width: '100%',
                 minHeight: '44px',
@@ -487,6 +524,26 @@ export const RepertoireClient = ({
               )}
             </select>
           </div>
+
+          {/* Clear Filters Button if active */}
+          {(searchValue || selectedCategoryFilter !== 'ALL' || activeTab !== 'ALL') && (
+            <button
+              onClick={handleClearAllFilters}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '10px',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                color: 'var(--muted)',
+                background: 'rgba(0,0,0,0.05)',
+                border: 'none',
+                minHeight: '44px',
+                cursor: 'pointer',
+              }}
+            >
+              Clear Filter
+            </button>
+          )}
 
           {/* Quick Collapse / Expand All Buttons */}
           {viewMode === 'MASS_PARTS' && activeTab === 'ALL' && !isSearching && (
@@ -543,7 +600,7 @@ export const RepertoireClient = ({
             }}
           >
             <button
-              onClick={() => setActiveTab('ALL')}
+              onClick={() => handleSelectTab('ALL')}
               style={{
                 padding: '8px 14px',
                 borderRadius: '20px',
@@ -568,7 +625,7 @@ export const RepertoireClient = ({
               return (
                 <button
                   key={part.id}
-                  onClick={() => setActiveTab(part.id)}
+                  onClick={() => handleSelectTab(part.id)}
                   style={{
                     padding: '8px 14px',
                     borderRadius: '20px',
