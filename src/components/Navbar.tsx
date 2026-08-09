@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { logout } from '@/app/actions';
 import {
@@ -52,6 +53,22 @@ const getAdminItems = (role: Role) => {
 const hasAdminAccess = (role: Role) =>
   ['super_admin', 'director', 'secretary', 'treasurer'].includes(role);
 
+// ✅ FIX: NavLink defined OUTSIDE Navbar so React doesn't create a new component
+// type on every render (which would cause all nav links to unmount/remount).
+const NavLink = ({ href, icon, label, matchFn, pathname }: {
+  href: string; icon: React.ReactNode; label: string;
+  matchFn?: (p: string) => boolean;
+  pathname: string;
+}) => {
+  const active = matchFn ? matchFn(pathname) : pathname === href;
+  return (
+    <Link href={href} className={`nav-link ${active ? 'active' : ''}`} title={label}>
+      {icon}
+      <span className="nav-link-text">{label}</span>
+    </Link>
+  );
+};
+
 export const Navbar = ({ profile, children }: NavbarProps) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -80,19 +97,6 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
     setAdminSheetOpen(false);
   }, [pathname]);
 
-  const NavLink = ({ href, icon, label, matchFn }: {
-    href: string; icon: React.ReactNode; label: string;
-    matchFn?: (p: string) => boolean;
-  }) => {
-    const active = matchFn ? matchFn(pathname) : pathname === href;
-    return (
-      <Link href={href} className={`nav-link ${active ? 'active' : ''}`} title={label}>
-        {icon}
-        <span className="nav-link-text">{label}</span>
-      </Link>
-    );
-  };
-
   return (
     <>
       {/* ── Desktop / top navbar ── */}
@@ -104,10 +108,13 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
             onClick={() => router.push('/dashboard')}
             style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
           >
-            <img
-              src="/logo.png"
+            <Image
+              src="/collective-logo.png"
               alt="Choir Collective"
-              style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }}
+              width={32}
+              height={32}
+              priority
+              style={{ borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }}
             />
             <span>Choir Collective</span>
           </div>
@@ -116,32 +123,32 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
 
         {/* Desktop links */}
         <div className="nav-links">
-          <NavLink href="/dashboard" label="Dashboard" icon={
+          <NavLink href="/dashboard" label="Dashboard" pathname={pathname} icon={
             <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
           } />
-          <NavLink href="/repertoire" label="Repertoire" matchFn={p => p.startsWith('/repertoire')} icon={
+          <NavLink href="/repertoire" label="Repertoire" pathname={pathname} matchFn={p => p.startsWith('/repertoire')} icon={
             <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
             </svg>
           } />
-          <NavLink href="/live" label="Live Sync" icon={
+          <NavLink href="/live" label="Live Sync" pathname={pathname} icon={
             <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
             </svg>
           } />
-          <NavLink href="/calendar" label="Calendar" icon={
+          <NavLink href="/calendar" label="Calendar" pathname={pathname} icon={
             <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           } />
-          <NavLink href="/directory" label="Directory" matchFn={p => p.startsWith('/directory')} icon={
+          <NavLink href="/directory" label="Directory" pathname={pathname} matchFn={p => p.startsWith('/directory')} icon={
             <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           } />
-          <NavLink href="/messages" label="Messages" matchFn={p => p.startsWith('/messages')} icon={
+          <NavLink href="/messages" label="Messages" pathname={pathname} matchFn={p => p.startsWith('/messages')} icon={
             <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -149,6 +156,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
           <NavLink
             href={isFinanceAdmin ? '/admin/finances' : '/dues'}
             label="Dues"
+            pathname={pathname}
             matchFn={p => p === '/dues' || p.startsWith('/admin/finances')}
             icon={
               <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
@@ -156,7 +164,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               </svg>
             }
           />
-          <NavLink href="/profile" label="Profile" icon={
+          <NavLink href="/profile" label="Profile" pathname={pathname} icon={
             <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>

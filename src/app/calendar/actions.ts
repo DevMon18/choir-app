@@ -2,6 +2,7 @@
 
 import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
+import { getCache, setCache } from '@/lib/cache';
 
 export interface CalendarEvent {
   id: string;
@@ -17,6 +18,11 @@ export interface CalendarEvent {
 }
 
 export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
+  // ✅ FIX: Cache calendar data for 60s to avoid 4 Supabase queries on every page load
+  const cacheKey = 'calendar:all_events';
+  const cached = await getCache<CalendarEvent[]>(cacheKey);
+  if (cached) return cached;
+
   try {
     const supabase = await createClient();
     const events: CalendarEvent[] = [];
@@ -132,6 +138,9 @@ export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
 
     // Sort combined events by dateTimeISO ascending
     events.sort((a, b) => new Date(a.dateTimeISO).getTime() - new Date(b.dateTimeISO).getTime());
+
+    // Store in cache for 60 seconds
+    await setCache(cacheKey, events, 60);
 
     return events;
   } catch (err) {

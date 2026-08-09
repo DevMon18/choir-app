@@ -19,7 +19,9 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export const PushNotificationManager = () => {
-  const [isSupported, setIsSupported] = useState(false);
+  const [isSupported, setIsSupported] = useState(() => {
+    return typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window;
+  });
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -100,7 +102,6 @@ export const PushNotificationManager = () => {
 
     // 2. Register Web Service Worker if browser supports PushManager
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
-      setIsSupported(true);
       navigator.serviceWorker.register('/sw.js').then((reg) => {
         reg.pushManager.getSubscription().then((sub) => {
           if (sub) {

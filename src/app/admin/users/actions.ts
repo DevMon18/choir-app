@@ -3,30 +3,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-
-// Helper to check for admin roles
-const checkAdminAuth = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user: currentUser },
-  } = await supabase.auth.getUser();
-
-  if (!currentUser) {
-    return { error: 'Not authenticated', supabase: null };
-  }
-
-  const { data: currentProfile, error: profileErr } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', currentUser.id)
-    .single();
-
-  if (profileErr || !['super_admin', 'director', 'secretary'].includes(currentProfile?.role || '')) {
-    return { error: 'Unauthorized. Secretary, Director, or Super Admin role required.', supabase: null };
-  }
-
-  return { error: null, supabase };
-};
+import { requireUser, requirePermission } from '@/lib/auth/permissions';
+import { recordAuditLog } from '@/lib/audit';
 
 export const createUserDirectly = async (input: {
   email: string;
@@ -34,8 +12,8 @@ export const createUserDirectly = async (input: {
   role: 'director' | 'treasurer' | 'secretary' | 'member';
 }) => {
   try {
-    const { error } = await checkAdminAuth();
-    if (error) return { error };
+    const user = await requireUser();
+    requirePermission(user, 'users.write');
 
     const supabaseAdmin = createAdminClient();
     const tempPassword = 'TempPassword123!';
@@ -66,6 +44,15 @@ export const createUserDirectly = async (input: {
       return { error: upsertError.message };
     }
 
+    await recordAuditLog({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: 'USER_CREATED_DIRECTLY',
+      entityType: 'user',
+      entityId: newUserId,
+      metadata: { targetEmail: input.email, role: input.role },
+    });
+
     revalidatePath('/admin/users');
     return { success: true, tempPassword };
   } catch (err: any) {
@@ -75,8 +62,8 @@ export const createUserDirectly = async (input: {
 
 export const updateProfileRole = async (profileId: string, role: string) => {
   try {
-    const { error } = await checkAdminAuth();
-    if (error) return { error };
+    const user = await requireUser();
+    requirePermission(user, 'users.write');
 
     const supabaseAdmin = createAdminClient();
 
@@ -94,6 +81,15 @@ export const updateProfileRole = async (profileId: string, role: string) => {
       app_metadata: { role },
     });
 
+    await recordAuditLog({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: 'PROFILE_ROLE_UPDATED',
+      entityType: 'user',
+      entityId: profileId,
+      metadata: { newRole: role },
+    });
+
     revalidatePath('/admin/users');
     revalidatePath('/admin/roster');
     revalidatePath('/directory');
@@ -109,8 +105,8 @@ export const updateProfileRole = async (profileId: string, role: string) => {
 
 export const approveJoinRequest = async (requestId: string) => {
   try {
-    const { error } = await checkAdminAuth();
-    if (error) return { error };
+    const user = await requireUser();
+    requirePermission(user, 'users.write');
 
     const supabase = await createClient();
 
@@ -148,7 +144,7 @@ export const approveJoinRequest = async (requestId: string) => {
         full_name: request.full_name,
         email: request.email,
         role: 'member',
-        voice_part: request.voice_part, // Auto-assign requested voice part
+        voice_part: request.voice_part,
       });
 
     if (profileErr) {
@@ -165,6 +161,15 @@ export const approveJoinRequest = async (requestId: string) => {
       return { error: `Failed to update request status: ${statusErr.message}` };
     }
 
+    await recordAuditLog({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: 'JOIN_REQUEST_APPROVED',
+      entityType: 'join_request',
+      entityId: requestId,
+      metadata: { targetEmail: request.email, assignedUserId: authResult.user.id },
+    });
+
     revalidatePath('/admin/users');
     return { success: true, tempPassword, email: request.email, fullName: request.full_name };
   } catch (err: any) {
@@ -174,8 +179,8 @@ export const approveJoinRequest = async (requestId: string) => {
 
 export const rejectJoinRequest = async (requestId: string, rejectionReason: string) => {
   try {
-    const { error } = await checkAdminAuth();
-    if (error) return { error };
+    const user = await requireUser();
+    requirePermission(user, 'users.write');
 
     if (!rejectionReason.trim()) {
       return { error: 'Rejection reason is required.' };
@@ -183,7 +188,7 @@ export const rejectJoinRequest = async (requestId: string, rejectionReason: stri
 
     const supabase = await createClient();
 
-    // 1. Fetch request details to get email
+    // 1. Fetch request details
     const { data: request, error: fetchErr } = await supabase
       .from('join_requests')
       .select('email, full_name')
@@ -207,10 +212,9 @@ export const rejectJoinRequest = async (requestId: string, rejectionReason: stri
       return { error: statusErr.message };
     }
 
-    // 3. Create or update profile record with 'rejected' role, preventing signup bypass
     const supabaseAdmin = createAdminClient();
-    
-    // Check if profile exists already
+
+    // Check if profile exists already and set to rejected
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('id')
@@ -222,13 +226,16 @@ export const rejectJoinRequest = async (requestId: string, rejectionReason: stri
         .from('profiles')
         .update({ role: 'rejected' })
         .eq('id', profile.id);
-    } else {
-      // Create a dummy / shadow profile entry with the email to block future signups directly
-      // Wait, since auth.users does not exist, profiles FK constraint would fail because id references auth.users!
-      // So we can let profiles be created upon auth signup, but we reject them.
-      // Wait, in signup/actions.ts, let's verify if they are allowed to sign up.
-      // Yes, if we want to block them from signing up directly, we can check join_requests for rejected emails in the signup handler!
     }
+
+    await recordAuditLog({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: 'JOIN_REQUEST_REJECTED',
+      entityType: 'join_request',
+      entityId: requestId,
+      metadata: { targetEmail: request.email, rejectionReason },
+    });
 
     revalidatePath('/admin/users');
     return { success: true };
@@ -247,8 +254,8 @@ export const updateUserProfile = async (
   }
 ) => {
   try {
-    const { error } = await checkAdminAuth();
-    if (error) return { error };
+    const user = await requireUser();
+    requirePermission(user, 'users.write');
 
     const supabaseAdmin = createAdminClient();
 
@@ -275,10 +282,17 @@ export const updateUserProfile = async (
     });
 
     if (authErr) {
-      // It is okay if auth updates fail if email already exists or auth doesn't exist (e.g. shadow profile),
-      // but let's report the error.
       return { error: `Authentication update failed: ${authErr.message}` };
     }
+
+    await recordAuditLog({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: 'USER_PROFILE_UPDATED',
+      entityType: 'user',
+      entityId: profileId,
+      metadata: { newFullName: input.fullName, newRole: input.role },
+    });
 
     revalidatePath('/admin/users');
     revalidatePath('/admin/roster');
@@ -290,8 +304,8 @@ export const updateUserProfile = async (
 
 export const deleteUserDirectly = async (profileId: string) => {
   try {
-    const { error } = await checkAdminAuth();
-    if (error) return { error };
+    const user = await requireUser();
+    requirePermission(user, 'users.write');
 
     const supabaseAdmin = createAdminClient();
 
@@ -313,6 +327,14 @@ export const deleteUserDirectly = async (profileId: string) => {
         return { error: `Authentication account deletion failed: ${authErr.message}` };
       }
     }
+
+    await recordAuditLog({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: 'USER_DELETED',
+      entityType: 'user',
+      entityId: profileId,
+    });
 
     revalidatePath('/admin/users');
     revalidatePath('/admin/roster');

@@ -94,63 +94,80 @@ export async function getConversations(): Promise<{ conversations?: Conversation
     if (convErr) return { error: convErr.message };
     if (!convs || convs.length === 0) return { conversations: [] };
 
-    // Gather all target user IDs
+    // Gather all target user IDs and conversation IDs
     const otherUserIds = convs.map((c) =>
       c.participant_one === user.id ? c.participant_two : c.participant_one
     );
+    const convIds = convs.map((c) => c.id);
 
     const adminSupabase = createAdminClient();
 
-    // Fetch profiles of participants using adminSupabase to bypass RLS restrictions
-    const { data: profiles } = await adminSupabase
-      .from('profiles')
-      .select('id, full_name, avatar_url, voice_part, role')
-      .in('id', otherUserIds);
+    // ✅ FIX: 3 bulk queries instead of N×2 per-conversation queries
+    const [{ data: profiles }, { data: allLastMessages }, { data: allUnreadMessages }] = await Promise.all([
+      // Bulk fetch all participant profiles
+      adminSupabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, voice_part, role')
+        .in('id', otherUserIds),
+      // Bulk fetch all messages (ordered desc) — pick first per conversation in JS
+      supabase
+        .from('messages')
+        .select('body, created_at, sender_id, conversation_id')
+        .in('conversation_id', convIds)
+        .order('created_at', { ascending: false }),
+      // Bulk fetch all unread messages across all conversations
+      supabase
+        .from('messages')
+        .select('conversation_id')
+        .in('conversation_id', convIds)
+        .neq('sender_id', user.id)
+        .is('read_at', null),
+    ]);
 
+    // Build O(1) lookup maps
     const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
 
-    const result: ConversationItem[] = await Promise.all(
-      convs.map(async (c) => {
-        const otherId = c.participant_one === user.id ? c.participant_two : c.participant_one;
-        const fetchedProfile = profileMap.get(otherId);
-        
-        const otherUser = fetchedProfile
-          ? { ...fetchedProfile, isDeletedUser: false }
-          : {
-              id: otherId,
-              full_name: 'Removed Account',
-              avatar_url: null,
-              voice_part: null,
-              role: 'member',
-              isDeletedUser: true,
-            };
+    // Last message per conversation (messages ordered desc — first match wins)
+    const lastMsgMap = new Map<string, { body: string; created_at: string; sender_id: string }>();
+    for (const msg of (allLastMessages || [])) {
+      if (!lastMsgMap.has(msg.conversation_id)) {
+        lastMsgMap.set(msg.conversation_id, {
+          body: msg.body,
+          created_at: msg.created_at,
+          sender_id: msg.sender_id,
+        });
+      }
+    }
 
-        // Fetch last message and unread count concurrently via Promise.all
-        const [{ data: lastMsg }, { count: unreadCount }] = await Promise.all([
-          supabase
-            .from('messages')
-            .select('body, created_at, sender_id')
-            .eq('conversation_id', c.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-          supabase
-            .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('conversation_id', c.id)
-            .neq('sender_id', user.id)
-            .is('read_at', null),
-        ]);
+    // Unread count per conversation
+    const unreadMap = new Map<string, number>();
+    for (const msg of (allUnreadMessages || [])) {
+      unreadMap.set(msg.conversation_id, (unreadMap.get(msg.conversation_id) ?? 0) + 1);
+    }
 
-        return {
-          id: c.id,
-          otherUser,
-          lastMessage: lastMsg || null,
-          unreadCount: unreadCount || 0,
-          last_message_at: c.last_message_at,
-        };
-      })
-    );
+    const result: ConversationItem[] = convs.map((c) => {
+      const otherId = c.participant_one === user.id ? c.participant_two : c.participant_one;
+      const fetchedProfile = profileMap.get(otherId);
+
+      const otherUser = fetchedProfile
+        ? { ...fetchedProfile, isDeletedUser: false }
+        : {
+            id: otherId,
+            full_name: 'Removed Account',
+            avatar_url: null,
+            voice_part: null,
+            role: 'member',
+            isDeletedUser: true,
+          };
+
+      return {
+        id: c.id,
+        otherUser,
+        lastMessage: lastMsgMap.get(c.id) ?? null,
+        unreadCount: unreadMap.get(c.id) ?? 0,
+        last_message_at: c.last_message_at,
+      };
+    });
 
     return { conversations: result };
   } catch (err: any) {

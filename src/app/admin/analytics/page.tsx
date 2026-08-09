@@ -87,9 +87,21 @@ const AdminAnalyticsPage = async () => {
   const presentCount = recordList.filter((r) => r.status === 'present' || r.status === 'late').length;
   const overallAttendanceRate = totalRecords > 0 ? Math.round((presentCount / totalRecords) * 100) : 0;
 
-  // Breakdown by session type
+  // ✅ FIX: Pre-build a Map session_id → records[] for O(1) lookups.
+  // Previous code used .filter() inside .reduce(), causing O(sessions × records) iterations.
+  const recordsBySession = new Map<string, typeof recordList>();
+  for (const record of recordList) {
+    const existing = recordsBySession.get(record.session_id);
+    if (existing) {
+      existing.push(record);
+    } else {
+      recordsBySession.set(record.session_id, [record]);
+    }
+  }
+
+  // Breakdown by session type — now O(sessions) instead of O(sessions × records)
   const attendanceByType = sessionList.reduce((acc, sess) => {
-    const sessRecords = recordList.filter((r) => r.session_id === sess.id);
+    const sessRecords = recordsBySession.get(sess.id) ?? [];
     const total = sessRecords.length;
     const present = sessRecords.filter((r) => r.status === 'present' || r.status === 'late').length;
 
@@ -109,6 +121,10 @@ const AdminAnalyticsPage = async () => {
   // Popular songs calculation
   const songList = songs || [];
   const seqItems = sequenceItems || [];
+
+  // ✅ FIX: Pre-build songMap for O(1) lookups (replaces O(N) .find() inside .map())
+  const songMap = new Map(songList.map((s) => [s.id, s]));
+
   const songCounts = seqItems.reduce((acc, curr) => {
     if (curr.song_id) {
       acc[curr.song_id] = (acc[curr.song_id] || 0) + 1;
@@ -118,7 +134,7 @@ const AdminAnalyticsPage = async () => {
 
   const popularSongs = Object.entries(songCounts)
     .map(([songId, count]) => {
-      const songInfo = songList.find((s) => s.id === songId);
+      const songInfo = songMap.get(songId);
       return {
         title: songInfo?.title || 'Unknown Song',
         category: songInfo?.category || 'General',

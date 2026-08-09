@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { useToast } from '@/components/Toast';
@@ -59,7 +59,24 @@ export const PhotoGallery: React.FC<Props> = ({
   const visiblePhotos = photos.slice(gridPage * MAX_PER_PAGE, gridPage * MAX_PER_PAGE + MAX_PER_PAGE);
   const selectedPhoto = selectedIndex !== null && photos[selectedIndex] ? photos[selectedIndex] : null;
 
-  // Keyboard navigation for Lightbox
+  // ✅ FIX: Store photos and selectedIndex in refs so navigation handlers are stable
+  // (don't change identity on every render), preventing listener re-attach on every keystroke.
+  const photosRef = useRef(photos);
+  const selectedIndexRef = useRef(selectedIndex);
+  photosRef.current = photos;
+  selectedIndexRef.current = selectedIndex;
+
+  const handlePrevPhoto = useCallback(() => {
+    if (selectedIndexRef.current === null || photosRef.current.length <= 1) return;
+    setSelectedIndex((prev) => (prev! > 0 ? prev! - 1 : photosRef.current.length - 1));
+  }, []);
+
+  const handleNextPhoto = useCallback(() => {
+    if (selectedIndexRef.current === null || photosRef.current.length <= 1) return;
+    setSelectedIndex((prev) => (prev! < photosRef.current.length - 1 ? prev! + 1 : 0));
+  }, []);
+
+  // Keyboard navigation for Lightbox — listener attached/detached only when lightbox opens/closes
   useEffect(() => {
     if (selectedIndex === null) return;
 
@@ -75,17 +92,7 @@ export const PhotoGallery: React.FC<Props> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedIndex, photos.length]);
-
-  const handlePrevPhoto = () => {
-    if (selectedIndex === null || photos.length <= 1) return;
-    setSelectedIndex((prev) => (prev! > 0 ? prev! - 1 : photos.length - 1));
-  };
-
-  const handleNextPhoto = () => {
-    if (selectedIndex === null || photos.length <= 1) return;
-    setSelectedIndex((prev) => (prev! < photos.length - 1 ? prev! + 1 : 0));
-  };
+  }, [selectedIndex, handlePrevPhoto, handleNextPhoto]);
 
   // Touch swipe handler for Lightbox & Grid
   const handleTouchStart = (e: React.TouchEvent) => {

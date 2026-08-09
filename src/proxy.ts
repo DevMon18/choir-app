@@ -48,7 +48,10 @@ export const proxy = async (request: NextRequest) => {
     path.endsWith('.ico') ||
     path.endsWith('.png') ||
     path.endsWith('.jpg') ||
-    path.endsWith('.svg')
+    path.endsWith('.svg') ||
+    path.endsWith('.webmanifest') ||
+    path.endsWith('.json') ||
+    path === '/manifest.webmanifest'
   ) {
     return supabaseResponse;
   }

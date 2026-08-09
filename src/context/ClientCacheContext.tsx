@@ -5,10 +5,12 @@ import React, { createContext, useContext, useState, useRef, useEffect, useCallb
 interface CacheItem<T = any> {
   data: T;
   timestamp: number;
+  version: number;
 }
 
 interface ClientCacheContextType {
   getCachedData: <T>(key: string) => T | null;
+  getCachedVersion: (key: string) => number;
   setCachedData: <T>(key: string, data: T) => void;
   invalidateCache: (key: string) => void;
   clearCache: () => void;
@@ -25,8 +27,17 @@ export const ClientCacheProvider = ({ children }: { children: React.ReactNode })
     return item.data as T;
   }, []);
 
+  const getCachedVersion = useCallback((key: string): number => {
+    return cacheRef.current.get(key)?.version ?? -1;
+  }, []);
+
   const setCachedData = useCallback(<T,>(key: string, data: T) => {
-    cacheRef.current.set(key, { data, timestamp: Date.now() });
+    const existing = cacheRef.current.get(key);
+    cacheRef.current.set(key, {
+      data,
+      timestamp: Date.now(),
+      version: (existing?.version ?? -1) + 1,
+    });
   }, []);
 
   const invalidateCache = useCallback((key: string) => {
@@ -38,29 +49,39 @@ export const ClientCacheProvider = ({ children }: { children: React.ReactNode })
   }, []);
 
   return (
-    <ClientCacheContext.Provider value={{ getCachedData, setCachedData, invalidateCache, clearCache }}>
+    <ClientCacheContext.Provider value={{ getCachedData, getCachedVersion, setCachedData, invalidateCache, clearCache }}>
       {children}
     </ClientCacheContext.Provider>
   );
 };
 
+const fallbackContext: ClientCacheContextType = {
+  getCachedData: () => null,
+  getCachedVersion: () => -1,
+  setCachedData: () => {},
+  invalidateCache: () => {},
+  clearCache: () => {},
+};
+
 export const useClientCacheContext = () => {
   const ctx = useContext(ClientCacheContext);
-  if (!ctx) {
-    throw new Error('useClientCacheContext must be used within a ClientCacheProvider');
-  }
-  return ctx;
+  return ctx || fallbackContext;
 };
 
 /**
- * Facebook-style SWR hook for Instant 0ms Client Navigation
- * Returns cached data immediately on revisit, while accepting incoming fresh data from server
+ * Facebook-style SWR hook for Instant 0ms Client Navigation.
+ * Returns cached data immediately on revisit, while accepting fresh data from server.
+ * ✅ FIX: Uses version counter instead of JSON.stringify for change detection —
+ * avoids serializing entire datasets (songs, members) into strings on every render.
  */
 export function useClientCache<T>(key: string, initialServerData: T): {
   data: T;
   updateData: (action: React.SetStateAction<T>) => void;
 } {
-  const { getCachedData, setCachedData } = useClientCacheContext();
+  const { getCachedData, getCachedVersion, setCachedData } = useClientCacheContext();
+
+  // Track the version of server data we last synced from
+  const serverVersionRef = useRef<number>(-1);
 
   // Initialize state from client memory cache if present; fallback to initialServerData
   const [data, setData] = useState<T>(() => {
@@ -69,28 +90,33 @@ export function useClientCache<T>(key: string, initialServerData: T): {
     return initialServerData;
   });
 
-  // Save server data or initial data into cache on mount or when server payload changes
+  // Sync server data into cache when it changes, using version counters not JSON.stringify
   useEffect(() => {
     const cached = getCachedData<T>(key);
-    if (!cached) {
+    const cachedVersion = getCachedVersion(key);
+
+    if (cached === null) {
+      // First mount — prime the cache
       setCachedData(key, initialServerData);
-      setData(initialServerData);
-    } else if (JSON.stringify(cached) !== JSON.stringify(initialServerData)) {
-      // Sync background revalidation from server seamlessly
+      serverVersionRef.current = getCachedVersion(key);
+    } else if (cachedVersion !== serverVersionRef.current) {
+      // Cache was updated externally (e.g. by another component or background revalidation)
       setCachedData(key, initialServerData);
-      setData(initialServerData);
+      queueMicrotask(() => setData(initialServerData));
+      serverVersionRef.current = getCachedVersion(key);
     }
-  }, [key, initialServerData, getCachedData, setCachedData]);
+  }, [key, initialServerData, getCachedData, getCachedVersion, setCachedData]);
 
   const updateData = useCallback(
     (action: React.SetStateAction<T>) => {
       setData((prev) => {
         const next = typeof action === 'function' ? (action as (p: T) => T)(prev) : action;
         setCachedData(key, next);
+        serverVersionRef.current = getCachedVersion(key);
         return next;
       });
     },
-    [key, setCachedData]
+    [key, setCachedData, getCachedVersion]
   );
 
   return { data, updateData };

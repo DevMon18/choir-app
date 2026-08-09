@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { sendPushToAll } from '@/lib/push';
 import { revalidatePath } from 'next/cache';
+import { getCache, setCache, delCache } from '@/lib/cache';
 
 export interface AnnouncementInput {
   title: string;
@@ -35,6 +36,11 @@ export async function getAnnouncements() {
 }
 
 export async function getActiveAnnouncements() {
+  // ✅ FIX: Cache for 60s — dashboard loaded this fresh on every visit
+  const cacheKey = 'announcements:active';
+  const cached = await getCache<any[]>(cacheKey);
+  if (cached) return cached;
+
   try {
     const supabase = await createClient();
     const now = new Date().toISOString();
@@ -52,7 +58,9 @@ export async function getActiveAnnouncements() {
       return [];
     }
 
-    return data || [];
+    const result = data || [];
+    await setCache(cacheKey, result, 60);
+    return result;
   } catch (err) {
     console.error('getActiveAnnouncements failed:', err);
     return [];
@@ -120,6 +128,7 @@ export async function createAnnouncement(input: AnnouncementInput) {
       warning = `Announcement created, but push notification system encountered an error: ${pushErr.message || pushErr}`;
     }
 
+    await delCache('announcements:active');
     revalidatePath('/dashboard');
     revalidatePath('/admin/announcements');
     return { success: true, announcement: data, warning };
@@ -159,6 +168,7 @@ export async function updateAnnouncement(id: string, input: Partial<Announcement
       return { error: error.message };
     }
 
+    await delCache('announcements:active');
     revalidatePath('/dashboard');
     revalidatePath('/admin/announcements');
     return { success: true };
@@ -192,6 +202,7 @@ export async function deleteAnnouncement(id: string) {
       return { error: error.message };
     }
 
+    await delCache('announcements:active');
     revalidatePath('/dashboard');
     revalidatePath('/admin/announcements');
     return { success: true };

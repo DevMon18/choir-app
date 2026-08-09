@@ -14,25 +14,34 @@ export interface CategoryItem {
 
 const getAdminClient = async () => {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase, user: null, profile: null, error: 'Not authenticated' };
+  const { requireUser, requirePermission } = await import('@/lib/auth/permissions');
+  
+  const user = await requireUser();
+  requirePermission(user, 'songs.write');
 
   const rateLimit = await checkRateLimitMutation(user.id);
   if (!rateLimit.success) {
     return { supabase, user, profile: null, error: 'Rate limit exceeded. Please slow down.' };
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  const canEdit = ['super_admin', 'director', 'secretary'].includes(profile?.role ?? '');
-  if (!canEdit) return { supabase, user, profile, error: 'Insufficient permissions' };
-
-  return { supabase, user, profile, error: null };
+  return { supabase, user, profile: { role: user.role }, error: null };
 };
+
+const LITURGICAL_MASS_PARTS = [
+  'Entrance Song',
+  'Kyrie',
+  'Gloria',
+  'Responsorial Psalm',
+  'Gospel Acclamation (Alleluia or Praise to You)',
+  'Offertory / Presentation Song',
+  'Sanctus',
+  'Memorial Acclamation',
+  'Great Amen',
+  "Lord's Prayer",
+  'Lamb of God',
+  'Communion Song',
+  'Recessional / Closing Song',
+] as const;
 
 export const listCategories = async () => {
   try {
@@ -41,13 +50,46 @@ export const listCategories = async () => {
     if (!user) return { error: 'Not authenticated', categories: [] };
 
     // Fetch categories with usage song count
-    const { data: categories, error } = await supabase
+    let { data: categories, error } = await supabase
       .from('song_categories')
       .select('id, name, sort_order, created_at, song_category_links(song_id)')
       .order('sort_order', { ascending: true })
       .order('name', { ascending: true });
 
     if (error) return { error: error.message, categories: [] };
+
+    // Auto-seed missing required Liturgical Mass Part categories
+    const existingNames = new Set((categories || []).map((c: any) => c.name));
+    const missingParts = LITURGICAL_MASS_PARTS.filter((name) => !existingNames.has(name));
+
+    if (missingParts.length > 0) {
+      try {
+        const { createAdminClient } = await import('@/lib/supabase/admin');
+        const adminSupabase = createAdminClient();
+        let maxSortOrder = (categories || []).reduce((max: number, c: any) => Math.max(max, c.sort_order ?? 0), 0);
+
+        const newRecords = missingParts.map((name) => {
+          maxSortOrder += 1;
+          return {
+            name,
+            sort_order: maxSortOrder,
+          };
+        });
+
+        await adminSupabase.from('song_categories').insert(newRecords);
+
+        // Re-fetch after seeding missing categories
+        const { data: refreshed } = await supabase
+          .from('song_categories')
+          .select('id, name, sort_order, created_at, song_category_links(song_id)')
+          .order('sort_order', { ascending: true })
+          .order('name', { ascending: true });
+
+        if (refreshed) categories = refreshed;
+      } catch (seedErr) {
+        console.error('Failed to auto-seed missing liturgical categories:', seedErr);
+      }
+    }
 
     const formatted: CategoryItem[] = (categories || []).map((cat: any) => ({
       id: cat.id,

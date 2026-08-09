@@ -21,12 +21,12 @@ const RepertoirePage = async ({ searchParams }: PageProps) => {
   if (!currentProfile) redirect('/login');
   if (['pending', 'rejected'].includes(currentProfile.role)) redirect('/dashboard');
 
-  const cacheKey = `repertoire:all_songs${query ? `:${query}` : ''}`;
+  const cacheKey = 'repertoire:all_songs';
   let mappedSongs = await getCache<any[]>(cacheKey);
 
   if (!mappedSongs) {
     const supabase = await createClient();
-    let songsQuery = supabase
+    const rawSongsRes = await supabase
       .from('songs')
       .select(`
         id, title, composer, category, lyrics,
@@ -37,14 +37,6 @@ const RepertoirePage = async ({ searchParams }: PageProps) => {
       .eq('is_archived', false)
       .order('title');
 
-    if (query) {
-      songsQuery = songsQuery.textSearch('lyrics_tsv', query, {
-        type: 'plain',
-        config: 'english',
-      });
-    }
-
-    const rawSongsRes = await songsQuery;
     if (rawSongsRes.error) console.error('Error fetching songs:', rawSongsRes.error);
 
     mappedSongs = (rawSongsRes.data || []).map((s: any) => ({

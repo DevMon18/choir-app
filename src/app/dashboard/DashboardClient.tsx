@@ -156,7 +156,7 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
       setCoverPosition(coverPosition); // revert
     } else {
       addToast({ type: 'success', title: 'Position Saved', message: 'Cover photo position updated.' });
-      router.refresh();
+      // No router.refresh() needed — position is local state already updated optimistically
     }
   };
 
@@ -173,9 +173,8 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
     if (res.error) {
       addToast({ type: 'error', title: 'Save Failed', message: 'Failed to save interest: ' + res.error });
       setInterests(interests); // revert
-    } else {
-      router.refresh();
     }
+    // No router.refresh() — interests are local state already updated optimistically
   };
 
   const handleRemoveInterest = async (interestToRemove: string) => {
@@ -186,9 +185,8 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
     if (res.error) {
       addToast({ type: 'error', title: 'Update Failed', message: 'Failed to remove interest: ' + res.error });
       setInterests(interests); // revert
-    } else {
-      router.refresh();
     }
+    // No router.refresh() — interests are local state already updated optimistically
   };
 
   return (

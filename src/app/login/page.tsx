@@ -120,7 +120,7 @@ const LoginPage = () => {
         onMouseLeave={handleMouseLeave}
       >
         <div className="auth-header stagger-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-          <img src="/logo.png" alt="Choir Collective Logo" style={{ width: '84px', height: '84px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)', boxShadow: 'var(--card-shadow)' }} />
+          <img src="/collective-logo.png" alt="Choir Collective Logo" style={{ width: '84px', height: '84px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)', boxShadow: 'var(--card-shadow)' }} />
           <div>
             <h1 className="auth-title">Choir Collective</h1>
             <p className="auth-subtitle">Sign in to your account to continue</p>
