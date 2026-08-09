@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { ChordProRenderer, ChordProControls, usePersistedFontSize } from '@/components/ChordProRenderer';
+import { ChordProRenderer, ChordProControls, usePersistedFontSize, usePersistedFontWeight } from '@/components/ChordProRenderer';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { SongCategory } from '@/app/admin/songs/SongForm';
@@ -39,6 +39,7 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
   // Custom states for rendering customization
   const [semitones, setSemitones] = useState(0);
   const [fontSize, setFontSize] = usePersistedFontSize('choir_chordpro_fontsize', 16);
+  const [fontWeight, setFontWeight] = usePersistedFontWeight('choir_chordpro_fontweight', 600);
   const [showChords, setShowChords] = useState(true);
 
   useEffect(() => {
@@ -148,6 +149,8 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
             onSemitonesChange={setSemitones}
             fontSize={fontSize}
             onFontSizeChange={setFontSize}
+            fontWeight={fontWeight}
+            onFontWeightChange={setFontWeight}
             showChords={showChords}
             onShowChordsChange={setShowChords}
           />
@@ -169,6 +172,7 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
               lyrics={song.lyrics}
               semitones={semitones}
               fontSize={fontSize}
+              fontWeight={fontWeight}
               showChords={showChords}
             />
           ) : (

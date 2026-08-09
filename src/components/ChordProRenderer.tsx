@@ -33,6 +33,10 @@ const transposeChord = (chord: string, semitones: number): string => {
   return newRoot + suffix;
 };
 
+// High-legibility modern monospace font stack with clear letterforms and thick stroke options
+const MONOSPACE_FONT_FAMILY =
+  'ui-monospace, "JetBrains Mono", "SF Mono", "Fira Code", "Roboto Mono", Consolas, "Courier New", monospace';
+
 // ---------------------------------------------------------------------------
 // ChordPro parser
 // Converts a ChordPro line into an exact monospace chordLine and lyricLine
@@ -98,6 +102,7 @@ interface ChordProRendererProps {
   lyrics: string;
   semitones?: number;         // -6 to +6
   fontSize?: number;          // px
+  fontWeight?: number;        // 600 (Semi-Bold), 700 (Bold), 800 (Extra Bold)
   showChords?: boolean;
 }
 
@@ -109,6 +114,7 @@ export const ChordProRenderer = ({
   lyrics,
   semitones = 0,
   fontSize = 16,
+  fontWeight = 600,
   showChords = true,
 }: ChordProRendererProps) => {
   const lines = lyrics.split('\n');
@@ -116,7 +122,7 @@ export const ChordProRenderer = ({
   return (
     <div
       style={{
-        fontFamily: '"Courier New", Courier, monospace',
+        fontFamily: MONOSPACE_FONT_FAMILY,
         fontSize: `${fontSize}px`,
         lineHeight: 1.6,
         whiteSpace: 'pre-wrap',
@@ -162,9 +168,9 @@ export const ChordProRenderer = ({
             {hasChords && showChords && (
               <div
                 style={{
-                  fontFamily: '"Courier New", Courier, monospace',
+                  fontFamily: MONOSPACE_FONT_FAMILY,
                   fontSize: `${fontSize}px`,
-                  fontWeight: 700,
+                  fontWeight: Math.min(900, fontWeight + 100),
                   color: 'var(--primary)',
                   whiteSpace: 'pre',
                   lineHeight: 1.2,
@@ -178,9 +184,9 @@ export const ChordProRenderer = ({
             {/* Lyric row */}
             <div
               style={{
-                fontFamily: '"Courier New", Courier, monospace',
+                fontFamily: MONOSPACE_FONT_FAMILY,
                 fontSize: `${fontSize}px`,
-                fontWeight: 500,
+                fontWeight: fontWeight,
                 color: 'var(--foreground)',
                 whiteSpace: 'pre-wrap',
                 lineHeight: 1.35,
@@ -197,7 +203,7 @@ export const ChordProRenderer = ({
 };
 
 // ---------------------------------------------------------------------------
-// Controls bar — transposition + font size (exported separately for reuse)
+// Controls bar — transposition + font size + boldness weight (exported separately)
 // ---------------------------------------------------------------------------
 
 interface ChordProControlsProps {
@@ -205,6 +211,8 @@ interface ChordProControlsProps {
   onSemitonesChange: (s: number) => void;
   fontSize: number;
   onFontSizeChange: (s: number) => void;
+  fontWeight?: number;
+  onFontWeightChange?: (w: number) => void;
   showChords: boolean;
   onShowChordsChange: (v: boolean) => void;
   storageKey?: string;
@@ -215,33 +223,33 @@ export const ChordProControls = ({
   onSemitonesChange,
   fontSize,
   onFontSizeChange,
+  fontWeight = 600,
+  onFontWeightChange,
   showChords,
   onShowChordsChange,
 }: ChordProControlsProps) => {
-  const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const baseKey = NOTE_NAMES[0]; // display relative shift
-
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '20px',
+        gap: '16px',
         flexWrap: 'wrap',
-        padding: '12px 20px',
-        background: 'rgba(255,255,255,0.7)',
-        borderRadius: '12px',
+        padding: '12px 18px',
+        background: 'rgba(255,255,255,0.75)',
+        borderRadius: '14px',
         border: '1px solid var(--glass-border)',
         backdropFilter: 'blur(8px)',
-        marginBottom: '24px',
+        marginBottom: '20px',
       }}
     >
       {/* Transpose */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--muted)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           KEY
         </span>
         <button
+          type="button"
           onClick={() => onSemitonesChange(Math.max(-6, semitones - 1))}
           style={controlBtnStyle}
           aria-label="Transpose down one semitone"
@@ -254,12 +262,13 @@ export const ChordProControls = ({
             textAlign: 'center',
             fontWeight: 700,
             color: 'var(--primary)',
-            fontSize: '0.95rem',
+            fontSize: '0.92rem',
           }}
         >
           {semitones === 0 ? 'Original' : semitones > 0 ? `+${semitones}` : semitones}
         </span>
         <button
+          type="button"
           onClick={() => onSemitonesChange(Math.min(6, semitones + 1))}
           style={controlBtnStyle}
           aria-label="Transpose up one semitone"
@@ -268,6 +277,7 @@ export const ChordProControls = ({
         </button>
         {semitones !== 0 && (
           <button
+            type="button"
             onClick={() => onSemitonesChange(0)}
             style={{ ...controlBtnStyle, color: 'var(--muted)', fontSize: '0.7rem' }}
             aria-label="Reset transposition"
@@ -278,23 +288,25 @@ export const ChordProControls = ({
       </div>
 
       {/* Divider */}
-      <div style={{ width: '1px', height: '24px', background: 'var(--glass-border)' }} />
+      <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
 
       {/* Font size */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--muted)' }}>SIZE</span>
+        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>SIZE</span>
         <button
+          type="button"
           onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))}
           style={controlBtnStyle}
           aria-label="Decrease font size"
         >
           A−
         </button>
-        <span style={{ minWidth: '32px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
+        <span style={{ minWidth: '32px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 700 }}>
           {fontSize}px
         </span>
         <button
-          onClick={() => onFontSizeChange(Math.min(30, fontSize + 2))}
+          type="button"
+          onClick={() => onFontSizeChange(Math.min(32, fontSize + 2))}
           style={controlBtnStyle}
           aria-label="Increase font size"
         >
@@ -302,8 +314,44 @@ export const ChordProControls = ({
         </button>
       </div>
 
+      {/* Font Weight / Boldness */}
+      {onFontWeightChange && (
+        <>
+          {/* Divider */}
+          <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--muted)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              WEIGHT
+            </span>
+            {[
+              { label: 'Normal', val: 600 },
+              { label: 'Bold', val: 700 },
+              { label: 'Extra Bold', val: 800 },
+            ].map(({ label, val }) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => onFontWeightChange(val)}
+                style={{
+                  ...controlBtnStyle,
+                  fontWeight: val,
+                  padding: '4px 9px',
+                  fontSize: '0.78rem',
+                  background: fontWeight === val ? 'var(--primary)' : 'rgba(255,255,255,0.85)',
+                  color: fontWeight === val ? '#ffffff' : 'var(--primary)',
+                  borderColor: fontWeight === val ? 'var(--primary)' : 'var(--glass-border)',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* Divider */}
-      <div style={{ width: '1px', height: '24px', background: 'var(--glass-border)' }} />
+      <div style={{ width: '1px', height: '22px', background: 'var(--glass-border)' }} />
 
       {/* Chords toggle */}
       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
@@ -311,9 +359,9 @@ export const ChordProControls = ({
           type="checkbox"
           checked={showChords}
           onChange={(e) => onShowChordsChange(e.target.checked)}
-          style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }}
+          style={{ accentColor: 'var(--primary)', width: '16px', height: '16px', cursor: 'pointer' }}
         />
-        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)' }}>Show Chords</span>
+        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--muted)' }}>Show Chords</span>
       </label>
     </div>
   );
@@ -321,18 +369,18 @@ export const ChordProControls = ({
 
 const controlBtnStyle: React.CSSProperties = {
   padding: '4px 10px',
-  borderRadius: '6px',
+  borderRadius: '8px',
   border: '1px solid var(--glass-border)',
-  background: 'rgba(255,255,255,0.8)',
+  background: 'rgba(255,255,255,0.85)',
   cursor: 'pointer',
-  fontSize: '0.85rem',
-  fontWeight: 600,
+  fontSize: '0.82rem',
+  fontWeight: 700,
   color: 'var(--primary)',
-  transition: 'background 0.15s',
+  transition: 'all 0.15s ease',
 };
 
 // ---------------------------------------------------------------------------
-// Hook: persist font size in localStorage
+// Hooks: persist font size & weight in localStorage
 // ---------------------------------------------------------------------------
 
 export const usePersistedFontSize = (key: string, defaultSize = 16) => {
@@ -342,7 +390,7 @@ export const usePersistedFontSize = (key: string, defaultSize = 16) => {
     const stored = localStorage.getItem(key);
     if (stored) {
       const n = parseInt(stored, 10);
-      if (!isNaN(n) && n >= 12 && n <= 30) setFontSize(n);
+      if (!isNaN(n) && n >= 12 && n <= 32) setFontSize(n);
     }
   }, [key]);
 
@@ -352,6 +400,25 @@ export const usePersistedFontSize = (key: string, defaultSize = 16) => {
   };
 
   return [fontSize, updateFontSize] as const;
+};
+
+export const usePersistedFontWeight = (key: string, defaultWeight = 600) => {
+  const [fontWeight, setFontWeight] = useState(defaultWeight);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const n = parseInt(stored, 10);
+      if (!isNaN(n) && (n === 600 || n === 700 || n === 800)) setFontWeight(n);
+    }
+  }, [key]);
+
+  const updateFontWeight = (weight: number) => {
+    setFontWeight(weight);
+    localStorage.setItem(key, String(weight));
+  };
+
+  return [fontWeight, updateFontWeight] as const;
 };
 
 export default ChordProRenderer;

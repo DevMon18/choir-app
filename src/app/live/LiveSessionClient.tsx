@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { ChordProRenderer } from '@/components/ChordProRenderer';
+import { ChordProRenderer, ChordProControls, usePersistedFontSize, usePersistedFontWeight } from '@/components/ChordProRenderer';
 import Link from 'next/link';
 import { logout } from '../actions';
 import { updateLiveSession } from '../admin/sequences/actions';
@@ -65,6 +65,10 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
   const [manualScroll, setManualScroll] = useState(false);
   const [localShowChords, setLocalShowChords] = useState<boolean | null>(null);
   const [showNextLyrics, setShowNextLyrics] = useState(false);
+
+  // Persisted accessibility controls for font size & weight in Live Sync
+  const [fontSize, setFontSize] = usePersistedFontSize('choir_live_fontsize', 18);
+  const [fontWeight, setFontWeight] = usePersistedFontWeight('choir_live_fontweight', 600);
 
   // Reset next lyrics preview when the active song changes
   useEffect(() => {
@@ -425,11 +429,36 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                     </div>
                   )}
 
+                  {/* Live Customizer Bar for Font Size, Weight & Key */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <ChordProControls
+                      semitones={session.director_semitones}
+                      onSemitonesChange={async (st) => {
+                        if (isDirector) {
+                          setSession(p => p ? { ...p, director_semitones: st } : null);
+                          await updateLiveSession(session.id, { director_semitones: st });
+                        }
+                      }}
+                      fontSize={fontSize}
+                      onFontSizeChange={setFontSize}
+                      fontWeight={fontWeight}
+                      onFontWeightChange={setFontWeight}
+                      showChords={isChordsVisible}
+                      onShowChordsChange={(val) => {
+                        setLocalShowChords(val);
+                        if (isDirector) {
+                          updateLiveSession(session.id, { show_chords: val });
+                        }
+                      }}
+                    />
+                  </div>
+
                   {activeSong.lyrics ? (
                     <ChordProRenderer
                       lyrics={activeSong.lyrics}
                       semitones={session.director_semitones}
-                      fontSize={18} // slightly larger font size for lyrics on the music stand!
+                      fontSize={fontSize}
+                      fontWeight={fontWeight}
                       showChords={isChordsVisible}
                     />
                   ) : (
