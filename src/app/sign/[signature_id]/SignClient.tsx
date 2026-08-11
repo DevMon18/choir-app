@@ -437,7 +437,7 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
           {pdfSignedUrl ? (
             <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--glass-border)', background: '#ffffff' }}>
               <iframe
-                src={pdfSignedUrl}
+                src={`https://docs.google.com/viewer?url=${encodeURIComponent(pdfSignedUrl)}&embedded=true`}
                 className="docs-preview-iframe"
                 style={{ width: '100%', height: '420px', minHeight: '300px', border: 'none' }}
                 title={doc.title}
