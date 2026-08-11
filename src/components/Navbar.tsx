@@ -19,6 +19,7 @@ import {
   Calendar,
   Radio,
   FileMusic,
+  FileText,
   MessageSquare,
   ShieldCheck,
   ChevronDown
@@ -44,6 +45,8 @@ const getAdminItems = (role: Role) => {
     { href: '/admin/songs',     label: 'Songs',         icon: <Music2 size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
     { href: '/admin/sequences', label: 'Sequences',     icon: <Mic size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
     { href: '/admin/announcements', label: 'Announcements', icon: <Megaphone size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
+    { href: '/admin/documents', label: 'Documents',     icon: <FileText size={iconSize} />, roles: ['super_admin', 'director'] },
+    { href: '/admin/verifications', label: 'Verifications', icon: <ShieldCheck size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
     { href: '/admin/finances',  label: 'Finances',      icon: <DollarSign size={iconSize} />, roles: ['super_admin', 'director', 'treasurer'] },
     { href: '/admin/analytics', label: 'Analytics',     icon: <BarChart3 size={iconSize} />, roles: ['super_admin', 'director', 'secretary', 'treasurer'] },
   ];
@@ -164,6 +167,9 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               </svg>
             }
           />
+          {profile.role !== 'super_admin' && (
+            <NavLink href="/my-documents" label="Waivers" pathname={pathname} matchFn={p => p === '/my-documents' || p.startsWith('/sign')} icon={<FileText size={16} />} />
+          )}
           <NavLink href="/profile" label="Profile" pathname={pathname} icon={
             <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -315,6 +321,14 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                 <span>My Dues & Finances</span>
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
+
+              {profile.role !== 'super_admin' && (
+                <Link href="/my-documents" className={`mobile-sheet-link ${pathname === '/my-documents' || pathname.startsWith('/sign') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
+                  <span className="mobile-sheet-link-icon">📄</span>
+                  <span>My Documents &amp; Waivers</span>
+                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </Link>
+              )}
 
               {hasAdminAccess(profile.role) && (
                 <>

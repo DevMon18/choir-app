@@ -117,14 +117,20 @@ body {
 }
 
 .input-label {
+  display: block;
+  width: 100%;
   font-size: 0.825rem;
   font-weight: 600;
   color: var(--muted);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  margin-bottom: 6px;
 }
 
 .input-field {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(11, 77, 36, 0.1);
   border-radius: 10px;
@@ -1849,5 +1855,64 @@ input::-webkit-contacts-auto-fill-button {
   }
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Documents Manager: primary action FAB (mobile) / header button (desktop)
+   Mirrors the ann-mobile-fab / ann-desktop-create pattern exactly.
+────────────────────────────────────────────── */
 
+.docs-mobile-fab {
+  display: none; /* hidden on desktop */
+}
 
+.docs-desktop-create {
+  display: flex; /* visible on desktop */
+}
+
+@media (max-width: 768px) {
+  .docs-mobile-fab {
+    display: flex;
+    position: fixed;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 150;
+    min-height: 52px;
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 99px;
+    box-shadow: 0 8px 24px rgba(11, 77, 36, 0.35);
+    white-space: nowrap;
+    align-items: center;
+    justify-content: center;
+  }
+  .docs-desktop-create {
+    display: none;
+  }
+
+  /* Documents Mobile Modals & Actions Touch Optimization */
+  .docs-modal-container {
+    padding: 20px 16px !important;
+    max-height: 94vh !important;
+    border-radius: 20px !important;
+  }
+
+  .docs-preview-iframe {
+    height: 50vh !important;
+    min-height: 260px !important;
+  }
+
+  .docs-table-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+
+  .docs-table-actions button {
+    flex: 1 1 auto !important;
+    min-height: 46px !important;
+    padding: 8px 12px !important;
+    font-size: 0.85rem !important;
+    justify-content: center !important;
+  }
+}

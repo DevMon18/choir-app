@@ -22,11 +22,12 @@ const DashboardPage = async () => {
 
   const supabase = await createClient();
 
-  // Fetch fullProfile, rawPhotos, and announcements concurrently via Promise.all
+  // Fetch fullProfile, rawPhotos, announcements, and pendingSignatures concurrently via Promise.all
   const [
     { data: fullProfile },
     { data: rawPhotos },
     announcements,
+    { data: rawPendingSignatures },
   ] = await Promise.all([
     supabase
       .from('profiles')
@@ -39,6 +40,11 @@ const DashboardPage = async () => {
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false }),
     getActiveAnnouncements(),
+    supabase
+      .from('document_signatures')
+      .select('id, status, created_at, documents:document_id(id, title, type, expires_at)')
+      .eq('primary_member_id', profile.id)
+      .order('created_at', { ascending: false }),
   ]);
 
   const initialPhotos = (rawPhotos || []).map((p) => {
@@ -70,6 +76,7 @@ const DashboardPage = async () => {
       initialPhotos={initialPhotos}
       isAdmin={isAdmin}
       announcements={announcements}
+      pendingSignatures={(rawPendingSignatures as any) || []}
     />
   );
 };
