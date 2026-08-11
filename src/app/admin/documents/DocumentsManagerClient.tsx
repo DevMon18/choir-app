@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { Navbar } from '@/components/Navbar';
 import { useToast } from '@/components/Toast';
 import { ConfirmModal } from '@/components/ConfirmModal';
+import { PdfCanvasViewer } from '@/components/PdfCanvasViewer';
 import {
   uploadDocumentAction,
   deleteDocumentAction,
@@ -421,32 +422,7 @@ const DocPreviewModal = ({ document, onClose }: DocPreviewModalProps) => {
           ) : errorMsg ? (
             <div className="alert alert-error" style={{ margin: 'auto' }}>{errorMsg}</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '10px' }}>
-              {/* Mobile Quick Action Banner */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(11,77,36,0.08)', borderRadius: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
-                  📱 Viewing PDF Document
-                </span>
-                <a
-                  href={signedUrl!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-primary"
-                  style={{ fontSize: '0.78rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                >
-                  <span>Open / Download PDF ↗</span>
-                </a>
-              </div>
-
-              <div style={{ flex: 1, position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--glass-border)', background: '#ffffff', minHeight: '350px' }}>
-                <iframe
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(signedUrl!)}&embedded=true`}
-                  className="docs-preview-iframe"
-                  style={{ width: '100%', height: '65vh', minHeight: '350px', border: 'none' }}
-                  title={document.title}
-                />
-              </div>
-            </div>
+            <PdfCanvasViewer url={signedUrl!} title={document.title} height="55vh" />
           )}
         </div>
       </div>

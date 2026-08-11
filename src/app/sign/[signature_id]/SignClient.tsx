@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { useToast } from '@/components/Toast';
+import { PdfCanvasViewer } from '@/components/PdfCanvasViewer';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import {
   submitSignatureAction,
@@ -417,34 +418,11 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
         </div>
 
         {/* PDF Document Viewer Container */}
-        <div className="glass-container" style={{ padding: '20px', marginBottom: '28px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
-              📄 Read Document Template
-            </h3>
-            {pdfSignedUrl && (
-              <a
-                href={pdfSignedUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontSize: '0.8rem', color: 'var(--primary)', textDecoration: 'underline', fontWeight: 600 }}
-              >
-                Open Full PDF ↗
-              </a>
-            )}
-          </div>
-
+        <div style={{ marginBottom: '28px' }}>
           {pdfSignedUrl ? (
-            <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--glass-border)', background: '#ffffff' }}>
-              <iframe
-                src={`https://docs.google.com/viewer?url=${encodeURIComponent(pdfSignedUrl)}&embedded=true`}
-                className="docs-preview-iframe"
-                style={{ width: '100%', height: '420px', minHeight: '300px', border: 'none' }}
-                title={doc.title}
-              />
-            </div>
+            <PdfCanvasViewer url={pdfSignedUrl} title={doc.title} height="420px" />
           ) : (
-            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
+            <div className="glass-container" style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
               PDF preview unavailable. Please proceed to sign below.
             </div>
           )}
