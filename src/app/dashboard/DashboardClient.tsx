@@ -52,6 +52,7 @@ interface Profile {
 export interface PendingSignatureItem {
   id: string;
   status: 'pending' | 'submitted' | 'verified' | 'verified_manual' | 'rejected';
+  is_archived?: boolean;
   created_at: string;
   documents: {
     id: string;
@@ -651,13 +652,36 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                         </p>
                       </div>
 
-                      <Link
-                        href={`/sign/${sig.id}`}
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.8rem', padding: '6px 14px', fontWeight: 600 }}
-                      >
-                        {isPending ? 'Sign Document →' : 'View Submission →'}
-                      </Link>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Link
+                          href={`/sign/${sig.id}`}
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.8rem', padding: '6px 14px', fontWeight: 600 }}
+                        >
+                          {isPending ? 'Sign Document →' : 'View Submission →'}
+                        </Link>
+
+                        {(sig.status === 'verified' || sig.status === 'verified_manual') && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const { toggleArchiveSignatureAction } = await import('@/app/my-documents/actions');
+                              const res = await toggleArchiveSignatureAction(sig.id);
+                              if (res.success) {
+                                addToast({ type: 'success', title: 'Waiver Archived', message: 'Moved off your home dashboard feed. Access anytime under My Documents.' });
+                                router.refresh();
+                              } else if (res.error) {
+                                addToast({ type: 'error', title: 'Archive Failed', message: res.error });
+                              }
+                            }}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '0.78rem', padding: '6px 12px', color: 'var(--muted)' }}
+                            title="Archive waiver off home feed"
+                          >
+                            📁 Archive
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

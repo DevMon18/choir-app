@@ -2,7 +2,9 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
+import { useToast } from '@/components/Toast';
 
 interface DocumentTemplate {
   id: string;
@@ -20,6 +22,7 @@ export interface MemberSignatureRow {
   additional_names: string[];
   signer_printed_name: string | null;
   status: 'pending' | 'submitted' | 'verified' | 'verified_manual' | 'rejected';
+  is_archived?: boolean;
   signature_path: string | null;
   selfie_path: string | null;
   created_at: string;
@@ -60,24 +63,36 @@ const DOC_TYPE_TEXT: Record<string, string> = {
 };
 
 export default function MyDocumentsClient({ currentUserProfile, initialSignatures }: Props) {
-  const [filter, setFilter] = useState<'all' | 'pending' | 'submitted' | 'verified'>('all');
+  const router = useRouter();
+  const { addToast } = useToast();
+  const [filter, setFilter] = useState<'all' | 'pending' | 'submitted' | 'verified' | 'archived'>('all');
 
   const filteredSignatures = useMemo(() => {
-    if (filter === 'all') return initialSignatures;
+    if (filter === 'all') {
+      return initialSignatures.filter((s) => !s.is_archived);
+    }
     if (filter === 'pending') {
-      return initialSignatures.filter((s) => s.status === 'pending' || s.status === 'rejected');
+      return initialSignatures.filter((s) => !s.is_archived && (s.status === 'pending' || s.status === 'rejected'));
     }
     if (filter === 'submitted') {
-      return initialSignatures.filter((s) => s.status === 'submitted');
+      return initialSignatures.filter((s) => !s.is_archived && s.status === 'submitted');
     }
     if (filter === 'verified') {
-      return initialSignatures.filter((s) => s.status === 'verified' || s.status === 'verified_manual');
+      return initialSignatures.filter((s) => !s.is_archived && (s.status === 'verified' || s.status === 'verified_manual'));
+    }
+    if (filter === 'archived') {
+      return initialSignatures.filter((s) => s.is_archived);
     }
     return initialSignatures;
   }, [initialSignatures, filter]);
 
   const pendingCount = useMemo(
-    () => initialSignatures.filter((s) => s.status === 'pending' || s.status === 'rejected').length,
+    () => initialSignatures.filter((s) => !s.is_archived && (s.status === 'pending' || s.status === 'rejected')).length,
+    [initialSignatures]
+  );
+
+  const archivedCount = useMemo(
+    () => initialSignatures.filter((s) => s.is_archived).length,
     [initialSignatures]
   );
 
@@ -113,7 +128,7 @@ export default function MyDocumentsClient({ currentUserProfile, initialSignature
             className={`btn ${filter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ fontSize: '0.85rem', padding: '8px 16px' }}
           >
-            All Documents ({initialSignatures.length})
+            Active Documents ({initialSignatures.filter((s) => !s.is_archived).length})
           </button>
           <button
             onClick={() => setFilter('pending')}
@@ -133,14 +148,21 @@ export default function MyDocumentsClient({ currentUserProfile, initialSignature
             className={`btn ${filter === 'submitted' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ fontSize: '0.85rem', padding: '8px 16px' }}
           >
-            Submitted ({initialSignatures.filter((s) => s.status === 'submitted').length})
+            Submitted ({initialSignatures.filter((s) => !s.is_archived && s.status === 'submitted').length})
           </button>
           <button
             onClick={() => setFilter('verified')}
             className={`btn ${filter === 'verified' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ fontSize: '0.85rem', padding: '8px 16px' }}
           >
-            Verified ({initialSignatures.filter((s) => s.status === 'verified' || s.status === 'verified_manual').length})
+            Verified ({initialSignatures.filter((s) => !s.is_archived && (s.status === 'verified' || s.status === 'verified_manual')).length})
+          </button>
+          <button
+            onClick={() => setFilter('archived')}
+            className={`btn ${filter === 'archived' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+          >
+            📁 Archived ({archivedCount})
           </button>
         </div>
 
@@ -234,21 +256,49 @@ export default function MyDocumentsClient({ currentUserProfile, initialSignature
                     </div>
                   </div>
 
-                  <Link
-                    href={`/sign/${sig.id}`}
-                    className={`btn ${isUrgent ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{
-                      padding: '10px 18px',
-                      fontSize: '0.88rem',
-                      fontWeight: 700,
-                      whiteSpace: 'nowrap',
-                      background: isUrgent ? '#dc2626' : undefined,
-                      borderColor: isUrgent ? '#dc2626' : undefined,
-                      color: isUrgent ? '#ffffff' : undefined,
-                    }}
-                  >
-                    {isUrgent ? 'Sign Waiver Now →' : 'View Submission →'}
-                  </Link>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <Link
+                      href={`/sign/${sig.id}`}
+                      className={`btn ${isUrgent ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{
+                        padding: '10px 18px',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                        background: isUrgent ? '#dc2626' : undefined,
+                        borderColor: isUrgent ? '#dc2626' : undefined,
+                        color: isUrgent ? '#ffffff' : undefined,
+                      }}
+                    >
+                      {isUrgent ? 'Sign Waiver Now →' : 'View Submission →'}
+                    </Link>
+
+                    {(sig.status === 'verified' || sig.status === 'verified_manual') && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const { toggleArchiveSignatureAction } = await import('./actions');
+                          const res = await toggleArchiveSignatureAction(sig.id);
+                          if (res.success) {
+                            addToast({
+                              type: 'success',
+                              title: res.is_archived ? 'Waiver Archived' : 'Waiver Unarchived',
+                              message: res.is_archived
+                                ? 'Moved to archived documents. It will no longer appear on your home dashboard.'
+                                : 'Restored to active documents.',
+                            });
+                            router.refresh();
+                          } else if (res.error) {
+                            addToast({ type: 'error', title: 'Action Failed', message: res.error });
+                          }
+                        }}
+                        className="btn btn-secondary"
+                        style={{ padding: '10px 14px', fontSize: '0.825rem', whiteSpace: 'nowrap' }}
+                      >
+                        {sig.is_archived ? '📂 Unarchive' : '📁 Archive'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}

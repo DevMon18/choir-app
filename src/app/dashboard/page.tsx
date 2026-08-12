@@ -42,8 +42,9 @@ const DashboardPage = async () => {
     getActiveAnnouncements(),
     supabase
       .from('document_signatures')
-      .select('id, status, created_at, documents:document_id(id, title, type, expires_at)')
+      .select('id, status, is_archived, created_at, documents:document_id(id, title, type, expires_at)')
       .eq('primary_member_id', profile.id)
+      .eq('is_archived', false)
       .order('created_at', { ascending: false }),
   ]);
 
