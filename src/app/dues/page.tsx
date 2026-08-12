@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { logout } from '../actions';
 import { getProfile } from '@/lib/supabase/user';
 
+// Client Component Navbar
 import { Navbar } from '@/components/Navbar';
 
 export const dynamic = 'force-dynamic';
