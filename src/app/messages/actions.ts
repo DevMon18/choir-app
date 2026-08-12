@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { checkRateLimitMessage } from '@/lib/ratelimit';
+import { sendPushToUser } from '@/lib/push';
 
 export interface ConversationItem {
   id: string;
@@ -262,6 +263,38 @@ export async function sendMessage(conversationId: string, body: string) {
       .from('conversations')
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', conversationId);
+
+    // Asynchronously dispatch targeted Push Notification to recipient
+    (async () => {
+      try {
+        const adminSupabase = createAdminClient();
+        const [{ data: conv }, { data: senderProfile }] = await Promise.all([
+          adminSupabase
+            .from('conversations')
+            .select('participant_one, participant_two')
+            .eq('id', conversationId)
+            .single(),
+          adminSupabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single(),
+        ]);
+
+        if (conv) {
+          const recipientId = conv.participant_one === user.id ? conv.participant_two : conv.participant_one;
+          const senderName = senderProfile?.full_name || 'Choir Member';
+          await sendPushToUser(recipientId, {
+            title: `💬 New message from ${senderName}`,
+            body: body.trim().substring(0, 120),
+            url: `/messages/${conversationId}`,
+            icon: '/collective-logo.png',
+          });
+        }
+      } catch (pushErr) {
+        console.error('Error dispatching message push notification:', pushErr);
+      }
+    })();
 
     revalidatePath('/messages');
     revalidatePath(`/messages/${conversationId}`);

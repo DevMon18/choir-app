@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { logout } from '@/app/actions';
+import { useToast } from '@/components/Toast';
+import { createClient } from '@/lib/supabase/client';
 import {
   Users,
   Music,
@@ -58,15 +60,42 @@ const hasAdminAccess = (role: Role) =>
 
 // ✅ FIX: NavLink defined OUTSIDE Navbar so React doesn't create a new component
 // type on every render (which would cause all nav links to unmount/remount).
-const NavLink = ({ href, icon, label, matchFn, pathname }: {
+const NavLink = ({ href, icon, label, matchFn, pathname, badge }: {
   href: string; icon: React.ReactNode; label: string;
   matchFn?: (p: string) => boolean;
   pathname: string;
+  badge?: number;
 }) => {
   const active = matchFn ? matchFn(pathname) : pathname === href;
   return (
     <Link href={href} className={`nav-link ${active ? 'active' : ''}`} title={label}>
-      {icon}
+      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+        {icon}
+        {badge !== undefined && badge > 0 && (
+          <span
+            style={{
+              position: 'absolute',
+              top: '-4px',
+              right: '-6px',
+              background: 'var(--error)',
+              color: '#ffffff',
+              fontSize: '0.6rem',
+              fontWeight: 800,
+              borderRadius: '999px',
+              padding: '1px 4px',
+              minWidth: '13px',
+              height: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              lineHeight: 1,
+              border: '1.5px solid #ffffff',
+            }}
+          >
+            {badge > 9 ? '9+' : badge}
+          </span>
+        )}
+      </div>
       <span className="nav-link-text">{label}</span>
     </Link>
   );
@@ -75,13 +104,73 @@ const NavLink = ({ href, icon, label, matchFn, pathname }: {
 export const Navbar = ({ profile, children }: NavbarProps) => {
   const pathname = usePathname();
   const router = useRouter();
+  const { addToast } = useToast();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [adminSheetOpen, setAdminSheetOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const supabase = useMemo(() => createClient(), []);
 
   const adminItems = getAdminItems(profile.role);
   const isAdminPage = pathname.startsWith('/admin');
   const isFinanceAdmin = ['super_admin', 'director', 'treasurer'].includes(profile.role);
+
+  // Unread messages count & Realtime listener
+  useEffect(() => {
+    let channel: any;
+    async function fetchUnread() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: convs } = await supabase
+          .from('conversations')
+          .select('id')
+          .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`);
+
+        if (convs && convs.length > 0) {
+          const convIds = convs.map((c) => c.id);
+          const { count } = await supabase
+            .from('messages')
+            .select('id', { count: 'exact', head: true })
+            .in('conversation_id', convIds)
+            .neq('sender_id', user.id)
+            .is('read_at', null);
+
+          setUnreadCount(count || 0);
+        }
+
+        channel = supabase
+          .channel('navbar-unread-messages')
+          .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'messages' },
+            (payload) => {
+              const newMsg = payload.new as any;
+              if (newMsg && newMsg.sender_id !== user.id) {
+                setUnreadCount((prev) => prev + 1);
+                if (!pathname.includes(newMsg.conversation_id)) {
+                  addToast({
+                    type: 'info',
+                    title: '💬 New Direct Message',
+                    message: newMsg.body ? newMsg.body.substring(0, 80) : 'You received a new message.',
+                  });
+                }
+              }
+            }
+          )
+          .subscribe();
+      } catch (err) {
+        console.error('Navbar unread count listener error:', err);
+      }
+    }
+
+    fetchUnread();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [supabase, pathname, addToast]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -151,7 +240,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           } />
-          <NavLink href="/messages" label="Messages" pathname={pathname} matchFn={p => p.startsWith('/messages')} icon={
+          <NavLink href="/messages" label="Messages" pathname={pathname} matchFn={p => p.startsWith('/messages')} badge={unreadCount} icon={
             <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -255,9 +344,35 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
         </Link>
 
         <Link href="/messages" className={`mobile-tab ${pathname.startsWith('/messages') ? 'active' : ''}`}>
-          <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            {unreadCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-6px',
+                  background: 'var(--error)',
+                  color: '#ffffff',
+                  fontSize: '0.6rem',
+                  fontWeight: 800,
+                  borderRadius: '999px',
+                  padding: '1px 4px',
+                  minWidth: '13px',
+                  height: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
+                  border: '1.5px solid #ffffff',
+                }}
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </div>
           <span>Messages</span>
         </Link>
 

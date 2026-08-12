@@ -254,3 +254,157 @@ export const sendPushToAll = async (
 
   return report;
 };
+
+export const sendPushToUser = async (
+  userId: string,
+  payload: PushPayload
+): Promise<PushReport> => {
+  const report: PushReport = {
+    webPush: { total: 0, success: 0, failed: 0, errors: [] },
+    fcm: { total: 0, success: 0, failed: 0, errors: [] },
+  };
+
+  try {
+    const adminSupabase = createAdminClient();
+
+    // 1. Web Push Path for single user
+    const { data: subs, error: subError } = await adminSupabase
+      .from('push_subscriptions')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (subError) {
+      report.webPush.errors.push(`Database error: ${subError.message}`);
+    } else if (subs && subs.length > 0) {
+      report.webPush.total = subs.length;
+      const notificationPayload = JSON.stringify({
+        title: payload.title,
+        body: payload.body,
+        url: payload.url || '/dashboard',
+        icon: payload.icon || '/collective-logo.png',
+      });
+
+      const expiredOrInvalidIds: string[] = [];
+
+      await Promise.all(
+        subs.map(async (sub) => {
+          const pushSubscription = {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth,
+            },
+          };
+
+          try {
+            await webpush.sendNotification(pushSubscription, notificationPayload, {
+              headers: {
+                Urgency: 'high',
+                TTL: '86400',
+              },
+            });
+            report.webPush.success++;
+          } catch (err: any) {
+            report.webPush.failed++;
+            report.webPush.errors.push(`Endpoint ${sub.endpoint}: ${err.message || err}`);
+            if (err.statusCode === 404 || err.statusCode === 410) {
+              expiredOrInvalidIds.push(sub.id);
+            }
+          }
+        })
+      );
+
+      if (expiredOrInvalidIds.length > 0) {
+        await adminSupabase
+          .from('push_subscriptions')
+          .delete()
+          .in('id', expiredOrInvalidIds);
+      }
+    }
+
+    // 2. Native FCM Path for single user
+    const { data: fcmData, error: fcmError } = await adminSupabase
+      .from('fcm_tokens')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (fcmError) {
+      report.fcm.errors.push(`Database error: ${fcmError.message}`);
+    } else if (fcmData && fcmData.length > 0) {
+      report.fcm.total = fcmData.length;
+
+      const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT;
+      if (serviceAccountStr) {
+        try {
+          const serviceAccount = JSON.parse(serviceAccountStr);
+          const projectId = serviceAccount.project_id;
+          const accessToken = await getAccessToken(serviceAccount);
+
+          const expiredOrInvalidTokens: string[] = [];
+
+          await Promise.all(
+            fcmData.map(async (fcmEntry) => {
+              const token = fcmEntry.token;
+              try {
+                const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    message: {
+                      token: token,
+                      notification: {
+                        title: payload.title,
+                        body: payload.body,
+                      },
+                      data: {
+                        url: payload.url || '/dashboard',
+                      },
+                      android: {
+                        priority: 'high',
+                        notification: {
+                          sound: 'default',
+                          channel_id: 'choir_messages',
+                        },
+                      },
+                    },
+                  }),
+                });
+
+                if (res.ok) {
+                  report.fcm.success++;
+                } else {
+                  const errBody = await res.text();
+                  report.fcm.failed++;
+                  report.fcm.errors.push(`Token ${token.substring(0, 10)}...: Status ${res.status} - ${errBody}`);
+                  if (res.status === 400 || res.status === 404) {
+                    expiredOrInvalidTokens.push(token);
+                  }
+                }
+              } catch (err: any) {
+                report.fcm.failed++;
+                report.fcm.errors.push(`Token ${token.substring(0, 10)}...: ${err.message || err}`);
+              }
+            })
+          );
+
+          if (expiredOrInvalidTokens.length > 0) {
+            await adminSupabase
+              .from('fcm_tokens')
+              .delete()
+              .in('token', expiredOrInvalidTokens);
+          }
+        } catch (err: any) {
+          report.fcm.failed = fcmData.length;
+          report.fcm.errors.push(`FCM failure: ${err.message || err}`);
+        }
+      }
+    }
+  } catch (err: any) {
+    console.error('General failure in sendPushToUser:', err);
+  }
+
+  return report;
+};
