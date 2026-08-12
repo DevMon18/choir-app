@@ -16,6 +16,7 @@ export interface DocumentRow {
   title: string;
   type: DocumentType;
   file_path: string;
+  folder_id?: string | null;
   created_by: string;
   created_at: string;
   expires_at: string | null;
@@ -42,6 +43,7 @@ const UploadDocumentSchema = z.object({
   type: z.enum(['activity_waiver', 'wedding_waiver', 'wake_guide', 'general'] as const, {
     message: 'Invalid document type.',
   }),
+  folder_id: z.string().uuid().nullable().optional(),
   expires_at: z.string().nullable().optional(),
 });
 
@@ -79,9 +81,11 @@ export async function uploadDocumentAction(formData: FormData) {
     }
 
     // ── Validate scalar fields ──────────────────────────────────────────────
+    const folderIdRaw = formData.get('folder_id');
     const parsed = UploadDocumentSchema.safeParse({
       title: formData.get('title'),
       type: formData.get('type'),
+      folder_id: folderIdRaw && folderIdRaw !== 'none' ? folderIdRaw : null,
       expires_at: formData.get('expires_at') || null,
     });
     if (!parsed.success) {
@@ -123,6 +127,7 @@ export async function uploadDocumentAction(formData: FormData) {
       .insert({
         title: parsed.data.title,
         type: parsed.data.type,
+        folder_id: parsed.data.folder_id || null,
         file_path: storagePath,
         created_by: user.id,
         expires_at: parsed.data.expires_at || null,
@@ -264,22 +269,31 @@ export async function distributeDocumentAction(input: {
  * Fetch all documents for the admin list.
  */
 export async function getDocuments(): Promise<DocumentRow[]> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('documents')
-      .select('*, profiles:created_by(full_name)')
-      .order('created_at', { ascending: false });
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('documents')
+    .select('*, profiles:created_by(full_name)')
+    .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('[getDocuments]', error);
-      return [];
-    }
-    return (data as DocumentRow[]) || [];
-  } catch (err) {
-    console.error('[getDocuments] unexpected:', err);
+  if (error) {
+    console.error('[getDocuments] Error fetching documents:', error);
     return [];
   }
+  return (data as DocumentRow[]) || [];
+}
+
+export async function getFolders() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('document_folders')
+    .select('*')
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('[getFolders] Error fetching folders:', error);
+    return [];
+  }
+  return data || [];
 }
 
 /**

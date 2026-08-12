@@ -15,6 +15,17 @@ import {
   MemberOption,
   SequenceOption,
 } from './actions';
+import { createFolderAction, assignDocumentToFolderAction, FolderInput } from './folderActions';
+
+export interface FolderItem {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string;
+  color: string;
+  parent_id: string | null;
+  created_at: string;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,6 +38,7 @@ interface Profile {
 interface Props {
   currentUserProfile: Profile;
   initialDocuments: DocumentRow[];
+  initialFolders?: FolderItem[];
   initialMembers: MemberOption[];
   initialSequences: SequenceOption[];
 }
@@ -65,14 +77,16 @@ const isUnder18 = (birthdate: string | null): boolean => {
 // ─── Upload Modal ─────────────────────────────────────────────────────────────
 
 interface UploadModalProps {
+  folders: FolderItem[];
   onClose: () => void;
   onUploaded: (doc: DocumentRow) => void;
 }
 
-const UploadModal = ({ onClose, onUploaded }: UploadModalProps) => {
+const UploadModal = ({ folders, onClose, onUploaded }: UploadModalProps) => {
   const { addToast } = useToast();
   const [title, setTitle] = useState('');
-  const [type, setType] = useState<DocumentType>('activity_waiver');
+  const [type, setType] = useState<DocumentType>('general');
+  const [folderId, setFolderId] = useState<string>('none');
   const [expiresAt, setExpiresAt] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -137,6 +151,7 @@ const UploadModal = ({ onClose, onUploaded }: UploadModalProps) => {
     fd.append('title', title.trim());
     fd.append('type', type);
     fd.append('file', file);
+    if (folderId && folderId !== 'none') fd.append('folder_id', folderId);
     if (expiresAt) fd.append('expires_at', new Date(expiresAt).toISOString());
 
     const res = await uploadDocumentAction(fd);
@@ -150,6 +165,7 @@ const UploadModal = ({ onClose, onUploaded }: UploadModalProps) => {
         id: res.id as string,
         title: title.trim(),
         type,
+        folder_id: folderId !== 'none' ? folderId : null,
         file_path: '',
         created_by: '',
         created_at: new Date().toISOString(),
@@ -285,7 +301,26 @@ const UploadModal = ({ onClose, onUploaded }: UploadModalProps) => {
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ marginBottom: '18px' }}>
+            <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>
+              📁 Destination Folder (Optional)
+            </label>
+            <select
+              value={folderId}
+              onChange={(e) => setFolderId(e.target.value)}
+              className="form-input"
+              style={{ width: '100%' }}
+            >
+              <option value="none">📁 Root (No Folder)</option>
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.icon} {f.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label className="input-label" htmlFor="doc-type" style={{ display: 'block', margin: 0 }}>
               Document Type *
             </label>
@@ -677,17 +712,125 @@ const DistributeModal = ({ document, members, sequences, onClose, onDistributed 
   );
 };
 
+// ─── Create Folder Modal ──────────────────────────────────────────────────────
+
+const CreateFolderModal = ({ onClose, onCreated }: { onClose: () => void; onCreated: (folder: FolderItem) => void }) => {
+  const { addToast } = useToast();
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [icon, setIcon] = useState('📁');
+  const [color, setColor] = useState('#0b4d24');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) { setError('Folder name is required.'); return; }
+
+    setLoading(true);
+    setError('');
+
+    const res = await createFolderAction({ name, description, icon, color });
+    setLoading(false);
+
+    if (res.error) {
+      setError(res.error);
+    } else if (res.folder) {
+      addToast({ type: 'success', title: 'Folder Created', message: `Folder "${name}" created successfully.` });
+      onCreated(res.folder);
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+      onClick={onClose}
+    >
+      <div
+        className="glass-container"
+        style={{ width: '100%', maxWidth: '480px', padding: '28px', background: '#ffffff', borderRadius: '16px' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 style={{ margin: '0 0 16px', fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>
+          📁 Create New Folder
+        </h3>
+
+        {error && <div className="alert alert-error" style={{ marginBottom: '16px' }}>{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '14px' }}>
+            <label className="form-label">Folder Name *</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="form-input"
+              placeholder="e.g. Choir Recollection 2026"
+            />
+          </div>
+
+          <div style={{ marginBottom: '14px' }}>
+            <label className="form-label">Description (Optional)</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="form-input"
+              placeholder="e.g. Handouts, waivers & schedules"
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+            <div>
+              <label className="form-label">Icon</label>
+              <select value={icon} onChange={(e) => setIcon(e.target.value)} className="form-input">
+                <option value="📁">📁 Folder</option>
+                <option value="📜">📜 Waiver</option>
+                <option value="🎼">🎼 Sheet Music</option>
+                <option value="📝">📝 Notes</option>
+                <option value="🎉">🎉 Event</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="form-label">Folder Color</label>
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                style={{ width: '100%', height: '40px', padding: '2px', borderRadius: '8px', cursor: 'pointer' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <button type="button" onClick={onClose} className="btn btn-secondary">Cancel</button>
+            <button type="submit" disabled={loading} className="btn btn-primary">
+              {loading ? 'Creating…' : 'Create Folder'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ─── Main Client Component ─────────────────────────────────────────────────────
 
 export const DocumentsManagerClient = ({
   currentUserProfile,
   initialDocuments,
+  initialFolders = [],
   initialMembers,
   initialSequences,
 }: Props) => {
   const { addToast } = useToast();
   const [documents, setDocuments] = useState<DocumentRow[]>(initialDocuments);
+  const [folders, setFolders] = useState<FolderItem[]>(initialFolders);
   const [showUpload, setShowUpload] = useState(false);
+  const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [distributeTarget, setDistributeTarget] = useState<DocumentRow | null>(null);
   const [previewTarget, setPreviewTarget] = useState<DocumentRow | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -732,16 +875,26 @@ export const DocumentsManagerClient = ({
               Upload PDF documents, preview waivers, and distribute signature requests to members.
             </p>
           </div>
-          <button
-            onClick={() => setShowUpload(true)}
-            className="btn btn-primary docs-desktop-create"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Upload Document
-          </button>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowCreateFolder(true)}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              📁 + Create Folder
+            </button>
+
+            <button
+              onClick={() => setShowUpload(true)}
+              className="btn btn-primary docs-desktop-create"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Upload Document
+            </button>
+          </div>
         </div>
 
         {/* Document list */}
@@ -857,8 +1010,15 @@ export const DocumentsManagerClient = ({
       </button>
 
       {/* Modals */}
+      {showCreateFolder && (
+        <CreateFolderModal
+          onClose={() => setShowCreateFolder(false)}
+          onCreated={(f) => setFolders((prev) => [...prev, f])}
+        />
+      )}
+
       {showUpload && (
-        <UploadModal onClose={() => setShowUpload(false)} onUploaded={handleUploaded} />
+        <UploadModal folders={folders} onClose={() => setShowUpload(false)} onUploaded={handleUploaded} />
       )}
 
       {previewTarget && (

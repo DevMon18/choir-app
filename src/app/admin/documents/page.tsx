@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
-import { getDocuments, getActiveMembers, getUpcomingSequences } from './actions';
+import { getDocuments, getFolders, getActiveMembers, getUpcomingSequences } from './actions';
 import { DocumentsManagerClient } from './DocumentsManagerClient';
 
 export const dynamic = 'force-dynamic';
@@ -16,8 +16,9 @@ export default async function AdminDocumentsPage() {
     redirect('/dashboard');
   }
 
-  const [documents, members, sequences] = await Promise.all([
+  const [documents, folders, members, sequences] = await Promise.all([
     getDocuments(),
+    getFolders(),
     getActiveMembers(),
     getUpcomingSequences(),
   ]);
@@ -26,6 +27,7 @@ export default async function AdminDocumentsPage() {
     <DocumentsManagerClient
       currentUserProfile={profile}
       initialDocuments={documents}
+      initialFolders={folders}
       initialMembers={members}
       initialSequences={sequences}
     />
