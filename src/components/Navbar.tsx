@@ -118,17 +118,19 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
   // Unread messages count & Realtime listener
   useEffect(() => {
     let channel: any;
+    let isMounted = true;
+
     async function fetchUnread() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user || !isMounted) return;
 
         const { data: convs } = await supabase
           .from('conversations')
           .select('id')
           .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`);
 
-        if (convs && convs.length > 0) {
+        if (convs && convs.length > 0 && isMounted) {
           const convIds = convs.map((c) => c.id);
           const { count } = await supabase
             .from('messages')
@@ -137,11 +139,14 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
             .neq('sender_id', user.id)
             .is('read_at', null);
 
-          setUnreadCount(count || 0);
+          if (isMounted) setUnreadCount(count || 0);
         }
 
+        // Generate unique channel topic per mount to prevent topic collision after re-renders
+        const channelTopic = `navbar-unread-${user.id}-${Math.random().toString(36).substring(2, 7)}`;
+
         channel = supabase
-          .channel('navbar-unread-messages')
+          .channel(channelTopic)
           .on(
             'postgres_changes',
             { event: 'INSERT', schema: 'public', table: 'messages' },
@@ -168,7 +173,10 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
     fetchUnread();
 
     return () => {
-      if (channel) supabase.removeChannel(channel);
+      isMounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [supabase, pathname, addToast]);
 
