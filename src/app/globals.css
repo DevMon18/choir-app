@@ -204,6 +204,19 @@ body {
   transform: translateY(0);
 }
 
+.btn-danger {
+  background: var(--error);
+  border: none;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(159, 28, 28, 0.2);
+}
+
+.btn-danger:hover {
+  background: #7f1515;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(159, 28, 28, 0.3);
+}
+
 .btn-disabled {
   background: #e4e4e7 !important;
   border: 1px solid #e4e4e7 !important;
@@ -212,6 +225,45 @@ body {
   box-shadow: none !important;
   transform: none !important;
 }
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.badge-primary {
+  background: rgba(11, 77, 36, 0.1);
+  color: var(--primary);
+}
+
+.badge-accent {
+  background: rgba(197, 160, 89, 0.18);
+  color: var(--accent);
+}
+
+.badge-success {
+  background: rgba(11, 102, 35, 0.12);
+  color: var(--success);
+}
+
+.badge-danger {
+  background: rgba(159, 28, 28, 0.12);
+  color: var(--error);
+}
+
+.badge-warning {
+  background: rgba(180, 83, 9, 0.12);
+  color: var(--warning);
+}
+
 
 /* Auth Screens Layout */
 .auth-page {

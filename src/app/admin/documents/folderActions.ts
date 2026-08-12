@@ -120,6 +120,37 @@ export async function deleteFolderAction(folderId: string) {
   }
 }
 
+export async function moveFolderAction(folderId: string, newParentId: string | null) {
+  try {
+    const user = await requireUser();
+    if (!ADMIN_ROLES.includes(user.role)) {
+      return { error: 'Unauthorized to move folders.' };
+    }
+
+    if (folderId === newParentId) {
+      return { error: 'Cannot move a folder into itself.' };
+    }
+
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from('document_folders')
+      .update({ parent_id: newParentId })
+      .eq('id', folderId);
+
+    if (error) {
+      return { error: `Failed to move folder: ${error.message}` };
+    }
+
+    revalidatePath('/admin/documents');
+    revalidatePath('/my-documents');
+
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || 'An unexpected error occurred.' };
+  }
+}
+
 export async function assignDocumentToFolderAction(documentId: string, folderId: string | null) {
   try {
     const user = await requireUser();

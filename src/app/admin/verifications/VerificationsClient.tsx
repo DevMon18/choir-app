@@ -185,8 +185,8 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
               onClick={() => setActiveTab('submitted')}
-              className={`btn ${activeTab === 'submitted' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '0.85rem', padding: '8px 16px', background: activeTab === 'submitted' ? '#dc2626' : undefined, borderColor: activeTab === 'submitted' ? '#dc2626' : undefined, color: activeTab === 'submitted' ? '#fff' : undefined }}
+              className={`btn ${activeTab === 'submitted' ? 'btn-danger' : 'btn-secondary'}`}
+              style={{ fontSize: '0.85rem', padding: '8px 16px' }}
             >
               Submitted ({submittedCount})
             </button>
@@ -315,24 +315,16 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                       </div>
 
                       <span
-                        className="badge"
-                        style={{
-                          fontSize: '0.725rem',
-                          fontWeight: 700,
-                          background:
-                            item.status === 'pending' ? 'rgba(220,38,38,0.12)' :
-                            item.status === 'submitted' ? 'rgba(197,160,89,0.18)' :
-                            item.status === 'rejected' ? 'rgba(220,38,38,0.12)' :
-                            'rgba(11,77,36,0.12)',
-                          color:
-                            item.status === 'pending' ? '#dc2626' :
-                            item.status === 'submitted' ? 'var(--accent)' :
-                            item.status === 'rejected' ? '#dc2626' :
-                            'var(--primary)',
-                        }}
+                        className={`badge ${
+                          item.status === 'pending' ? 'badge-danger' :
+                          item.status === 'submitted' ? 'badge-accent' :
+                          item.status === 'rejected' ? 'badge-danger' :
+                          'badge-success'
+                        }`}
+                        style={{ fontSize: '0.75rem', fontWeight: 600 }}
                       >
                         {item.status === 'pending' ? 'Pending' :
-                         item.status === 'submitted' ? '⏳ Submitted' :
+                         item.status === 'submitted' ? 'Submitted' :
                          item.status === 'rejected' ? 'Rejected' :
                          item.status === 'verified_manual' ? 'Verified (Manual)' :
                          'Verified'}

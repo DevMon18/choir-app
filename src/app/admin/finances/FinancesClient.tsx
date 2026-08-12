@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { FileText, BarChart3, DollarSign, Calendar, Search, Check, X } from 'lucide-react';
 import { recordInvoicePayment, toggleSinkingFund } from './actions';
 import { Navbar } from '@/components/Navbar';
 import { useToast } from '@/components/Toast';
@@ -200,14 +201,14 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
                 onClick={() => setActiveTab('dues')}
                 style={{ padding: '8px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                📁 Annual Membership Dues
+                <FileText size={16} /> Annual Membership Dues
               </button>
               <button
                 className={`btn finances-tab-btn ${activeTab === 'sinking' ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => setActiveTab('sinking')}
                 style={{ padding: '8px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                📊 Sunday Sinking Fund Tally
+                <BarChart3 size={16} /> Sunday Sinking Fund Tally
               </button>
             </div>
 

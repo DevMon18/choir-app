@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Plus, Megaphone } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { useToast } from '@/components/Toast';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -185,7 +186,7 @@ export const AnnouncementsManagerClient = ({
             className="btn btn-primary ann-desktop-create"
             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <span>+ Create Announcement</span>
+            <Plus size={16} /> Create Announcement
           </button>
         </div>
 

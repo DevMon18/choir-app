@@ -366,3 +366,54 @@ export async function getDocumentSignedUrl(filePath: string): Promise<string | n
     return null;
   }
 }
+
+/**
+ * Rename a document title.
+ */
+export async function renameDocumentAction(documentId: string, newTitle: string) {
+  try {
+    const { user, supabase } = await getAdminContext();
+    if (!newTitle || !newTitle.trim()) {
+      return { error: 'Document title cannot be empty.' };
+    }
+    const { error } = await supabase
+      .from('documents')
+      .update({ title: newTitle.trim() })
+      .eq('id', documentId);
+
+    if (error) {
+      console.error('[renameDocumentAction] DB error:', error);
+      return { error: 'Failed to rename document.' };
+    }
+    revalidatePath('/admin/documents');
+    revalidatePath('/my-documents');
+    return { success: true };
+  } catch (err: any) {
+    console.error('[renameDocumentAction] unexpected:', err);
+    return { error: err.message || 'An unexpected error occurred.' };
+  }
+}
+
+/**
+ * Move a document to a different folder (or root drive if null).
+ */
+export async function moveDocumentAction(documentId: string, newFolderId: string | null) {
+  try {
+    const { user, supabase } = await getAdminContext();
+    const { error } = await supabase
+      .from('documents')
+      .update({ folder_id: newFolderId || null })
+      .eq('id', documentId);
+
+    if (error) {
+      console.error('[moveDocumentAction] DB error:', error);
+      return { error: 'Failed to move document.' };
+    }
+    revalidatePath('/admin/documents');
+    revalidatePath('/my-documents');
+    return { success: true };
+  } catch (err: any) {
+    console.error('[moveDocumentAction] unexpected:', err);
+    return { error: err.message || 'An unexpected error occurred.' };
+  }
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { Settings, Folder, FileText, Eye, Download, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
@@ -188,7 +189,7 @@ export default function MyDocumentsClient({
               className="btn btn-primary"
               style={{ fontSize: '0.85rem', padding: '8px 16px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              <span>⚙️ Manage Folders &amp; Files →</span>
+              <Settings size={15} /> Manage Drive
             </Link>
           )}
         </div>
@@ -255,21 +256,30 @@ export default function MyDocumentsClient({
                   style={{
                     background: 'none',
                     border: 'none',
-                    padding: 0,
-                    fontSize: '0.95rem',
+                    fontSize: '0.925rem',
                     fontWeight: selectedFolderId === null ? 700 : 500,
                     color: selectedFolderId === null ? 'var(--primary)' : 'var(--muted)',
                     cursor: 'pointer',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
                   }}
                 >
-                  🏠 Root Drive
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  </svg>
+                  <span>Choir Storage Drive</span>
                 </button>
 
                 {currentFolder && (
                   <>
                     <span style={{ color: 'var(--muted)' }}>/</span>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--primary)' }}>
-                      {currentFolder.icon} {currentFolder.name}
+                    <span style={{ fontSize: '0.925rem', fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                      </svg>
+                      <span>{currentFolder.name}</span>
                     </span>
                   </>
                 )}
@@ -279,11 +289,17 @@ export default function MyDocumentsClient({
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <input
                   type="text"
-                  placeholder="🔍 Search files..."
+                  placeholder="Search storage files..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="form-input"
-                  style={{ width: '200px', padding: '6px 12px', fontSize: '0.85rem' }}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--glass-border)',
+                    fontSize: '0.85rem',
+                    outline: 'none',
+                    width: '190px',
+                  }}
                 />
 
                 <div style={{ display: 'flex', border: '1px solid var(--glass-border)', borderRadius: '8px', overflow: 'hidden' }}>
@@ -292,30 +308,32 @@ export default function MyDocumentsClient({
                     onClick={() => setViewMode('grid')}
                     style={{
                       border: 'none',
-                      padding: '6px 10px',
+                      padding: '6px 12px',
                       background: viewMode === 'grid' ? 'var(--primary)' : '#ffffff',
                       color: viewMode === 'grid' ? '#ffffff' : 'var(--foreground)',
                       cursor: 'pointer',
-                      fontSize: '0.85rem',
+                      fontSize: '0.825rem',
+                      fontWeight: 600,
                     }}
                     title="Grid View"
                   >
-                    田 Grid
+                    Grid
                   </button>
                   <button
                     type="button"
                     onClick={() => setViewMode('list')}
                     style={{
                       border: 'none',
-                      padding: '6px 10px',
+                      padding: '6px 12px',
                       background: viewMode === 'list' ? 'var(--primary)' : '#ffffff',
                       color: viewMode === 'list' ? '#ffffff' : 'var(--foreground)',
                       cursor: 'pointer',
-                      fontSize: '0.85rem',
+                      fontSize: '0.825rem',
+                      fontWeight: 600,
                     }}
                     title="List View"
                   >
-                    ☰ List
+                    List
                   </button>
                 </div>
               </div>
@@ -375,7 +393,9 @@ export default function MyDocumentsClient({
                             flexShrink: 0,
                           }}
                         >
-                          {folder.icon || '📁'}
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                          </svg>
                         </div>
 
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -444,7 +464,18 @@ export default function MyDocumentsClient({
                           </span>
                         </div>
 
-                        <h4 style={{ margin: '0 0 6px', fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                        <h4
+                          title={doc.title}
+                          style={{
+                            margin: '0 0 6px',
+                            fontSize: '0.95rem',
+                            fontWeight: 700,
+                            color: 'var(--foreground)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           📄 {doc.title}
                         </h4>
                       </div>
@@ -488,10 +519,21 @@ export default function MyDocumentsClient({
                         gap: '10px',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '220px' }}>
-                        <span style={{ fontSize: '1.5rem' }}>📄</span>
-                        <div>
-                          <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                        <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>📄</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h4
+                            title={doc.title}
+                            style={{
+                              margin: 0,
+                              fontSize: '0.95rem',
+                              fontWeight: 700,
+                              color: 'var(--foreground)',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
                             {doc.title}
                           </h4>
                           <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>

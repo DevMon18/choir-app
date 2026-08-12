@@ -1,6 +1,26 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import {
+  Eye,
+  Pencil,
+  Folder,
+  Send,
+  Trash2,
+  FolderPlus,
+  Upload,
+  MoreVertical,
+  FileText,
+  ChevronRight,
+  LayoutGrid,
+  List,
+  Search,
+  FolderOpen,
+  ArrowLeft,
+  X,
+  Sparkles,
+} from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { useToast } from '@/components/Toast';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -10,12 +30,21 @@ import {
   deleteDocumentAction,
   distributeDocumentAction,
   getDocumentSignedUrl,
+  renameDocumentAction,
+  moveDocumentAction,
   DocumentRow,
   DocumentType,
   MemberOption,
   SequenceOption,
 } from './actions';
-import { createFolderAction, assignDocumentToFolderAction, FolderInput } from './folderActions';
+import {
+  createFolderAction,
+  updateFolderAction,
+  deleteFolderAction,
+  moveFolderAction,
+  assignDocumentToFolderAction,
+  FolderInput,
+} from './folderActions';
 
 export interface FolderItem {
   id: string;
@@ -206,7 +235,7 @@ const UploadModal = ({ folders, onClose, onUploaded }: UploadModalProps) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
           {/* File Selection / Preview Box */}
           {!file ? (
             <div
@@ -215,12 +244,12 @@ const UploadModal = ({ folders, onClose, onUploaded }: UploadModalProps) => {
               onDragLeave={() => setDragOver(false)}
               onClick={() => fileInputRef.current?.click()}
               style={{
-                border: `2px dashed ${dragOver ? 'var(--primary)' : 'var(--glass-border)'}`,
-                borderRadius: '12px',
-                padding: '36px 20px',
+                border: `2px dashed ${dragOver ? 'var(--primary)' : 'rgba(11,77,36,0.25)'}`,
+                borderRadius: '16px',
+                padding: '32px 20px',
                 textAlign: 'center',
                 cursor: 'pointer',
-                background: dragOver ? 'rgba(11,77,36,0.04)' : 'rgba(255,255,255,0.4)',
+                background: dragOver ? 'rgba(11,77,36,0.06)' : 'rgba(248,250,252,0.8)',
                 transition: 'all 0.2s ease',
               }}
             >
@@ -232,19 +261,42 @@ const UploadModal = ({ folders, onClose, onUploaded }: UploadModalProps) => {
                 onChange={handleFileInput}
                 id="doc-file-input"
               />
-              <div style={{ fontSize: '2.4rem', marginBottom: '8px' }}>☁️</div>
-              <p style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--foreground)', margin: 0 }}>
-                Drop PDF here or click to browse
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '14px',
+                  background: 'rgba(11,77,36,0.1)',
+                  color: 'var(--primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 12px',
+                }}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </div>
+              <p style={{ fontWeight: 700, fontSize: '0.975rem', color: 'var(--foreground)', margin: 0 }}>
+                Drop PDF file here or click to browse
               </p>
               <p style={{ fontSize: '0.825rem', color: 'var(--muted)', margin: '4px 0 0' }}>
                 Only .pdf files accepted (max 20 MB)
               </p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px', background: 'rgba(11,77,36,0.06)', border: '1px solid rgba(11,77,36,0.15)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
-                  <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>📄</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: '12px', background: 'rgba(11,77,36,0.06)', border: '1px solid rgba(11,77,36,0.15)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(11,77,36,0.15)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                  </div>
                   <div style={{ minWidth: 0 }}>
                     <p style={{ fontWeight: 700, fontSize: '0.925rem', color: 'var(--primary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {file.name}
@@ -258,7 +310,7 @@ const UploadModal = ({ folders, onClose, onUploaded }: UploadModalProps) => {
                   type="button"
                   onClick={() => { setFile(null); }}
                   className="btn btn-secondary"
-                  style={{ fontSize: '0.78rem', padding: '4px 10px', flexShrink: 0 }}
+                  style={{ fontSize: '0.78rem', padding: '6px 12px', flexShrink: 0 }}
                 >
                   Change File
                 </button>
@@ -266,18 +318,18 @@ const UploadModal = ({ folders, onClose, onUploaded }: UploadModalProps) => {
 
               {/* Embedded Client-side PDF Preview */}
               {previewUrl && (
-                <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--glass-border)', background: '#ffffff', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-                  <div style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.03)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--glass-border)', background: '#ffffff', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                  <div style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.03)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       PDF Live Preview
                     </span>
-                    <a href={previewUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'underline', fontWeight: 600 }}>
+                    <a href={previewUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 700 }}>
                       Open full view ↗
                     </a>
                   </div>
                   <iframe
                     src={previewUrl}
-                    style={{ width: '100%', height: '240px', border: 'none' }}
+                    style={{ width: '100%', height: '220px', border: 'none' }}
                     title="PDF Upload Live Preview"
                   />
                 </div>
@@ -285,50 +337,88 @@ const UploadModal = ({ folders, onClose, onUploaded }: UploadModalProps) => {
             </div>
           )}
 
-          {/* Form Fields — Explicit Vertical Stack */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label className="input-label" htmlFor="doc-title" style={{ display: 'block', margin: 0 }}>
+          {/* Form Fields */}
+          <div style={{ width: '100%' }}>
+            <label htmlFor="doc-title" style={{ display: 'block', width: '100%', fontWeight: 700, fontSize: '0.85rem', color: 'var(--foreground)', marginBottom: '6px' }}>
               Document Title *
             </label>
             <input
               id="doc-title"
               type="text"
-              className="input-field"
               placeholder="e.g. Summer Activity Waiver 2026"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
+              style={{
+                display: 'block',
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '11px 15px',
+                borderRadius: '10px',
+                border: '1px solid var(--glass-border)',
+                background: '#ffffff',
+                fontSize: '0.925rem',
+                color: 'var(--foreground)',
+                outline: 'none',
+              }}
             />
           </div>
 
-          <div style={{ marginBottom: '18px' }}>
-            <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>
-              📁 Destination Folder (Optional)
+          <div style={{ width: '100%' }}>
+            <label htmlFor="doc-folder" style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', fontWeight: 700, fontSize: '0.85rem', color: 'var(--foreground)', marginBottom: '6px' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              </svg>
+              <span>Destination Folder (Optional)</span>
             </label>
             <select
+              id="doc-folder"
               value={folderId}
               onChange={(e) => setFolderId(e.target.value)}
-              className="form-input"
-              style={{ width: '100%' }}
+              style={{
+                display: 'block',
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '11px 15px',
+                borderRadius: '10px',
+                border: '1px solid var(--glass-border)',
+                background: '#ffffff',
+                fontSize: '0.925rem',
+                color: 'var(--foreground)',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
             >
-              <option value="none">📁 Root (No Folder)</option>
+              <option value="none">Root (No Folder)</option>
               {folders.map((f) => (
                 <option key={f.id} value={f.id}>
-                  {f.icon} {f.name}
+                  {f.name}
                 </option>
               ))}
             </select>
           </div>
 
-          <div style={{ marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label className="input-label" htmlFor="doc-type" style={{ display: 'block', margin: 0 }}>
+          <div style={{ width: '100%' }}>
+            <label htmlFor="doc-type" style={{ display: 'block', width: '100%', fontWeight: 700, fontSize: '0.85rem', color: 'var(--foreground)', marginBottom: '6px' }}>
               Document Type *
             </label>
             <select
               id="doc-type"
-              className="input-field"
               value={type}
               onChange={(e) => setType(e.target.value as DocumentType)}
+              style={{
+                display: 'block',
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '11px 15px',
+                borderRadius: '10px',
+                border: '1px solid var(--glass-border)',
+                background: '#ffffff',
+                fontSize: '0.925rem',
+                color: 'var(--foreground)',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
             >
               <option value="activity_waiver">Activity Waiver</option>
               <option value="wedding_waiver">Wedding Waiver</option>
@@ -337,24 +427,54 @@ const UploadModal = ({ folders, onClose, onUploaded }: UploadModalProps) => {
             </select>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label className="input-label" htmlFor="doc-expires" style={{ display: 'block', margin: 0 }}>
-              Expiry Date (optional)
+          <div style={{ width: '100%' }}>
+            <label htmlFor="doc-expires" style={{ display: 'block', width: '100%', fontWeight: 700, fontSize: '0.85rem', color: 'var(--foreground)', marginBottom: '6px' }}>
+              Expiry Date (Optional)
             </label>
             <input
               id="doc-expires"
               type="datetime-local"
-              className="input-field"
               value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
+              style={{
+                display: 'block',
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '11px 15px',
+                borderRadius: '10px',
+                border: '1px solid var(--glass-border)',
+                background: '#ffffff',
+                fontSize: '0.925rem',
+                color: 'var(--foreground)',
+                outline: 'none',
+              }}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
-            <button type="button" onClick={onClose} className="btn btn-secondary">
+          {/* Modal Actions */}
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px', width: '100%' }}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-secondary"
+              style={{ padding: '10px 20px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}
+            >
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="btn btn-primary" style={{ minWidth: '140px' }}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary"
+              style={{
+                padding: '10px 24px',
+                fontSize: '0.875rem',
+                fontWeight: 700,
+                background: 'var(--primary)',
+                borderColor: 'var(--primary)',
+                color: '#ffffff',
+                cursor: 'pointer',
+              }}
+            >
               {loading ? 'Uploading…' : 'Upload Document'}
             </button>
           </div>
@@ -718,8 +838,6 @@ const CreateFolderModal = ({ onClose, onCreated }: { onClose: () => void; onCrea
   const { addToast } = useToast();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [icon, setIcon] = useState('📁');
-  const [color, setColor] = useState('#0b4d24');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -730,7 +848,7 @@ const CreateFolderModal = ({ onClose, onCreated }: { onClose: () => void; onCrea
     setLoading(true);
     setError('');
 
-    const res = await createFolderAction({ name, description, icon, color });
+    const res = await createFolderAction({ name, description, icon: '📁', color: '#0b4d24' });
     setLoading(false);
 
     if (res.error) {
@@ -744,71 +862,831 @@ const CreateFolderModal = ({ onClose, onCreated }: { onClose: () => void; onCrea
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        background: 'rgba(15,23,42,0.5)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+      }}
       onClick={onClose}
     >
       <div
         className="glass-container"
-        style={{ width: '100%', maxWidth: '480px', padding: '28px', background: '#ffffff', borderRadius: '16px' }}
+        style={{
+          width: '100%',
+          maxWidth: '460px',
+          padding: '28px',
+          background: '#ffffff',
+          borderRadius: '16px',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.18)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 style={{ margin: '0 0 16px', fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>
-          📁 Create New Folder
-        </h3>
+        {/* Modal Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                background: 'rgba(11,77,36,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--primary)' }}>
+                Create New Folder
+              </h3>
+              <span style={{ fontSize: '0.825rem', color: 'var(--muted)' }}>
+                Organize documents &amp; waivers for choir members
+              </span>
+            </div>
+          </div>
 
-        {error && <div className="alert alert-error" style={{ marginBottom: '16px' }}>{error}</div>}
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.2rem',
+              color: 'var(--muted)',
+              cursor: 'pointer',
+              padding: '4px',
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '14px' }}>
-            <label className="form-label">Folder Name *</label>
+        {error && (
+          <div className="alert alert-error" style={{ marginBottom: '16px', fontSize: '0.85rem' }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+          {/* Folder Name Input */}
+          <div style={{ marginBottom: '16px', width: '100%' }}>
+            <label
+              htmlFor="folder-name-input"
+              style={{
+                display: 'block',
+                width: '100%',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                color: 'var(--foreground)',
+                marginBottom: '6px',
+              }}
+            >
+              Folder Name *
+            </label>
+            <input
+              id="folder-name-input"
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Choir Recollection 2026"
+              style={{
+                display: 'block',
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                border: '1px solid var(--glass-border)',
+                background: '#ffffff',
+                fontSize: '0.925rem',
+                color: 'var(--foreground)',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          {/* Description Input */}
+          <div style={{ marginBottom: '24px', width: '100%' }}>
+            <label
+              htmlFor="folder-desc-input"
+              style={{
+                display: 'block',
+                width: '100%',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                color: 'var(--foreground)',
+                marginBottom: '6px',
+              }}
+            >
+              Description (Optional)
+            </label>
+            <input
+              id="folder-desc-input"
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g. Activity waivers & schedules"
+              style={{
+                display: 'block',
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                border: '1px solid var(--glass-border)',
+                background: '#ffffff',
+                fontSize: '0.925rem',
+                color: 'var(--foreground)',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          {/* Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', width: '100%' }}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-secondary"
+              style={{ padding: '8px 16px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary"
+              style={{
+                padding: '8px 20px',
+                fontSize: '0.875rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {loading ? 'Creating…' : 'Create Folder'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ─── File Action Three-Dot Dropdown Menu ─────────────────────────────────────
+
+const FileActionMenu = ({
+  doc,
+  onPreview,
+  onRename,
+  onMove,
+  onDistribute,
+  onDelete,
+}: {
+  doc: DocumentRow;
+  onPreview: () => void;
+  onRename: () => void;
+  onMove: () => void;
+  onDistribute: () => void;
+  onDelete: () => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (!open && e.currentTarget) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const menuWidth = 160;
+      const menuHeight = 215;
+
+      let left = rect.right - menuWidth;
+      if (left < 12) left = 12;
+      if (left + menuWidth > window.innerWidth - 12) {
+        left = window.innerWidth - menuWidth - 12;
+      }
+
+      let top = rect.bottom + 4;
+      if (top + menuHeight > window.innerHeight && rect.top - menuHeight > 0) {
+        top = rect.top - menuHeight - 4;
+      }
+
+      setMenuPos({ top, left });
+      setOpen(true);
+    } else {
+      setOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    const handleScroll = () => {
+      if (open) setOpen(false);
+    };
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, { capture: true });
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, { capture: true });
+    };
+  }, [open]);
+
+  const dropdownMenu = open && menuPos ? (
+    <div
+      ref={menuRef}
+      style={{
+        position: 'fixed',
+        top: `${menuPos.top}px`,
+        left: `${menuPos.left}px`,
+        zIndex: 99999,
+        background: '#ffffff',
+        borderRadius: '12px',
+        border: '1px solid var(--glass-border)',
+        boxShadow: '0 12px 30px rgba(0,0,0,0.18)',
+        width: '160px',
+        overflow: 'hidden',
+        padding: '4px',
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        onClick={() => { setOpen(false); onPreview(); }}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+      >
+        <Eye size={15} style={{ color: 'var(--primary)' }} /> Preview
+      </button>
+      <button
+        type="button"
+        onClick={() => { setOpen(false); onRename(); }}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+      >
+        <Pencil size={15} style={{ color: 'var(--accent)' }} /> Rename
+      </button>
+      <button
+        type="button"
+        onClick={() => { setOpen(false); onMove(); }}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+      >
+        <Folder size={15} style={{ color: '#2563eb' }} /> Move
+      </button>
+      <button
+        type="button"
+        onClick={() => { setOpen(false); onDistribute(); }}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+      >
+        <Send size={15} style={{ color: 'var(--primary)' }} /> Distribute
+      </button>
+      <div style={{ height: '1px', background: 'var(--glass-border)', margin: '4px 0' }} />
+      <button
+        type="button"
+        onClick={() => { setOpen(false); onDelete(); }}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: 'var(--error)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+      >
+        <Trash2 size={15} style={{ color: 'var(--error)' }} /> Delete
+      </button>
+    </div>
+  ) : null;
+
+  return (
+    <div style={{ display: 'inline-block' }}>
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={handleToggle}
+        style={{
+          background: 'none',
+          border: '1px solid var(--glass-border)',
+          borderRadius: '8px',
+          padding: '4px 10px',
+          cursor: 'pointer',
+          color: 'var(--foreground)',
+          fontSize: '1.1rem',
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          lineHeight: 1,
+        }}
+        title="File Options"
+      >
+        ⋮
+      </button>
+
+      {mounted && dropdownMenu && createPortal(dropdownMenu, document.body)}
+    </div>
+  );
+};
+
+// ─── Folder Action Context Menu (Right-Click & Long Press) ────────────────────
+
+const FolderContextMenu = ({
+  folder,
+  x,
+  y,
+  onClose,
+  onOpen,
+  onRename,
+  onMove,
+  onDelete,
+}: {
+  folder: FolderItem;
+  x: number;
+  y: number;
+  onClose: () => void;
+  onOpen: () => void;
+  onRename: () => void;
+  onMove: () => void;
+  onDelete: () => void;
+}) => {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onClose]);
+
+  const folderMenu = (
+    <div
+      ref={menuRef}
+      style={{
+        position: 'fixed',
+        left: Math.min(x, window.innerWidth - 180),
+        top: Math.min(y, window.innerHeight - 220),
+        zIndex: 99999,
+        background: '#ffffff',
+        borderRadius: '12px',
+        border: '1px solid var(--glass-border)',
+        boxShadow: '0 12px 30px rgba(0,0,0,0.18)',
+        minWidth: '170px',
+        padding: '6px',
+        overflow: 'hidden',
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div style={{ padding: '6px 10px 8px', fontSize: '0.78rem', fontWeight: 700, color: 'var(--muted)', borderBottom: '1px solid rgba(0,0,0,0.06)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <Folder size={14} style={{ color: 'var(--accent)' }} /> {folder.name}
+      </div>
+      <button
+        type="button"
+        onClick={() => { onClose(); onOpen(); }}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+      >
+        <FolderOpen size={15} style={{ color: 'var(--primary)' }} /> Open Folder
+      </button>
+      <button
+        type="button"
+        onClick={() => { onClose(); onRename(); }}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+      >
+        <Pencil size={15} style={{ color: 'var(--accent)' }} /> Rename Folder
+      </button>
+      <button
+        type="button"
+        onClick={() => { onClose(); onMove(); }}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+      >
+        <Folder size={15} style={{ color: '#2563eb' }} /> Move Folder
+      </button>
+      <div style={{ height: '1px', background: 'var(--glass-border)', margin: '4px 0' }} />
+      <button
+        type="button"
+        onClick={() => { onClose(); onDelete(); }}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: 'var(--error)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+      >
+        <Trash2 size={15} style={{ color: 'var(--error)' }} /> Delete Folder
+      </button>
+    </div>
+  );
+
+  return mounted ? createPortal(folderMenu, document.body) : null;
+};
+
+// ─── Rename Folder Modal ─────────────────────────────────────────────────────
+
+const RenameFolderModal = ({
+  folder,
+  onClose,
+  onRenamed,
+}: {
+  folder: FolderItem;
+  onClose: () => void;
+  onRenamed: (updated: FolderItem) => void;
+}) => {
+  const { addToast } = useToast();
+  const [name, setName] = useState(folder.name);
+  const [description, setDescription] = useState(folder.description || '');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setLoading(true);
+
+    const res = await updateFolderAction(folder.id, {
+      name: name.trim(),
+      description: description.trim(),
+      icon: folder.icon,
+      color: folder.color,
+      parent_id: folder.parent_id,
+    });
+
+    setLoading(false);
+    if (res.error) {
+      addToast({ type: 'error', title: 'Rename Failed', message: res.error });
+    } else if (res.folder) {
+      addToast({ type: 'success', title: 'Folder Renamed', message: 'Folder updated successfully.' });
+      onRenamed(res.folder);
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="glass-container"
+        style={{
+          width: '100%',
+          maxWidth: '460px',
+          padding: '24px',
+          borderRadius: '16px',
+          background: '#ffffff',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--foreground)' }}>
+            ✏️ Rename Folder
+          </h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--muted)' }}>
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)' }}>
+              Folder Name
+            </label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="form-input"
-              placeholder="e.g. Choir Recollection 2026"
+              placeholder="e.g., Waivers & Contracts"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                border: '1px solid var(--glass-border)',
+                fontSize: '0.9rem',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
             />
           </div>
 
-          <div style={{ marginBottom: '14px' }}>
-            <label className="form-label">Description (Optional)</label>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+            <button type="button" onClick={onClose} className="btn btn-secondary" style={{ padding: '8px 16px' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={loading || !name.trim()} className="btn btn-primary" style={{ padding: '8px 20px' }}>
+              {loading ? 'Saving…' : 'Save Name'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ─── Move Folder Modal ───────────────────────────────────────────────────────
+
+const MoveFolderModal = ({
+  folder,
+  allFolders,
+  onClose,
+  onMoved,
+}: {
+  folder: FolderItem;
+  allFolders: FolderItem[];
+  onClose: () => void;
+  onMoved: (targetParentId: string | null) => void;
+}) => {
+  const { addToast } = useToast();
+  const [selectedParentId, setSelectedParentId] = useState<string>(folder.parent_id || '');
+  const [loading, setLoading] = useState(false);
+
+  const availableParents = useMemo(() => {
+    return allFolders.filter((f) => f.id !== folder.id);
+  }, [allFolders, folder.id]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const targetParentId = selectedParentId === '' ? null : selectedParentId;
+
+    const res = await moveFolderAction(folder.id, targetParentId);
+    setLoading(false);
+
+    if (res.error) {
+      addToast({ type: 'error', title: 'Move Failed', message: res.error });
+    } else {
+      addToast({ type: 'success', title: 'Folder Moved', message: 'Folder directory location updated.' });
+      onMoved(targetParentId);
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="glass-container"
+        style={{
+          width: '100%',
+          maxWidth: '460px',
+          padding: '24px',
+          borderRadius: '16px',
+          background: '#ffffff',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--foreground)' }}>
+            📁 Move Folder "{folder.name}"
+          </h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--muted)' }}>
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)' }}>
+              Destination Folder Directory
+            </label>
+            <select
+              value={selectedParentId}
+              onChange={(e) => setSelectedParentId(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                border: '1px solid var(--glass-border)',
+                fontSize: '0.9rem',
+                outline: 'none',
+                boxSizing: 'border-box',
+                background: '#ffffff',
+              }}
+            >
+              <option value="">📁 Root Choir Storage Drive (No Parent)</option>
+              {availableParents.map((parent) => (
+                <option key={parent.id} value={parent.id}>
+                  📁 {parent.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+            <button type="button" onClick={onClose} className="btn btn-secondary" style={{ padding: '8px 16px' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={loading} className="btn btn-primary" style={{ padding: '8px 20px' }}>
+              {loading ? 'Moving…' : 'Move Folder'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ─── Rename Document Modal ───────────────────────────────────────────────────
+
+const RenameDocumentModal = ({
+  document,
+  onClose,
+  onRenamed,
+}: {
+  document: DocumentRow;
+  onClose: () => void;
+  onRenamed: (newTitle: string) => void;
+}) => {
+  const { addToast } = useToast();
+  const [title, setTitle] = useState(document.title);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) { setError('Title is required.'); return; }
+    setLoading(true);
+    setError('');
+
+    const res = await renameDocumentAction(document.id, title.trim());
+    setLoading(false);
+
+    if (res.error) {
+      setError(res.error);
+    } else {
+      addToast({ type: 'success', title: 'File Renamed', message: `Renamed to "${title.trim()}"` });
+      onRenamed(title.trim());
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+      onClick={onClose}
+    >
+      <div
+        className="glass-container"
+        style={{ width: '100%', maxWidth: '440px', padding: '28px', background: '#ffffff', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.18)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 style={{ margin: '0 0 16px', fontSize: '1.15rem', fontWeight: 700, color: 'var(--primary)' }}>
+          ✏️ Rename File
+        </h3>
+
+        {error && <div className="alert alert-error" style={{ marginBottom: '16px', fontSize: '0.85rem' }}>{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '20px' }}>
+            <label htmlFor="rename-title-input" style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '6px' }}>
+              New File Name *
+            </label>
             <input
+              id="rename-title-input"
               type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="form-input"
-              placeholder="e.g. Handouts, waivers & schedules"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              style={{ display: 'block', width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)', outline: 'none', fontSize: '0.925rem' }}
             />
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-            <div>
-              <label className="form-label">Icon</label>
-              <select value={icon} onChange={(e) => setIcon(e.target.value)} className="form-input">
-                <option value="📁">📁 Folder</option>
-                <option value="📜">📜 Waiver</option>
-                <option value="🎼">🎼 Sheet Music</option>
-                <option value="📝">📝 Notes</option>
-                <option value="🎉">🎉 Event</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="form-label">Folder Color</label>
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                style={{ width: '100%', height: '40px', padding: '2px', borderRadius: '8px', cursor: 'pointer' }}
-              />
-            </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <button type="button" onClick={onClose} className="btn btn-secondary">Cancel</button>
-            <button type="submit" disabled={loading} className="btn btn-primary">
-              {loading ? 'Creating…' : 'Create Folder'}
+            <button type="button" onClick={onClose} className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.875rem' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={loading} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '0.875rem' }}>
+              {loading ? 'Saving…' : 'Rename'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ─── Move Document Modal ─────────────────────────────────────────────────────
+
+const MoveDocumentModal = ({
+  document,
+  folders,
+  onClose,
+  onMoved,
+}: {
+  document: DocumentRow;
+  folders: FolderItem[];
+  onClose: () => void;
+  onMoved: (targetFolderId: string | null) => void;
+}) => {
+  const { addToast } = useToast();
+  const [targetFolderId, setTargetFolderId] = useState<string>(document.folder_id || 'none');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    const destId = targetFolderId === 'none' ? null : targetFolderId;
+    const res = await moveDocumentAction(document.id, destId);
+    setLoading(false);
+
+    if (res.error) {
+      setError(res.error);
+    } else {
+      addToast({ type: 'success', title: 'File Moved', message: `Moved "${document.title}" successfully.` });
+      onMoved(destId);
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+      onClick={onClose}
+    >
+      <div
+        className="glass-container"
+        style={{ width: '100%', maxWidth: '440px', padding: '28px', background: '#ffffff', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.18)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 style={{ margin: '0 0 6px', fontSize: '1.15rem', fontWeight: 700, color: 'var(--primary)' }}>
+          📁 Move File
+        </h3>
+        <p style={{ margin: '0 0 16px', fontSize: '0.85rem', color: 'var(--muted)' }}>
+          Select destination folder for "{document.title}"
+        </p>
+
+        {error && <div className="alert alert-error" style={{ marginBottom: '16px', fontSize: '0.85rem' }}>{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '24px' }}>
+            <label htmlFor="move-folder-select" style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '6px' }}>
+              Destination Folder
+            </label>
+            <select
+              id="move-folder-select"
+              value={targetFolderId}
+              onChange={(e) => setTargetFolderId(e.target.value)}
+              style={{ display: 'block', width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)', outline: 'none', fontSize: '0.925rem', cursor: 'pointer' }}
+            >
+              <option value="none">Choir Storage Drive (Root / No Folder)</option>
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>
+                  📁 {f.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <button type="button" onClick={onClose} className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.875rem' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={loading} className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '0.875rem' }}>
+              {loading ? 'Moving…' : 'Move File'}
             </button>
           </div>
         </form>
@@ -833,8 +1711,117 @@ export const DocumentsManagerClient = ({
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [distributeTarget, setDistributeTarget] = useState<DocumentRow | null>(null);
   const [previewTarget, setPreviewTarget] = useState<DocumentRow | null>(null);
+  const [renameTarget, setRenameTarget] = useState<DocumentRow | null>(null);
+  const [moveTarget, setMoveTarget] = useState<DocumentRow | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const currentFolder = useMemo(() => {
+    return folders.find((f) => f.id === selectedFolderId) || null;
+  }, [folders, selectedFolderId]);
+
+  const displayedFolders = useMemo(() => {
+    return folders.filter((f) => f.parent_id === (selectedFolderId || null));
+  }, [folders, selectedFolderId]);
+
+  const filteredDocuments = useMemo(() => {
+    return documents.filter((doc) => {
+      // Filter by folder if not searching, or filter by search query across all
+      const matchesFolder = searchQuery.trim()
+        ? true
+        : selectedFolderId === null
+        ? !doc.folder_id
+        : doc.folder_id === selectedFolderId;
+
+      const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesFolder && matchesSearch;
+    });
+  }, [documents, selectedFolderId, searchQuery]);
+
+  const [isDraggingOverPage, setIsDraggingOverPage] = useState(false);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  const [draggedDocId, setDraggedDocId] = useState<string | null>(null);
+
+  const [folderContextMenu, setFolderContextMenu] = useState<{ folder: FolderItem; x: number; y: number } | null>(null);
+  const [renameFolderTarget, setRenameFolderTarget] = useState<FolderItem | null>(null);
+  const [moveFolderTarget, setMoveFolderTarget] = useState<FolderItem | null>(null);
+  const [deleteFolderTargetId, setDeleteFolderTargetId] = useState<string | null>(null);
+
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleTouchStartFolder = (folder: FolderItem, e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const posX = touch.clientX;
+    const posY = touch.clientY;
+    longPressTimerRef.current = setTimeout(() => {
+      if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+      }
+      setFolderContextMenu({ folder, x: posX, y: posY });
+    }, 500);
+  };
+
+  const handleTouchEndFolder = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleConfirmDeleteFolder = async () => {
+    if (!deleteFolderTargetId) return;
+    const id = deleteFolderTargetId;
+    setDeleteFolderTargetId(null);
+
+    const res = await deleteFolderAction(id);
+    if (res.error) {
+      addToast({ type: 'error', title: 'Delete Failed', message: res.error });
+    } else {
+      setFolders((prev) => prev.filter((f) => f.id !== id));
+      if (selectedFolderId === id) setSelectedFolderId(null);
+      addToast({ type: 'success', title: 'Folder Deleted', message: 'Folder removed successfully.' });
+    }
+  };
+
+  const handlePageDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDraggingOverPage(true);
+    }
+  };
+
+  const handlePageDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDraggingOverPage(false);
+  };
+
+  const handlePageDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOverPage(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setShowUpload(true);
+    }
+  };
+
+  const handleDropOnFolder = async (folderId: string, e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverFolderId(null);
+    const docId = e.dataTransfer.getData('text/plain') || draggedDocId;
+    if (!docId) return;
+
+    setDocuments((prev) => prev.map((d) => (d.id === docId ? { ...d, folder_id: folderId } : d)));
+    const res = await moveDocumentAction(docId, folderId);
+    if (res.error) {
+      addToast({ type: 'error', title: 'Move Failed', message: res.error });
+    } else {
+      addToast({ type: 'success', title: 'File Moved', message: 'Document moved into folder.' });
+    }
+    setDraggedDocId(null);
+  };
 
   const handleUploaded = (doc: DocumentRow) => {
     setDocuments((prev) => [doc, ...prev]);
@@ -853,12 +1840,53 @@ export const DocumentsManagerClient = ({
       addToast({ type: 'error', title: 'Delete Failed', message: res.error });
     } else {
       setDocuments((prev) => prev.filter((d) => d.id !== id));
-      addToast({ type: 'success', title: 'Document Deleted', message: 'Document and its associated files have been removed.' });
+      addToast({ type: 'success', title: 'Document Deleted', message: 'Document removed from storage.' });
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+    <div
+      onDragOver={handlePageDragOver}
+      onDragLeave={handlePageDragLeave}
+      onDrop={handlePageDrop}
+      style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}
+    >
+      {/* Drag and Drop File Upload Overlay */}
+      {isDraggingOverPage && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999,
+            background: 'rgba(11, 77, 36, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#ffffff',
+            pointerEvents: 'none',
+          }}
+        >
+          <div
+            style={{
+              padding: '40px',
+              borderRadius: '24px',
+              border: '3px dashed rgba(255,255,255,0.8)',
+              textAlign: 'center',
+              maxWidth: '440px',
+            }}
+          >
+            <div style={{ fontSize: '3.5rem', marginBottom: '12px' }}>📥</div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0 0 8px' }}>
+              Drop Files to Upload
+            </h2>
+            <p style={{ margin: 0, opacity: 0.9, fontSize: '0.95rem' }}>
+              Release your files to upload directly into {currentFolder ? `"${currentFolder.name}"` : 'Choir Storage Drive'}.
+            </p>
+          </div>
+        </div>
+      )}
       <div className="bg-orb bg-orb-1" style={{ width: '450px', height: '450px' }} />
       <div className="bg-orb bg-orb-2" style={{ width: '400px', height: '400px' }} />
 
@@ -866,28 +1894,33 @@ export const DocumentsManagerClient = ({
 
       <main className="admin-content-full" style={{ flex: 1, maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
         {/* Page header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
-              Documents &amp; Waivers
+              Document &amp; Waiver Storage Explorer
             </h1>
             <p style={{ color: 'var(--muted)', margin: '4px 0 0', fontSize: '0.95rem' }}>
-              Upload PDF documents, preview waivers, and distribute signature requests to members.
+              Manage choir folders, waivers, guides, and distribute files to members.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
               onClick={() => setShowCreateFolder(true)}
               className="btn btn-secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
             >
-              📁 + Create Folder
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                <line x1="12" y1="11" x2="12" y2="17" />
+                <line x1="9" y1="14" x2="15" y2="14" />
+              </svg>
+              <span>New Folder</span>
             </button>
 
             <button
               onClick={() => setShowUpload(true)}
               className="btn btn-primary docs-desktop-create"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -897,107 +1930,388 @@ export const DocumentsManagerClient = ({
           </div>
         </div>
 
-        {/* Document list */}
-        {documents.length === 0 ? (
-          <div className="glass-container" style={{ textAlign: 'center', padding: '64px 20px', color: 'var(--muted)' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📄</div>
-            <p style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--foreground)', margin: '0 0 8px' }}>No documents yet</p>
-            <p style={{ margin: 0 }}>Upload a PDF waiver or guide to get started.</p>
+        {/* Windows Explorer Storage Container */}
+        <div className="glass-container" style={{ padding: '20px', borderRadius: '16px', marginBottom: '32px' }}>
+          {/* Windows Explorer Navigation Bar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', paddingBottom: '16px', marginBottom: '16px', borderBottom: '1px solid var(--glass-border)' }}>
+            {/* Breadcrumb Path */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedFolderId(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '0.925rem',
+                  fontWeight: selectedFolderId === null ? 700 : 500,
+                  color: selectedFolderId === null ? 'var(--primary)' : 'var(--muted)',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                </svg>
+                <span>Choir Storage Drive</span>
+              </button>
+
+              {currentFolder && (
+                <>
+                  <span style={{ color: 'var(--muted)' }}>/</span>
+                  <span style={{ fontSize: '0.925rem', fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span>{currentFolder.name}</span>
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Search Bar & View Mode Switcher */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                placeholder="Search storage files..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--glass-border)',
+                  fontSize: '0.85rem',
+                  outline: 'none',
+                  width: '190px',
+                }}
+              />
+
+              <div style={{ display: 'flex', border: '1px solid var(--glass-border)', borderRadius: '8px', overflow: 'hidden' }}>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  style={{
+                    border: 'none',
+                    padding: '6px 12px',
+                    background: viewMode === 'grid' ? 'var(--primary)' : '#ffffff',
+                    color: viewMode === 'grid' ? '#ffffff' : 'var(--foreground)',
+                    cursor: 'pointer',
+                    fontSize: '0.825rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Grid
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  style={{
+                    border: 'none',
+                    padding: '6px 12px',
+                    background: viewMode === 'list' ? 'var(--primary)' : '#ffffff',
+                    color: viewMode === 'list' ? '#ffffff' : 'var(--foreground)',
+                    cursor: 'pointer',
+                    fontSize: '0.825rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  List
+                </button>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="table-container">
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>Document</th>
-                  <th>Type</th>
-                  <th>Uploaded By</th>
-                  <th>Expires</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {documents.map((doc) => (
-                  <tr key={doc.id}>
-                    <td data-label="Document">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(11,77,36,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                          </svg>
-                        </div>
-                        <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--foreground)' }}>{doc.title}</span>
-                      </div>
-                    </td>
-                    <td data-label="Type">
-                      <span
-                        className="badge"
+
+          {/* Back button if inside subfolder */}
+          {selectedFolderId !== null && (
+            <button
+              type="button"
+              onClick={() => setSelectedFolderId(currentFolder?.parent_id || null)}
+              className="btn btn-secondary"
+              style={{ marginBottom: '16px', fontSize: '0.825rem', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+            >
+              <span>← Back to Parent Storage</span>
+            </button>
+          )}
+
+          {/* Folders Section (Windows Explorer Style Yellow Folder Cards) */}
+          {displayedFolders.length > 0 && (
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '12px', fontWeight: 700 }}>
+                Storage Folders ({displayedFolders.length})
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px' }}>
+                {displayedFolders.map((folder) => {
+                  const fileCount = documents.filter((d) => d.folder_id === folder.id).length;
+                  const isHovered = dragOverFolderId === folder.id;
+                  return (
+                    <div
+                      key={folder.id}
+                      onClick={() => setSelectedFolderId(folder.id)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setFolderContextMenu({ folder, x: e.clientX, y: e.clientY });
+                      }}
+                      onTouchStart={(e) => handleTouchStartFolder(folder, e)}
+                      onTouchMove={handleTouchEndFolder}
+                      onTouchEnd={handleTouchEndFolder}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragOverFolderId(folder.id);
+                      }}
+                      onDragLeave={() => setDragOverFolderId(null)}
+                      onDrop={(e) => handleDropOnFolder(folder.id, e)}
+                      style={{
+                        padding: '14px 16px',
+                        borderRadius: '12px',
+                        border: isHovered ? '2px dashed var(--primary)' : '1px solid var(--glass-border)',
+                        background: isHovered ? 'rgba(11,77,36,0.1)' : 'rgba(255,255,255,0.85)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: isHovered ? '0 4px 14px rgba(11,77,36,0.2)' : '0 2px 8px rgba(0,0,0,0.03)',
+                        transform: isHovered ? 'scale(1.02)' : 'none',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                      }}
+                      title="Right click or long press for options"
+                    >
+                      <div
                         style={{
-                          background: DOC_TYPE_COLORS[doc.type],
-                          color: DOC_TYPE_TEXT[doc.type],
-                          fontWeight: 600,
-                          fontSize: '0.78rem',
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '10px',
+                          background: 'rgba(197,160,89,0.15)',
+                          color: 'var(--accent)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
                         }}
                       >
-                        {DOC_TYPE_LABELS[doc.type]}
-                      </span>
-                    </td>
-                    <td data-label="Uploaded By">
-                      <span style={{ fontSize: '0.88rem', color: 'var(--muted)' }}>
-                        {(doc.profiles as any)?.full_name || 'Admin'}
-                      </span>
-                    </td>
-                    <td data-label="Expires">
-                      <span style={{ fontSize: '0.85rem', color: doc.expires_at ? 'var(--foreground)' : 'var(--muted)' }}>
-                        {doc.expires_at ? new Date(doc.expires_at).toLocaleDateString() : 'No expiry'}
-                      </span>
-                    </td>
-                    <td data-label="Actions">
-                      <div className="docs-table-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <button
-                          onClick={() => setPreviewTarget(doc)}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}
-                          aria-label={`Preview ${doc.title}`}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                          </svg>
-                          Preview
-                        </button>
-                        <button
-                          onClick={() => setDistributeTarget(doc)}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}
-                          aria-label={`Distribute ${doc.title}`}
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                          </svg>
-                          Distribute
-                        </button>
-                        <button
-                          onClick={() => setDeleteTargetId(doc.id)}
-                          disabled={deletingId === doc.id}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '0.8rem', color: 'var(--error)', borderColor: 'var(--error)' }}
-                          aria-label={`Delete ${doc.title}`}
-                        >
-                          {deletingId === doc.id ? '…' : (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
-                            </svg>
-                          )}
-                        </button>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                        </svg>
                       </div>
-                    </td>
-                  </tr>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.925rem', color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {folder.name}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: '2px' }}>
+                          {isHovered ? 'Drop file to move here 📥' : `${fileCount} file${fileCount !== 1 ? 's' : ''}`}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Documents Section */}
+          <div>
+            <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '12px', fontWeight: 700 }}>
+              Files ({filteredDocuments.length})
+            </div>
+
+            {filteredDocuments.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)', background: 'rgba(0,0,0,0.02)', borderRadius: '12px' }}>
+                <p style={{ margin: 0, fontSize: '0.9rem' }}>No files found in this directory.</p>
+              </div>
+            ) : viewMode === 'grid' ? (
+              /* Grid / Tile View */
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
+                {filteredDocuments.map((doc) => (
+                  <div
+                    key={doc.id}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', doc.id);
+                      setDraggedDocId(doc.id);
+                    }}
+                    onDragEnd={() => setDraggedDocId(null)}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '14px',
+                      border: '1px solid var(--glass-border)',
+                      background: '#ffffff',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '14px',
+                      cursor: 'grab',
+                      opacity: draggedDocId === doc.id ? 0.5 : 1,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                      <div
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '10px',
+                          background: 'rgba(11,77,36,0.1)',
+                          color: 'var(--primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          title={doc.title}
+                          style={{
+                            fontWeight: 700,
+                            fontSize: '0.925rem',
+                            color: 'var(--foreground)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {doc.title}
+                        </div>
+                        <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span
+                            className="badge"
+                            style={{
+                              background: DOC_TYPE_COLORS[doc.type],
+                              color: DOC_TYPE_TEXT[doc.type],
+                              fontSize: '0.725rem',
+                              fontWeight: 700,
+                            }}
+                          >
+                            {DOC_TYPE_LABELS[doc.type]}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                      <button
+                        onClick={() => setPreviewTarget(doc)}
+                        className="btn btn-secondary"
+                        style={{ padding: '6px 14px', fontSize: '0.825rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
+                        title="Preview File"
+                      >
+                        <Eye size={14} /> Preview
+                      </button>
+
+                      <FileActionMenu
+                        doc={doc}
+                        onPreview={() => setPreviewTarget(doc)}
+                        onRename={() => setRenameTarget(doc)}
+                        onMove={() => setMoveTarget(doc)}
+                        onDistribute={() => setDistributeTarget(doc)}
+                        onDelete={() => setDeleteTargetId(doc.id)}
+                      />
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            ) : (
+              /* List / Details View */
+              <div className="table-container">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Document</th>
+                      <th>Type</th>
+                      <th>Uploaded By</th>
+                      <th>Expires</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDocuments.map((doc) => (
+                      <tr
+                        key={doc.id}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/plain', doc.id);
+                          setDraggedDocId(doc.id);
+                        }}
+                        onDragEnd={() => setDraggedDocId(null)}
+                        style={{ opacity: draggedDocId === doc.id ? 0.5 : 1, cursor: 'grab' }}
+                      >
+                        <td data-label="Document">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                            </svg>
+                            <span
+                              title={doc.title}
+                              style={{
+                                fontWeight: 600,
+                                fontSize: '0.925rem',
+                                color: 'var(--foreground)',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                display: 'inline-block',
+                                maxWidth: '240px',
+                              }}
+                            >
+                              {doc.title}
+                            </span>
+                          </div>
+                        </td>
+                        <td data-label="Type">
+                          <span className="badge" style={{ background: DOC_TYPE_COLORS[doc.type], color: DOC_TYPE_TEXT[doc.type], fontWeight: 600, fontSize: '0.75rem' }}>
+                            {DOC_TYPE_LABELS[doc.type]}
+                          </span>
+                        </td>
+                        <td data-label="Uploaded By">
+                          <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+                            {(doc.profiles as any)?.full_name || 'Admin'}
+                          </span>
+                        </td>
+                        <td data-label="Expires">
+                          <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+                            {doc.expires_at ? new Date(doc.expires_at).toLocaleDateString() : 'No expiry'}
+                          </span>
+                        </td>
+                        <td data-label="Actions">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <button
+                              onClick={() => setPreviewTarget(doc)}
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer' }}
+                            >
+                              Preview
+                            </button>
+                            <FileActionMenu
+                              doc={doc}
+                              onPreview={() => setPreviewTarget(doc)}
+                              onRename={() => setRenameTarget(doc)}
+                              onMove={() => setMoveTarget(doc)}
+                              onDistribute={() => setDistributeTarget(doc)}
+                              onDelete={() => setDeleteTargetId(doc.id)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
 
       {/* Mobile FAB */}
@@ -1023,6 +2337,72 @@ export const DocumentsManagerClient = ({
 
       {previewTarget && (
         <DocPreviewModal document={previewTarget} onClose={() => setPreviewTarget(null)} />
+      )}
+
+      {renameTarget && (
+        <RenameDocumentModal
+          document={renameTarget}
+          onClose={() => setRenameTarget(null)}
+          onRenamed={(newTitle) => {
+            setDocuments((prev) => prev.map((d) => (d.id === renameTarget.id ? { ...d, title: newTitle } : d)));
+          }}
+        />
+      )}
+
+      {moveTarget && (
+        <MoveDocumentModal
+          document={moveTarget}
+          folders={folders}
+          onClose={() => setMoveTarget(null)}
+          onMoved={(newFolderId) => {
+            setDocuments((prev) => prev.map((d) => (d.id === moveTarget.id ? { ...d, folder_id: newFolderId } : d)));
+          }}
+        />
+      )}
+
+      {folderContextMenu && (
+        <FolderContextMenu
+          folder={folderContextMenu.folder}
+          x={folderContextMenu.x}
+          y={folderContextMenu.y}
+          onClose={() => setFolderContextMenu(null)}
+          onOpen={() => setSelectedFolderId(folderContextMenu.folder.id)}
+          onRename={() => setRenameFolderTarget(folderContextMenu.folder)}
+          onMove={() => setMoveFolderTarget(folderContextMenu.folder)}
+          onDelete={() => setDeleteFolderTargetId(folderContextMenu.folder.id)}
+        />
+      )}
+
+      {renameFolderTarget && (
+        <RenameFolderModal
+          folder={renameFolderTarget}
+          onClose={() => setRenameFolderTarget(null)}
+          onRenamed={(updated) => {
+            setFolders((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+          }}
+        />
+      )}
+
+      {moveFolderTarget && (
+        <MoveFolderModal
+          folder={moveFolderTarget}
+          allFolders={folders}
+          onClose={() => setMoveFolderTarget(null)}
+          onMoved={(newParentId) => {
+            setFolders((prev) => prev.map((f) => (f.id === moveFolderTarget.id ? { ...f, parent_id: newParentId } : f)));
+          }}
+        />
+      )}
+
+      {deleteFolderTargetId && (
+        <ConfirmModal
+          title="Delete Folder"
+          message="This will delete this folder. Documents inside this folder will not be erased but will be unlinked back to root storage drive."
+          confirmLabel="Yes, Delete Folder"
+          isDanger
+          onConfirm={handleConfirmDeleteFolder}
+          onCancel={() => setDeleteFolderTargetId(null)}
+        />
       )}
 
       {distributeTarget && (
