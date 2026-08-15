@@ -300,31 +300,32 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
           {error && <div className="alert alert-error content-anim-item">{error}</div>}
           {success && <div className="alert alert-success content-anim-item">{success}</div>}
 
-          {/* Active Live Session Banner */}
+          {/* Active Live Session Status Pill Bar */}
           {activeSession && (
             <div
+              className="glass-container"
               style={{
-                marginBottom: '24px',
-                padding: '16px 20px',
-                borderRadius: '16px',
-                background: 'rgba(239, 68, 68, 0.08)',
-                border: '1.5px solid rgba(239, 68, 68, 0.3)',
+                marginBottom: '20px',
+                padding: '12px 18px',
+                background: 'rgba(239, 68, 68, 0.05)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                borderRadius: '14px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '12px',
                 flexWrap: 'wrap',
-                boxShadow: '0 4px 14px rgba(239, 68, 68, 0.12)',
+                boxShadow: '0 4px 16px rgba(239, 68, 68, 0.08)',
                 opacity: 1,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '1.2rem' }}>🔴</span>
-                <div>
-                  <strong style={{ color: '#991b1b', fontSize: '1rem' }}>Live Session Active</strong>
-                  <div style={{ fontSize: '0.82rem', color: '#7f1d1d', marginTop: '2px' }}>
-                    Session is live. <Link href="/live" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'underline' }}>Go to /live control screen</Link>
-                  </div>
+                <span style={{ fontSize: '1.1rem' }}>🔴</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <strong style={{ color: '#991b1b', fontSize: '0.92rem' }}>Live Session Active</strong>
+                  <span style={{ fontSize: '0.82rem', color: '#7f1d1d' }}>
+                    • <Link href="/live" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'underline' }}>Control Screen (/live)</Link>
+                  </span>
                 </div>
               </div>
               {canManage && (
@@ -335,12 +336,13 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                     background: 'var(--error)',
                     color: '#fff',
                     border: 'none',
-                    minHeight: '44px',
-                    padding: '8px 18px',
-                    fontSize: '0.85rem',
+                    minHeight: '38px',
+                    padding: '6px 16px',
+                    fontSize: '0.82rem',
                     borderRadius: '10px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(239, 68, 68, 0.25)',
                   }}
                   disabled={isPending}
                 >
@@ -417,7 +419,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                           {seq.sequence_items.length} song{seq.sequence_items.length !== 1 ? 's' : ''}
                         </p>
                       </div>
-                      <div className="seq-card-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <div className="seq-card-actions" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                         {isDirector && (
                           <button
                             onClick={() => {
@@ -429,9 +431,9 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                             }}
                             className="btn btn-primary"
                             style={{
-                              minHeight: '48px',
-                              padding: '8px 18px',
-                              fontSize: '0.88rem',
+                              minHeight: '42px',
+                              padding: '6px 16px',
+                              fontSize: '0.85rem',
                               background: activeSession && activeSession.sequence_id === seq.id
                                 ? 'var(--success)'
                                 : activeSession
@@ -450,14 +452,14 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                         <button
                           onClick={() => setSelectedSeqId(isSelected ? null : seq.id)}
                           className="btn btn-secondary"
-                          style={{ minHeight: '48px', padding: '8px 16px', fontSize: '0.85rem', fontWeight: 600 }}
+                          style={{ minHeight: '42px', padding: '6px 14px', fontSize: '0.82rem', fontWeight: 600 }}
                         >
                           {isSelected ? '▲ Hide' : `▼ ${seq.sequence_items.length} ${seq.sequence_items.length === 1 ? 'Song' : 'Songs'}`}
                         </button>
                         {canManage && (
                           <>
-                            <button onClick={() => setEditingSeq(seq)} className="btn btn-secondary" style={{ minHeight: '48px', padding: '8px 14px', fontSize: '0.85rem' }}>Edit</button>
-                            <button onClick={() => handleDeleteClick(seq)} className="btn btn-secondary" style={{ minHeight: '48px', padding: '8px 14px', fontSize: '0.85rem', color: 'var(--error)' }} disabled={isPending}>Delete</button>
+                            <button onClick={() => setEditingSeq(seq)} className="btn btn-secondary" style={{ minHeight: '42px', padding: '6px 12px', fontSize: '0.82rem' }}>Edit</button>
+                            <button onClick={() => handleDeleteClick(seq)} className="btn btn-secondary" style={{ minHeight: '42px', padding: '6px 12px', fontSize: '0.82rem', color: 'var(--error)' }} disabled={isPending}>Delete</button>
                           </>
                         )}
                       </div>
