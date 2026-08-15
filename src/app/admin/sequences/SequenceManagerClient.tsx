@@ -417,7 +417,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                           {seq.sequence_items.length} song{seq.sequence_items.length !== 1 ? 's' : ''}
                         </p>
                       </div>
-                      <div className="seq-card-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <div className="seq-card-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                         {isDirector && (
                           <button
                             onClick={() => {
@@ -429,9 +429,9 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                             }}
                             className="btn btn-primary"
                             style={{
-                              minHeight: '44px',
-                              padding: '8px 16px',
-                              fontSize: '0.85rem',
+                              minHeight: '48px',
+                              padding: '8px 18px',
+                              fontSize: '0.88rem',
                               background: activeSession && activeSession.sequence_id === seq.id
                                 ? 'var(--success)'
                                 : activeSession
@@ -447,15 +447,19 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                               : '▶ Go Live'}
                           </button>
                         )}
+                        <button
+                          onClick={() => setSelectedSeqId(isSelected ? null : seq.id)}
+                          className="btn btn-secondary"
+                          style={{ minHeight: '48px', padding: '8px 16px', fontSize: '0.85rem', fontWeight: 600 }}
+                        >
+                          {isSelected ? '▲ Hide' : `▼ ${seq.sequence_items.length} ${seq.sequence_items.length === 1 ? 'Song' : 'Songs'}`}
+                        </button>
                         {canManage && (
                           <>
-                            <button onClick={() => setEditingSeq(seq)} className="btn btn-secondary" style={{ minHeight: '44px', padding: '8px 14px', fontSize: '0.82rem' }}>Edit</button>
-                            <button onClick={() => handleDeleteClick(seq)} className="btn btn-secondary" style={{ minHeight: '44px', padding: '8px 14px', fontSize: '0.82rem', color: 'var(--error)' }} disabled={isPending}>Delete</button>
+                            <button onClick={() => setEditingSeq(seq)} className="btn btn-secondary" style={{ minHeight: '48px', padding: '8px 14px', fontSize: '0.85rem' }}>Edit</button>
+                            <button onClick={() => handleDeleteClick(seq)} className="btn btn-secondary" style={{ minHeight: '48px', padding: '8px 14px', fontSize: '0.85rem', color: 'var(--error)' }} disabled={isPending}>Delete</button>
                           </>
                         )}
-                        <button onClick={() => setSelectedSeqId(isSelected ? null : seq.id)} className="btn btn-secondary" style={{ minHeight: '44px', padding: '8px 14px', fontSize: '0.82rem' }}>
-                          {isSelected ? '▲ Hide' : '▼ Songs'}
-                        </button>
                       </div>
                     </div>
 
@@ -542,10 +546,12 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                                     </button>
                                   )}
                                   {canManage && (
-                                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                      <button onClick={() => handleMoveItem(seq, item.id, 'up')} disabled={idx === 0 || isPending} style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Move up" title="Move up">↑</button>
-                                      <button onClick={() => handleMoveItem(seq, item.id, 'down')} disabled={idx === sorted.length - 1 || isPending} style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Move down" title="Move down">↓</button>
-                                      <button onClick={() => handleRemoveSong(item.id)} disabled={isPending} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--error)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Remove" title="Remove song">✕</button>
+                                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                      <div style={{ display: 'inline-flex', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '8px', overflow: 'hidden' }}>
+                                        <button onClick={() => handleMoveItem(seq, item.id, 'up')} disabled={idx === 0 || isPending} style={{ background: 'none', border: 'none', borderRight: '1px solid rgba(0,0,0,0.08)', width: '36px', height: '36px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Move up" title="Move up">↑</button>
+                                        <button onClick={() => handleMoveItem(seq, item.id, 'down')} disabled={idx === sorted.length - 1 || isPending} style={{ background: 'none', border: 'none', width: '36px', height: '36px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Move down" title="Move down">↓</button>
+                                      </div>
+                                      <button onClick={() => handleRemoveSong(item.id)} disabled={isPending} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', width: '36px', height: '36px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--error)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Remove song" title="Remove song">✕</button>
                                     </div>
                                   )}
                                 </div>
@@ -558,10 +564,20 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                           <div>
                             <button
                               onClick={() => setAddSongSeqId(addSongSeqId === seq.id ? null : seq.id)}
-                              className="btn btn-secondary"
-                              style={{ minHeight: '44px', fontSize: '0.85rem' }}
+                              className="btn"
+                              style={{
+                                width: '100%',
+                                minHeight: '48px',
+                                fontSize: '0.88rem',
+                                fontWeight: 700,
+                                border: '1.5px dashed rgba(30,58,138,0.25)',
+                                background: addSongSeqId === seq.id ? 'rgba(0,0,0,0.04)' : 'rgba(30,58,138,0.03)',
+                                color: 'var(--primary)',
+                                borderRadius: '12px',
+                                marginTop: '8px',
+                              }}
                             >
-                              {addSongSeqId === seq.id ? '✕ Close Picker' : '+ Add Song'}
+                              {addSongSeqId === seq.id ? '✕ Close Repertoire Songbook' : '+ Add Song to Setlist'}
                             </button>
 
                             {addSongSeqId === seq.id && (
