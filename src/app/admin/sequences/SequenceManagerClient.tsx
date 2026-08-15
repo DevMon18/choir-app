@@ -529,8 +529,8 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
 
           {/* Edit Modal */}
           {editingSeq && (
-            <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }} onClick={() => setEditingSeq(null)}>
-              <div style={{ background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.12)', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(11, 77, 36, 0.25)', maxWidth: '480px', width: '100%', padding: '32px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '76px 16px 84px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }} onClick={() => setEditingSeq(null)}>
+              <div style={{ background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.12)', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(11, 77, 36, 0.25)', maxWidth: '480px', width: '100%', padding: '24px 28px', maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                 <h2 style={{ fontWeight: 700, marginBottom: '20px', color: 'var(--primary)' }}>Edit Sequence</h2>
                 <form onSubmit={handleUpdate}>
                   <div className="input-group">
@@ -545,9 +545,9 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                     <label className="input-label">Scheduled Date & Time</label>
                     <input name="scheduled_at" type="datetime-local" className="input-field" defaultValue={editingSeq.scheduled_at?.slice(0, 16) ?? ''} />
                   </div>
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                    <button type="submit" className="btn btn-primary" disabled={isPending} style={{ minHeight: '48px' }}>Save</button>
-                    <button type="button" className="btn btn-secondary" onClick={() => setEditingSeq(null)} style={{ minHeight: '48px' }}>Cancel</button>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                    <button type="submit" className="btn btn-primary" disabled={isPending} style={{ minHeight: '48px', flex: 1 }}>Save</button>
+                    <button type="button" className="btn btn-secondary" onClick={() => setEditingSeq(null)} style={{ minHeight: '48px', flex: 1 }}>Cancel</button>
                   </div>
                 </form>
               </div>
@@ -556,8 +556,8 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
 
           {/* Song Lyrics Preview Modal */}
           {previewSong && (
-            <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }} onClick={() => setPreviewSong(null)}>
-              <div style={{ background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.12)', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(11, 77, 36, 0.25)', maxWidth: '640px', width: '100%', padding: '32px', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '76px 16px 84px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }} onClick={() => setPreviewSong(null)}>
+              <div style={{ background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.12)', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(11, 77, 36, 0.25)', maxWidth: '640px', width: '100%', padding: '24px 28px', maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
                   <div>
                     {(previewSong.categories && previewSong.categories.length > 0
@@ -573,7 +573,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                     <h2 style={{ fontWeight: 700, color: 'var(--primary)', margin: 0 }}>{previewSong.title}</h2>
                     {previewSong.composer && <p style={{ color: 'var(--muted)', fontSize: '0.82rem', margin: '4px 0 0' }}>by {previewSong.composer}</p>}
                   </div>
-                  <button onClick={() => setPreviewSong(null)} className="btn btn-secondary" style={{ minWidth: '40px', padding: '8px' }}>✕</button>
+                  <button onClick={() => setPreviewSong(null)} className="btn btn-secondary" style={{ minWidth: '44px', minHeight: '44px', padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                 </div>
                 
                 <div style={{ background: 'rgba(30,58,138,0.02)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '20px', overflowX: 'auto' }}>
