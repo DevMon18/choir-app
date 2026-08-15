@@ -57,18 +57,19 @@ const MASS_ROLES = [
 ];
 
 const MASS_ROLE_LABELS: Record<string, string> = {
-  entrance: 'Entrance Song',
-  kyrie: 'Kyrie (Lord, Have Mercy)',
-  gloria: 'Gloria (Glory to God)',
+  entrance: 'Entrance',
+  kyrie: 'Kyrie',
+  gloria: 'Gloria',
   psalm: 'Responsorial Psalm',
-  gospel: 'Gospel Acclamation (Alleluia)',
-  offertory: 'Offertory Song (Preparation of the Gifts)',
-  sanctus: 'Sanctus (Holy, Holy, Holy)',
+  gospel: 'Gospel Acclamation',
+  offertory: 'Offertory',
+  sanctus: 'Sanctus',
   memorial: 'Memorial Acclamation',
   amen: 'Great Amen',
-  agnus: 'Agnus Dei (Lamb of God)',
-  communion: 'Communion Song',
-  recessional: 'Recessional Song (Closing/Sending Forth)',
+  agnus: 'Lamb of God',
+  communion: 'Communion',
+  recessional: 'Recessional',
+  lords_prayer: "Lord's Prayer",
 };
 
 interface Props {
@@ -408,72 +409,88 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                         ) : (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
                             {sorted.map((item, idx) => (
-                              <div key={item.id} className="seq-song-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(30,58,138,0.03)', borderRadius: '10px', padding: '12px 14px', flexWrap: 'wrap' }}>
-                                <span style={{ color: 'var(--muted)', fontSize: '0.8rem', fontWeight: 700, minWidth: '24px' }}>{idx + 1}</span>
-                                <div style={{ flex: 1, minWidth: '180px' }}>
+                              <div
+                                key={item.id}
+                                className="seq-song-row"
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  background: '#ffffff',
+                                  border: '1px solid rgba(0,0,0,0.06)',
+                                  borderRadius: '12px',
+                                  padding: '10px 14px',
+                                  flexWrap: 'wrap',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                                }}
+                              >
+                                <span style={{ color: 'var(--muted)', fontSize: '0.82rem', fontWeight: 700, minWidth: '20px' }}>{idx + 1}</span>
+                                <div style={{ flex: '1 1 160px', minWidth: '140px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                     <div
-                                        onClick={() => setPreviewSong(item.songs)}
-                                        style={{ fontWeight: 600, color: 'var(--primary)', fontSize: '0.95rem', cursor: 'pointer', textDecoration: 'underline' }}
-                                        title="Click to view lyrics & chords"
+                                      onClick={() => setPreviewSong(item.songs)}
+                                      style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.92rem', cursor: 'pointer' }}
+                                      title="Click to view lyrics & chords"
                                     >
                                       {item.songs.title}
                                     </div>
                                     {(() => {
-                                      const roleLabel = item.role_in_mass
+                                      const rawRole = item.role_in_mass
                                         ? (MASS_ROLE_LABELS[item.role_in_mass] || item.role_in_mass)
                                         : (item.songs.categories && item.songs.categories.length > 0
                                           ? item.songs.categories[0].name
                                           : item.songs.category || null);
-                                      if (!roleLabel) return null;
+                                      if (!rawRole) return null;
+                                      const cleanRole = (MASS_ROLE_LABELS[rawRole.toLowerCase()] || rawRole).replace(/\s*\([^)]*\)/g, '');
                                       return (
-                                        <span className="badge" style={{ fontSize: '0.65rem', padding: '2px 8px', background: 'rgba(11,77,36,0.08)', color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase' }}>
-                                          {roleLabel}
+                                        <span
+                                          className="badge"
+                                          style={{
+                                            fontSize: '0.64rem',
+                                            padding: '2px 8px',
+                                            background: 'rgba(11,77,36,0.08)',
+                                            color: 'var(--primary)',
+                                            fontWeight: 700,
+                                            textTransform: 'uppercase',
+                                            borderRadius: '10px',
+                                            whiteSpace: 'nowrap',
+                                          }}
+                                        >
+                                          {cleanRole}
                                         </span>
                                       );
                                     })()}
                                   </div>
-                                  {item.songs.composer && <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{item.songs.composer}</div>}
+                                  {item.songs.composer && <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{item.songs.composer}</div>}
                                 </div>
-                                {canManage && (
-                                  <select
-                                    value={item.role_in_mass || ''}
-                                    onChange={(e) => handleSetRoleInMass(item.id, e.target.value)}
-                                    disabled={isPending}
-                                    style={{
-                                      background: 'none', border: '1px solid var(--border)', borderRadius: '6px',
-                                      padding: '4px 8px', fontSize: '0.78rem', outline: 'none', color: 'var(--muted)',
-                                      maxWidth: '150px'
-                                    }}
-                                    title="Override Mass Role"
-                                  >
-                                    <option value="">Change Role…</option>
-                                    {MASS_ROLES.map(r => (
-                                      <option key={r.value} value={r.value}>{r.label}</option>
-                                    ))}
-                                  </select>
-                                )}
-                                {activeSession?.sequence_id === seq.id && isDirector && (
-                                  <button
-                                    onClick={() => handleSetActiveSong(item.songs.id)}
-                                    className="btn"
-                                    style={{
-                                      minHeight: '44px', padding: '4px 12px', fontSize: '0.75rem',
-                                      background: activeSession.active_song_id === item.songs.id ? 'var(--success)' : 'var(--primary)',
-                                      color: '#fff', border: 'none',
-                                    }}
-                                    disabled={isPending}
-                                  >
-                                    {activeSession.active_song_id === item.songs.id ? '▶ Active' : 'Set Active'}
-                                  </button>
-                                )}
-                                {canManage && (
-                                  <div style={{ display: 'flex', gap: '4px' }}>
-                                    <button onClick={() => handleMoveItem(seq, item.id, 'up')} disabled={idx === 0 || isPending} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', width: '44px', height: '44px', minHeight: '44px', cursor: 'pointer', fontSize: '0.8rem' }} aria-label="Move up">↑</button>
-                                    <button onClick={() => handleMoveItem(seq, item.id, 'down')} disabled={idx === sorted.length - 1 || isPending} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', width: '44px', height: '44px', minHeight: '44px', cursor: 'pointer', fontSize: '0.8rem' }} aria-label="Move down">↓</button>
-                                    <button onClick={() => handleRemoveSong(item.id)} disabled={isPending} style={{ background: 'none', border: '1px solid var(--error)', borderRadius: '6px', width: '44px', height: '44px', minHeight: '44px', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--error)' }} aria-label="Remove">×</button>
-                                  </div>
-                                )}
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+                                  {activeSession?.sequence_id === seq.id && isDirector && (
+                                    <button
+                                      onClick={() => handleSetActiveSong(item.songs.id)}
+                                      className="btn"
+                                      style={{
+                                        minHeight: '34px',
+                                        padding: '4px 10px',
+                                        fontSize: '0.75rem',
+                                        borderRadius: '8px',
+                                        background: activeSession.active_song_id === item.songs.id ? 'var(--success)' : 'var(--primary)',
+                                        color: '#fff',
+                                        border: 'none',
+                                      }}
+                                      disabled={isPending}
+                                    >
+                                      {activeSession.active_song_id === item.songs.id ? '▶ Active' : 'Set Active'}
+                                    </button>
+                                  )}
+                                  {canManage && (
+                                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                      <button onClick={() => handleMoveItem(seq, item.id, 'up')} disabled={idx === 0 || isPending} style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Move up" title="Move up">↑</button>
+                                      <button onClick={() => handleMoveItem(seq, item.id, 'down')} disabled={idx === sorted.length - 1 || isPending} style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Move down" title="Move down">↓</button>
+                                      <button onClick={() => handleRemoveSong(item.id)} disabled={isPending} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--error)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Remove" title="Remove song">✕</button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             ))}
                           </div>
