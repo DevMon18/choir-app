@@ -200,7 +200,6 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
       if (res?.error) flash(res.error, 'err');
       else {
         flash('Song added!', 'ok');
-        router.refresh();
       }
     });
   };

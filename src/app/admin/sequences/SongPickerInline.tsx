@@ -81,6 +81,11 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
   const [activeFilterId, setActiveFilterId] = useState<string>('ALL');
   const [previewSong, setPreviewSong] = useState<Song | null>(null);
   const [addingSongId, setAddingSongId] = useState<string | null>(null);
+  const [localAddedIds, setLocalAddedIds] = useState<string[]>(existingSongIds);
+
+  React.useEffect(() => {
+    setLocalAddedIds(existingSongIds);
+  }, [existingSongIds]);
 
   // Compute song count for each filter pill
   const filterCounts = useMemo(() => {
@@ -117,6 +122,7 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
   }, [songs, searchValue, activeFilterId]);
 
   const handleAddClick = async (song: Song) => {
+    setLocalAddedIds((prev) => (prev.includes(song.id) ? prev : [...prev, song.id]));
     setAddingSongId(song.id);
     const roleValue = detectRoleValue(song);
     try {
@@ -274,7 +280,7 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {filteredSongs.map((song) => {
-              const isAlreadyInSeq = existingSongIds.includes(song.id);
+              const isAlreadyInSeq = localAddedIds.includes(song.id) || existingSongIds.includes(song.id);
               const songCats = song.categories && song.categories.length > 0
                 ? song.categories
                 : song.category
