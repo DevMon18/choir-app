@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { ChordProRenderer } from '@/components/ChordProRenderer';
+import { createClient } from '@/lib/supabase/client';
 import {
   createSequence,
   updateSequence,
@@ -102,6 +103,31 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
 
   useEffect(() => {
     setActiveSession(initSession);
+
+    const supabase = createClient();
+    const fetchLatestActiveSession = async () => {
+      const { data } = await supabase
+        .from('live_sessions')
+        .select('id, sequence_id, active_song_id, director_semitones, scroll_speed, is_active')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setActiveSession(data || null);
+    };
+
+    fetchLatestActiveSession();
+
+    const channel = supabase
+      .channel('admin-live-sessions-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'live_sessions' }, () => {
+        fetchLatestActiveSession();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [initSession]);
 
   const isDirector = ['super_admin', 'director'].includes(profile.role);
@@ -235,6 +261,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
       const res = await startLiveSession(seq.id, firstSong);
       if (res?.error) flash(res.error, 'err');
       else {
+        if (res?.session) setActiveSession(res.session);
         router.push('/live');
       }
     });
@@ -283,8 +310,8 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                   Go to <Link href="/live" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'underline' }}>/live</Link> to view lyrics & control transposition
                 </span>
               </div>
-              {isDirector && (
-                <button onClick={handleEndSession} className="btn" style={{ background: 'var(--error)', color: '#fff', border: 'none', minHeight: '44px', padding: '10px 20px', fontSize: '0.9rem' }} disabled={isPending}>
+              {canManage && (
+                <button onClick={handleEndSession} className="btn" style={{ background: 'var(--error)', color: '#fff', border: 'none', minHeight: '48px', padding: '10px 20px', fontSize: '0.9rem', cursor: 'pointer' }} disabled={isPending}>
                   End Session
                 </button>
               )}
