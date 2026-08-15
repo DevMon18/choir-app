@@ -302,16 +302,48 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
 
           {/* Active Live Session Banner */}
           {activeSession && (
-            <div className="alert alert-info content-anim-item" style={{ marginBottom: '24px', alignItems: 'flex-start', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+            <div
+              style={{
+                marginBottom: '24px',
+                padding: '16px 20px',
+                borderRadius: '16px',
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1.5px solid rgba(239, 68, 68, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                flexWrap: 'wrap',
+                boxShadow: '0 4px 14px rgba(239, 68, 68, 0.12)',
+                opacity: 1,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '1.2rem' }}>🔴</span>
-                <strong>Live Session Active</strong>
-                <span style={{ marginLeft: 'auto', fontSize: '0.85rem', color: 'var(--muted)' }}>
-                  Go to <Link href="/live" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'underline' }}>/live</Link> to view lyrics & control transposition
-                </span>
+                <div>
+                  <strong style={{ color: '#991b1b', fontSize: '1rem' }}>Live Session Active</strong>
+                  <div style={{ fontSize: '0.82rem', color: '#7f1d1d', marginTop: '2px' }}>
+                    Session is live. <Link href="/live" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'underline' }}>Go to /live control screen</Link>
+                  </div>
+                </div>
               </div>
               {canManage && (
-                <button onClick={handleEndSession} className="btn" style={{ background: 'var(--error)', color: '#fff', border: 'none', minHeight: '48px', padding: '10px 20px', fontSize: '0.9rem', cursor: 'pointer' }} disabled={isPending}>
+                <button
+                  onClick={handleEndSession}
+                  className="btn"
+                  style={{
+                    background: 'var(--error)',
+                    color: '#fff',
+                    border: 'none',
+                    minHeight: '44px',
+                    padding: '8px 18px',
+                    fontSize: '0.85rem',
+                    borderRadius: '10px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                  disabled={isPending}
+                >
                   End Session
                 </button>
               )}
@@ -413,6 +445,25 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                               : activeSession
                               ? '⚠ Override Active'
                               : '▶ Go Live'}
+                          </button>
+                        )}
+                        {activeSession && activeSession.sequence_id === seq.id && canManage && (
+                          <button
+                            onClick={handleEndSession}
+                            className="btn"
+                            style={{
+                              minHeight: '44px',
+                              padding: '8px 14px',
+                              fontSize: '0.82rem',
+                              background: 'var(--error)',
+                              color: '#fff',
+                              border: 'none',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                            disabled={isPending}
+                          >
+                            End Session
                           </button>
                         )}
                         {canManage && (
