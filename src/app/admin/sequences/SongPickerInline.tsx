@@ -439,13 +439,13 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 99999,
+            zIndex: 999999,
             background: 'rgba(0,0,0,0.5)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '16px',
+            padding: '76px 16px 84px',
           }}
         >
           <div
@@ -453,7 +453,7 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
             style={{
               width: '100%',
               maxWidth: '600px',
-              maxHeight: '85vh',
+              maxHeight: 'calc(100vh - 160px)',
               background: '#ffffff',
               borderRadius: '20px',
               boxShadow: '0 20px 40px rgba(0,0,0,0.2)',

@@ -419,11 +419,19 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                                     >
                                       {item.songs.title}
                                     </div>
-                                    {item.role_in_mass && (
-                                      <span className="badge badge-approved" style={{ fontSize: '0.65rem', padding: '2px 8px', background: 'rgba(11,77,36,0.07)', color: 'var(--primary)', textTransform: 'none' }}>
-                                        {MASS_ROLE_LABELS[item.role_in_mass] || item.role_in_mass}
-                                      </span>
-                                    )}
+                                    {(() => {
+                                      const roleLabel = item.role_in_mass
+                                        ? (MASS_ROLE_LABELS[item.role_in_mass] || item.role_in_mass)
+                                        : (item.songs.categories && item.songs.categories.length > 0
+                                          ? item.songs.categories[0].name
+                                          : item.songs.category || null);
+                                      if (!roleLabel) return null;
+                                      return (
+                                        <span className="badge" style={{ fontSize: '0.65rem', padding: '2px 8px', background: 'rgba(11,77,36,0.08)', color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase' }}>
+                                          {roleLabel}
+                                        </span>
+                                      );
+                                    })()}
                                   </div>
                                   {item.songs.composer && <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{item.songs.composer}</div>}
                                 </div>
@@ -435,10 +443,11 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                                     style={{
                                       background: 'none', border: '1px solid var(--border)', borderRadius: '6px',
                                       padding: '4px 8px', fontSize: '0.78rem', outline: 'none', color: 'var(--muted)',
-                                      maxWidth: '160px'
+                                      maxWidth: '150px'
                                     }}
+                                    title="Override Mass Role"
                                   >
-                                    <option value="">-- Label Song --</option>
+                                    <option value="">Change Role…</option>
                                     {MASS_ROLES.map(r => (
                                       <option key={r.value} value={r.value}>{r.label}</option>
                                     ))}
