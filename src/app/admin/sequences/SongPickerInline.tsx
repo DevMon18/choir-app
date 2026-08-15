@@ -243,16 +243,17 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
           padding: '10px 14px',
           borderRadius: '12px',
           background: isAlreadyInSeq ? 'rgba(30,58,138,0.02)' : 'rgba(255, 255, 255, 0.95)',
           border: '1px solid var(--glass-border)',
           minHeight: '50px',
-          gap: '12px',
+          gap: '8px 12px',
           transition: 'all 0.15s ease',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', flex: '1 1 180px', minWidth: '150px' }}>
           <div
             style={{
               width: '32px',
@@ -278,14 +279,15 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
                   fontWeight: 700,
                   color: 'var(--primary)',
                   margin: 0,
-                  lineHeight: 1.35,
-                  wordBreak: 'break-word',
+                  lineHeight: 1.3,
+                  overflowWrap: 'normal',
+                  wordBreak: 'normal',
                 }}
               >
                 {song.title}
               </h4>
               {isAlreadyInSeq && (
-                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--success)', background: 'rgba(16,185,129,0.1)', padding: '1px 7px', borderRadius: '10px' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--success)', background: 'rgba(16,185,129,0.1)', padding: '1px 7px', borderRadius: '10px', whiteSpace: 'nowrap' }}>
                   In Sequence
                 </span>
               )}
@@ -340,7 +342,7 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
         </div>
 
         {/* Action Buttons: Preview Lyrics & Add to Sequence */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto', flexShrink: 0 }}>
           <button
             type="button"
             onClick={() => setPreviewSong(song)}
@@ -419,7 +421,7 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
       {/* Inline Header */}
       <div
         style={{
-          padding: '16px 20px 14px',
+          padding: '14px 18px',
           borderBottom: '1px solid rgba(0,0,0,0.08)',
           display: 'flex',
           alignItems: 'center',
@@ -430,15 +432,25 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <BookOpen size={18} style={{ color: 'var(--primary)' }} />
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
-              Select Song from Choir Songbook Repertoire
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+              Songbook Repertoire
             </h3>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                background: 'rgba(30,58,138,0.08)',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Adding to: {sequenceTitle}
+            </span>
           </div>
-          <p style={{ color: 'var(--muted)', fontSize: '0.8rem', margin: '2px 0 0' }}>
-            Adding to "{sequenceTitle}" • Organized by Mass Parts & A-Z Index
-          </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
