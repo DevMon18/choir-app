@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { sendPushToAll } from '@/lib/push';
 import { revalidatePath } from 'next/cache';
 import { getCache, setCache, delCache } from '@/lib/cache';
+import { invalidateCalendarCache } from '@/app/calendar/actions';
 
 export interface AnnouncementInput {
   title: string;
@@ -129,8 +130,10 @@ export async function createAnnouncement(input: AnnouncementInput) {
     }
 
     await delCache('announcements:active');
+    await invalidateCalendarCache();
     revalidatePath('/dashboard');
     revalidatePath('/admin/announcements');
+    revalidatePath('/calendar');
     return { success: true, announcement: data, warning };
   } catch (err: any) {
     return { error: err.message || 'Failed to create announcement' };
@@ -169,8 +172,10 @@ export async function updateAnnouncement(id: string, input: Partial<Announcement
     }
 
     await delCache('announcements:active');
+    await invalidateCalendarCache();
     revalidatePath('/dashboard');
     revalidatePath('/admin/announcements');
+    revalidatePath('/calendar');
     return { success: true };
   } catch (err: any) {
     return { error: err.message || 'Failed to update announcement' };
@@ -203,8 +208,10 @@ export async function deleteAnnouncement(id: string) {
     }
 
     await delCache('announcements:active');
+    await invalidateCalendarCache();
     revalidatePath('/dashboard');
     revalidatePath('/admin/announcements');
+    revalidatePath('/calendar');
     return { success: true };
   } catch (err: any) {
     return { error: err.message || 'Failed to delete announcement' };

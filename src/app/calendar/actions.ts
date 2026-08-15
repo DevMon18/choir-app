@@ -2,7 +2,7 @@
 
 import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
-import { getCache, setCache } from '@/lib/cache';
+import { getCache, setCache, delCache } from '@/lib/cache';
 
 export interface CalendarEvent {
   id: string;
@@ -17,8 +17,27 @@ export interface CalendarEvent {
   birthMonthDay?: string; // MM-DD format for annual recurring birthday mapping
 }
 
+const formatLocalDateString = (isoOrDateStr: string): string => {
+  if (!isoOrDateStr) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(isoOrDateStr)) return isoOrDateStr;
+  const d = new Date(isoOrDateStr);
+  if (isNaN(d.getTime())) return isoOrDateStr.slice(0, 10);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export async function invalidateCalendarCache() {
+  try {
+    await delCache('calendar:all_events');
+  } catch (e) {
+    console.error('Failed to invalidate calendar cache:', e);
+  }
+}
+
 export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
-  // ✅ FIX: Cache calendar data for 60s to avoid 4 Supabase queries on every page load
+  // ✅ Cache calendar data for 60s to avoid 4 Supabase queries on every page load
   const cacheKey = 'calendar:all_events';
   const cached = await getCache<CalendarEvent[]>(cacheKey);
   if (cached) return cached;
@@ -58,16 +77,15 @@ export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
     // 1. Process Scheduled Mass Sequences
     if (!massError && massData) {
       massData.forEach((seq) => {
-        const d = new Date(seq.scheduled_at);
         events.push({
           id: `mass_${seq.id}`,
           title: seq.title || 'Scheduled Mass Sequence',
-          date: d.toISOString().split('T')[0],
+          date: formatLocalDateString(seq.scheduled_at),
           dateTimeISO: seq.scheduled_at,
           type: 'mass',
           source: 'mass_sequence',
           details: seq.description || 'Mass singing engagement & sequence',
-          linkHref: `/repertoire/${seq.id}`,
+          linkHref: '/admin/sequences',
         });
       });
     }
@@ -75,7 +93,6 @@ export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
     // 2. Process Attendance Sessions
     if (!sessionError && sessionData) {
       sessionData.forEach((sess) => {
-        const d = new Date(sess.date);
         let eventType: CalendarEvent['type'] = 'rehearsal';
         if (sess.type === 'performance') eventType = 'performance';
         if (sess.type === 'mass') eventType = 'mass';
@@ -84,7 +101,7 @@ export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
         events.push({
           id: `session_${sess.id}`,
           title: sess.title || `${sess.type.charAt(0).toUpperCase() + sess.type.slice(1)} Session`,
-          date: d.toISOString().split('T')[0],
+          date: formatLocalDateString(sess.date),
           dateTimeISO: sess.date,
           type: eventType,
           source: 'attendance_session',
@@ -96,11 +113,10 @@ export const getCalendarEvents = cache(async (): Promise<CalendarEvent[]> => {
     // 3. Process Announcements
     if (!annError && annData) {
       annData.forEach((ann) => {
-        const d = new Date(ann.starts_at);
         events.push({
           id: `ann_${ann.id}`,
           title: ann.title || 'Announcement',
-          date: d.toISOString().split('T')[0],
+          date: formatLocalDateString(ann.starts_at),
           dateTimeISO: ann.starts_at,
           type: 'announcement',
           source: 'announcement',

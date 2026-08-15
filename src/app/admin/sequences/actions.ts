@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { invalidateCalendarCache } from '@/app/calendar/actions';
 
 // ── Sequence CRUD ──────────────────────────────────────
 
@@ -22,7 +23,9 @@ export async function createSequence(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+  await invalidateCalendarCache();
   revalidatePath('/admin/sequences');
+  revalidatePath('/calendar');
   return { success: true };
 }
 
@@ -42,7 +45,9 @@ export async function updateSequence(id: string, formData: FormData) {
     .eq('id', id);
 
   if (error) return { error: error.message };
+  await invalidateCalendarCache();
   revalidatePath('/admin/sequences');
+  revalidatePath('/calendar');
   return { success: true };
 }
 
@@ -50,13 +55,15 @@ export async function deleteSequence(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from('mass_sequences').delete().eq('id', id);
   if (error) return { error: error.message };
+  await invalidateCalendarCache();
   revalidatePath('/admin/sequences');
+  revalidatePath('/calendar');
   return { success: true };
 }
 
 // ── Sequence Items ─────────────────────────────────────
 
-export async function addSongToSequence(sequenceId: string, songId: string) {
+export async function addSongToSequence(sequenceId: string, songId: string, roleInMass?: string) {
   const supabase = await createClient();
 
   // Get current max order_index for this sequence
@@ -74,6 +81,7 @@ export async function addSongToSequence(sequenceId: string, songId: string) {
     song_id: songId,
     order_index: nextOrder,
     position: nextOrder,
+    role_in_mass: roleInMass || null,
   });
 
   if (error) return { error: error.message };

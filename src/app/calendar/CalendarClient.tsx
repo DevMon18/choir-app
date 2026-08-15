@@ -62,6 +62,7 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'auto' | 'grid' | 'agenda'>('auto');
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState<string | null>(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -86,7 +87,7 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
 
   // Map events to currently displayed year and group by dateStr
   const displayEvents = useMemo(() => {
-    return events.map((ev) => {
+    let list = events.map((ev) => {
       if (ev.type === 'birthday' && ev.birthMonthDay) {
         const mappedDateStr = `${year}-${ev.birthMonthDay}`;
         const mappedISO = `${year}-${ev.birthMonthDay}T00:00:00.000Z`;
@@ -97,8 +98,14 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
         };
       }
       return ev;
-    }).sort((a, b) => new Date(a.dateTimeISO).getTime() - new Date(b.dateTimeISO).getTime());
-  }, [events, year]);
+    });
+
+    if (selectedTypeFilter) {
+      list = list.filter((ev) => ev.type === selectedTypeFilter);
+    }
+
+    return list.sort((a, b) => new Date(a.dateTimeISO).getTime() - new Date(b.dateTimeISO).getTime());
+  }, [events, year, selectedTypeFilter]);
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {};
@@ -184,14 +191,54 @@ export const CalendarClient = ({ currentUserProfile, events }: Props) => {
           </div>
         </div>
 
-        {/* Legend */}
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap', fontSize: '0.85rem' }}>
-          {Object.entries(TYPE_CONFIG).map(([key, cfg]) => (
-            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: cfg.dot }} />
-              <span style={{ color: 'var(--foreground)', fontWeight: 500 }}>{cfg.label}</span>
-            </div>
-          ))}
+        {/* Legend / Interactive Type Filters */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center', fontSize: '0.82rem' }}>
+          <span style={{ fontWeight: 700, color: 'var(--muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Filter:</span>
+          {Object.entries(TYPE_CONFIG).map(([key, cfg]) => {
+            const isSelected = selectedTypeFilter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSelectedTypeFilter(isSelected ? null : key)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '5px 12px',
+                  borderRadius: '20px',
+                  background: isSelected ? cfg.bg : 'rgba(255,255,255,0.7)',
+                  border: isSelected ? `1.5px solid ${cfg.dot}` : '1px solid var(--glass-border)',
+                  color: isSelected ? cfg.color : 'var(--foreground)',
+                  cursor: 'pointer',
+                  fontWeight: isSelected ? 700 : 500,
+                  transition: 'all 0.15s ease',
+                  boxShadow: isSelected ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                }}
+              >
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: cfg.dot }} />
+                <span>{cfg.label}</span>
+              </button>
+            );
+          })}
+          {selectedTypeFilter && (
+            <button
+              type="button"
+              onClick={() => setSelectedTypeFilter(null)}
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--muted)',
+                background: 'rgba(0,0,0,0.05)',
+                border: 'none',
+                padding: '4px 10px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+              }}
+            >
+              Clear Filter ✕
+            </button>
+          )}
         </div>
 
         {/* MONTH GRID VIEW (Shown in Auto Mode or Grid Mode) */}

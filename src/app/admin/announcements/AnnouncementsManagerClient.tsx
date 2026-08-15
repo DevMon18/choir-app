@@ -48,6 +48,7 @@ export const AnnouncementsManagerClient = ({
   const [body, setBody] = useState('');
   const [priority, setPriority] = useState<'normal' | 'urgent'>('normal');
   const [isPinned, setIsPinned] = useState(false);
+  const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -58,6 +59,7 @@ export const AnnouncementsManagerClient = ({
     setBody('');
     setPriority('normal');
     setIsPinned(false);
+    setStartsAt(new Date().toISOString().slice(0, 16));
     setEndsAt('');
     setErrorMsg('');
     setShowModal(true);
@@ -69,6 +71,7 @@ export const AnnouncementsManagerClient = ({
     setBody(item.body);
     setPriority(item.priority);
     setIsPinned(item.is_pinned);
+    setStartsAt(item.starts_at ? new Date(item.starts_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16));
     setEndsAt(item.ends_at ? new Date(item.ends_at).toISOString().slice(0, 16) : '');
     setErrorMsg('');
     setShowModal(true);
@@ -89,6 +92,7 @@ export const AnnouncementsManagerClient = ({
       body,
       priority,
       is_pinned: isPinned,
+      starts_at: startsAt ? new Date(startsAt).toISOString() : new Date().toISOString(),
       ends_at: endsAt ? new Date(endsAt).toISOString() : null,
     };
 
@@ -308,6 +312,19 @@ export const AnnouncementsManagerClient = ({
               <div className="ann-modal-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '6px' }}>
+                    Event Date & Time (for Calendar) *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="input-field"
+                    value={startsAt}
+                    onChange={(e) => setStartsAt(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '6px' }}>
                     Priority
                   </label>
                   <select
@@ -319,18 +336,18 @@ export const AnnouncementsManagerClient = ({
                     <option value="urgent">Urgent (Triggers Mobile Push)</option>
                   </select>
                 </div>
+              </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '6px' }}>
-                    Expiry Date (Optional)
-                  </label>
-                  <input
-                    type="datetime-local"
-                    className="input-field"
-                    value={endsAt}
-                    onChange={(e) => setEndsAt(e.target.value)}
-                  />
-                </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '6px' }}>
+                  Expiry Date (Optional)
+                </label>
+                <input
+                  type="datetime-local"
+                  className="input-field"
+                  value={endsAt}
+                  onChange={(e) => setEndsAt(e.target.value)}
+                />
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>

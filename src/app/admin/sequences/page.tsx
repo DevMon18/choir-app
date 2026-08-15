@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
 import { SequenceManagerClient } from './SequenceManagerClient';
+import { listCategories } from '@/app/admin/categories/actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,11 +31,12 @@ const AdminSequencesPage = async () => {
 
   const supabase = await createClient();
 
-  // Fetch sequences, songs, and activeSession concurrently via Promise.all
+  // Fetch sequences, songs, activeSession, and categories concurrently via Promise.all
   const [
     { data: sequencesData },
     { data: songsData },
     { data: activeSession },
+    { categories: availableCategories },
   ] = await Promise.all([
     supabase
       .from('mass_sequences')
@@ -58,6 +60,7 @@ const AdminSequencesPage = async () => {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    listCategories(),
   ]);
 
   const mappedSongs = (songsData || []).map(mapSong);
@@ -74,6 +77,7 @@ const AdminSequencesPage = async () => {
       profile={profile}
       sequences={mappedSequences as unknown as Parameters<typeof SequenceManagerClient>[0]['sequences']}
       songs={mappedSongs}
+      availableCategories={availableCategories}
       activeSession={activeSession}
     />
   );

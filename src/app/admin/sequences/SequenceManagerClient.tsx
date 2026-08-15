@@ -18,6 +18,8 @@ import {
   updateSequenceItemRole,
 } from './actions';
 import { ConfirmModal } from '@/components/ConfirmModal';
+import { SongPickerInline } from './SongPickerInline';
+import { CategoryItem } from '@/app/admin/categories/actions';
 import gsap from 'gsap';
 
 interface Profile { id: string; full_name: string; role: string; }
@@ -73,10 +75,11 @@ interface Props {
   profile: Profile;
   sequences: Sequence[];
   songs: Song[];
+  availableCategories?: CategoryItem[];
   activeSession: LiveSession | null;
 }
 
-export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, activeSession: initSession }: Props) => {
+export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, availableCategories = [], activeSession: initSession }: Props) => {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [sequences, setSequences] = useState(initSeqs);
@@ -189,14 +192,13 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
     });
   };
 
-  const handleAddSong = async (songId: string) => {
+  const handleAddSong = async (songId: string, roleInMass?: string) => {
     if (!addSongSeqId) return;
     startTransition(async () => {
-      const res = await addSongToSequence(addSongSeqId, songId);
+      const res = await addSongToSequence(addSongSeqId, songId, roleInMass);
       if (res?.error) flash(res.error, 'err');
       else {
         flash('Song added!', 'ok');
-        setAddSongSeqId(null);
         router.refresh();
       }
     });
@@ -266,7 +268,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
 
       <Navbar profile={profile} />
 
-      <main className="admin-content-full">
+      <main className="admin-content-full" style={{ padding: '28px 20px 48px', maxWidth: '1040px', margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
           {/* Alerts */}
           {error && <div className="alert alert-error content-anim-item">{error}</div>}
           {success && <div className="alert alert-success content-anim-item">{success}</div>}
@@ -470,43 +472,24 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, act
 
                         {canManage && (
                           <div>
-                            <button onClick={() => setAddSongSeqId(addSongSeqId === seq.id ? null : seq.id)} className="btn btn-secondary" style={{ minHeight: '44px', fontSize: '0.85rem' }}>
-                              + Add Song
+                            <button
+                              onClick={() => setAddSongSeqId(addSongSeqId === seq.id ? null : seq.id)}
+                              className="btn btn-secondary"
+                              style={{ minHeight: '44px', fontSize: '0.85rem' }}
+                            >
+                              {addSongSeqId === seq.id ? '✕ Close Picker' : '+ Add Song'}
                             </button>
-                            {addSongSeqId === seq.id && (
-                              <div style={{ marginTop: '12px' }}>
-                                {/* Song search input */}
-                                <div style={{ position: 'relative', marginBottom: '12px' }}>
-                                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                                    <circle cx="9" cy="9" r="7" /><path strokeLinecap="round" d="m15 15 4 4" />
-                                  </svg>
-                                  <input
-                                    type="text"
-                                    placeholder="Search song to add..."
-                                    className="input-field"
-                                    value={songSearchQuery}
-                                    onChange={(e) => setSongSearchQuery(e.target.value)}
-                                    style={{ paddingLeft: '30px', fontSize: '0.85rem', width: '100%' }}
-                                  />
-                                </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
-                                  {filteredAvailableSongs.length === 0 ? (
-                                    <p style={{ color: 'var(--muted)', fontSize: '0.82rem', padding: '10px' }}>No songs found matching your search.</p>
-                                  ) : (
-                                    filteredAvailableSongs.map(song => (
-                                      <button key={song.id} onClick={() => { handleAddSong(song.id); setSongSearchQuery(''); }} disabled={isPending}
-                                        style={{ background: 'rgba(30,58,138,0.05)', border: '1px solid var(--glass-border)', borderRadius: '10px', padding: '12px 14px', cursor: 'pointer', textAlign: 'left', transition: 'background 0.2s', minHeight: '48px', width: '100%' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(30,58,138,0.1)')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(30,58,138,0.05)')}
-                                      >
-                                        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--primary)' }}>{song.title}</div>
-                                        {song.composer && <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{song.composer}</div>}
-                                      </button>
-                                    ))
-                                  )}
-                                </div>
-                              </div>
+                            {addSongSeqId === seq.id && (
+                              <SongPickerInline
+                                songs={songs}
+                                availableCategories={availableCategories}
+                                existingSongIds={seq.sequence_items.map(item => item.songs.id)}
+                                sequenceTitle={seq.title}
+                                onAddSong={handleAddSong}
+                                onClose={() => setAddSongSeqId(null)}
+                                isPending={isPending}
+                              />
                             )}
                           </div>
                         )}
