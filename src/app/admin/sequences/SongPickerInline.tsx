@@ -82,6 +82,19 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
   const [previewSong, setPreviewSong] = useState<Song | null>(null);
   const [addingSongId, setAddingSongId] = useState<string | null>(null);
 
+  // Compute song count for each filter pill
+  const filterCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    MASS_PART_FILTERS.forEach((f) => {
+      if (f.id === 'ALL') {
+        map[f.id] = songs.length;
+      } else {
+        map[f.id] = songs.filter((s) => matchesFilter(s, f.id)).length;
+      }
+    });
+    return map;
+  }, [songs]);
+
   // Filter songs based on search & active Mass Part filter pill
   const filteredSongs = useMemo(() => {
     return songs.filter((song) => {
@@ -146,37 +159,24 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
             Repertoire Songbook
           </h3>
-          <span
-            style={{
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              color: 'var(--primary)',
-              background: 'rgba(30,58,138,0.08)',
-              padding: '2px 8px',
-              borderRadius: '12px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Adding to: {sequenceTitle}
+          <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 500 }}>
+            • Tap "+ Add" to assign to setlist
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onClose}
+        <span
           style={{
-            fontSize: '0.78rem',
-            fontWeight: 600,
-            color: 'var(--muted)',
-            background: 'rgba(0,0,0,0.05)',
-            border: 'none',
+            fontSize: '0.74rem',
+            fontWeight: 700,
+            color: 'var(--primary)',
+            background: 'rgba(30,58,138,0.08)',
             padding: '4px 10px',
-            borderRadius: '10px',
-            cursor: 'pointer',
+            borderRadius: '12px',
+            whiteSpace: 'nowrap',
           }}
         >
-          Close Picker ✕
-        </button>
+          {songs.length} {songs.length === 1 ? 'Song' : 'Songs'} Available
+        </span>
       </div>
 
       {/* Search Input Bar */}
@@ -238,6 +238,7 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
       >
         {MASS_PART_FILTERS.map((filter) => {
           const isActive = activeFilterId === filter.id;
+          const count = filterCounts[filter.id] || 0;
           return (
             <button
               key={filter.id}
@@ -257,7 +258,7 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
                 boxShadow: isActive ? '0 2px 6px rgba(11,77,36,0.2)' : 'none',
               }}
             >
-              {filter.label}
+              {filter.label} <span style={{ opacity: isActive ? 0.9 : 0.6, fontSize: '0.7rem' }}>({count})</span>
             </button>
           );
         })}
