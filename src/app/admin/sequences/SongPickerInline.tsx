@@ -244,11 +244,9 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          padding: '10px 14px',
-          borderRadius: '12px',
-          background: isAlreadyInSeq ? 'rgba(30,58,138,0.02)' : 'rgba(255, 255, 255, 0.95)',
-          border: '1px solid var(--glass-border)',
-          minHeight: '50px',
+          padding: '11px 8px',
+          background: isAlreadyInSeq ? 'rgba(30,58,138,0.03)' : 'transparent',
+          borderBottom: '1px solid rgba(0,0,0,0.05)',
           gap: '8px 12px',
           transition: 'all 0.15s ease',
         }}
@@ -642,13 +640,13 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
                 <div
                   key={part.id}
                   style={{
-                    borderRadius: '14px',
+                    borderRadius: '16px',
                     overflow: 'visible',
                     position: 'relative',
                     zIndex: openFilterCardId === part.id ? 100 : 1,
-                    border: '1px solid var(--glass-border)',
+                    border: '1px solid rgba(30,58,138,0.1)',
                     background: '#ffffff',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                    boxShadow: '0 3px 14px rgba(0,0,0,0.03)',
                   }}
                 >
                   {/* Section Header */}
@@ -691,15 +689,15 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
 
                   {/* Section Body */}
                   {!isCollapsed && (
-                    <div style={{ padding: '10px 14px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {/* Tags line with Funnel Filter */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '4px', paddingBottom: '6px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>
-                            Tags:
-                          </span>
-                          {sectionCategoryTags.length > 0 ? (
-                            sectionCategoryTags.map((tag) => (
+                    <div style={{ padding: '4px 16px 12px', display: 'flex', flexDirection: 'column' }}>
+                      {/* Tags line with Funnel Filter — Only shown if section tags exist or tags selected */}
+                      {(sectionCategoryTags.length > 0 || selectedCategoryTags.length > 0) && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '4px', paddingBottom: '6px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>
+                              Tags:
+                            </span>
+                            {sectionCategoryTags.map((tag) => (
                               <span
                                 key={tag}
                                 style={{
@@ -709,69 +707,67 @@ export const SongPickerInline: React.FC<SongPickerInlineProps> = ({
                               >
                                 {tag}
                               </span>
-                            ))
-                          ) : (
-                            <span style={{ fontSize: '0.68rem', fontStyle: 'italic', color: 'var(--muted)' }}>None</span>
-                          )}
-                        </div>
+                            ))}
+                          </div>
 
-                        <div style={{ position: 'relative', flexShrink: 0 }}>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenFilterCardId((prev) => (prev === part.id ? null : part.id));
-                            }}
-                            style={{
-                              padding: '2px 8px', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600,
-                              border: selectedCategoryTags.length > 0 ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.12)',
-                              background: selectedCategoryTags.length > 0 ? 'rgba(30,58,138,0.1)' : '#ffffff',
-                              color: selectedCategoryTags.length > 0 ? 'var(--primary)' : 'var(--foreground)',
-                              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
-                            }}
-                          >
-                            <Filter size={12} />
-                            <span>Filter</span>
-                            {selectedCategoryTags.length > 0 && (
-                              <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'var(--primary)', color: '#ffffff', padding: '0 4px', borderRadius: '6px' }}>
-                                {selectedCategoryTags.length}
-                              </span>
-                            )}
-                          </button>
-
-                          {openFilterCardId === part.id && (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
+                          <div style={{ position: 'relative', flexShrink: 0 }}>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenFilterCardId((prev) => (prev === part.id ? null : part.id));
+                              }}
                               style={{
-                                position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 9999,
-                                width: '210px', background: '#ffffff', borderRadius: '12px',
-                                border: '1px solid rgba(0,0,0,0.12)', boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
-                                padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px',
+                                padding: '2px 8px', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600,
+                                border: selectedCategoryTags.length > 0 ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.12)',
+                                background: selectedCategoryTags.length > 0 ? 'rgba(30,58,138,0.1)' : '#ffffff',
+                                color: selectedCategoryTags.length > 0 ? 'var(--primary)' : 'var(--foreground)',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '4px' }}>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Filter Categories</span>
-                                {selectedCategoryTags.length > 0 && (
-                                  <button type="button" onClick={clearCategoryTags} style={{ fontSize: '0.68rem', color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
-                                    Reset
-                                  </button>
-                                )}
+                              <Filter size={12} />
+                              <span>Filter</span>
+                              {selectedCategoryTags.length > 0 && (
+                                <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'var(--primary)', color: '#ffffff', padding: '0 4px', borderRadius: '6px' }}>
+                                  {selectedCategoryTags.length}
+                                </span>
+                              )}
+                            </button>
+
+                            {openFilterCardId === part.id && (
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 9999,
+                                  width: '210px', background: '#ffffff', borderRadius: '12px',
+                                  border: '1px solid rgba(0,0,0,0.12)', boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+                                  padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px',
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '4px' }}>
+                                  <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Filter Categories</span>
+                                  {selectedCategoryTags.length > 0 && (
+                                    <button type="button" onClick={clearCategoryTags} style={{ fontSize: '0.68rem', color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                      Reset
+                                    </button>
+                                  )}
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxHeight: '160px', overflowY: 'auto' }}>
+                                  {tagCategoryNames.map((catName) => {
+                                    const isChecked = selectedCategoryTags.includes(catName);
+                                    return (
+                                      <label key={catName} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', padding: '2px 4px', cursor: 'pointer' }}>
+                                        <input type="checkbox" checked={isChecked} onChange={() => toggleCategoryTag(catName)} style={{ accentColor: 'var(--primary)' }} />
+                                        <span>{catName}</span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
                               </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxHeight: '160px', overflowY: 'auto' }}>
-                                {tagCategoryNames.map((catName) => {
-                                  const isChecked = selectedCategoryTags.includes(catName);
-                                  return (
-                                    <label key={catName} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', padding: '2px 4px', cursor: 'pointer' }}>
-                                      <input type="checkbox" checked={isChecked} onChange={() => toggleCategoryTag(catName)} style={{ accentColor: 'var(--primary)' }} />
-                                      <span>{catName}</span>
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       {paginatedPartSongs.length > 0 ? (
                         <>
