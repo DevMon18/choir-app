@@ -447,25 +447,6 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
                               : '▶ Go Live'}
                           </button>
                         )}
-                        {activeSession && activeSession.sequence_id === seq.id && canManage && (
-                          <button
-                            onClick={handleEndSession}
-                            className="btn"
-                            style={{
-                              minHeight: '44px',
-                              padding: '8px 14px',
-                              fontSize: '0.82rem',
-                              background: 'var(--error)',
-                              color: '#fff',
-                              border: 'none',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                            }}
-                            disabled={isPending}
-                          >
-                            End Session
-                          </button>
-                        )}
                         {canManage && (
                           <>
                             <button onClick={() => setEditingSeq(seq)} className="btn btn-secondary" style={{ minHeight: '44px', padding: '8px 14px', fontSize: '0.82rem' }}>Edit</button>
