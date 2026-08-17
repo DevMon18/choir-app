@@ -1839,11 +1839,314 @@ input::-webkit-contacts-auto-fill-button {
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding: 16px;
+  padding: 16px 16px 24px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   background: rgba(255, 254, 252, 0.4);
+}
+
+.message-row {
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+.message-row.highlighted {
+  animation: messagePulse 1.8s ease-out;
+}
+
+@keyframes messagePulse {
+  0% {
+    background-color: rgba(197, 160, 89, 0.25);
+    border-radius: 12px;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* Floating Action Bar (Emoji, Reply, More) */
+.msg-action-bar {
+  opacity: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 3px 6px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  transform: translateY(2px);
+  z-index: 20;
+}
+
+.message-row:hover .msg-action-bar,
+.message-row:focus-within .msg-action-bar {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.msg-action-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justifyContent: center;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.msg-action-btn:hover {
+  background: rgba(11, 77, 36, 0.08);
+  color: var(--primary);
+  transform: scale(1.1);
+}
+
+/* Floating Emoji Reaction Popover */
+.reaction-picker-popover {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  padding: 6px 10px;
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--glass-border);
+  z-index: 100;
+  animation: popIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.reaction-picker-emoji {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reaction-picker-emoji:hover {
+  transform: scale(1.35) translateY(-2px);
+}
+
+/* Reaction Pill on Message Bubble */
+.reaction-pill-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.reaction-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #ffffff;
+  padding: 2px 7px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.reaction-pill:hover {
+  transform: scale(1.08);
+}
+
+.reaction-pill.user-reacted {
+  background: rgba(11, 77, 36, 0.1);
+  border-color: rgba(11, 77, 36, 0.3);
+  color: var(--primary);
+}
+
+/* Quoted Reply Snippet Inside Bubble */
+.quoted-bubble-snippet {
+  border-left: 3px solid var(--accent);
+  padding: 4px 8px;
+  margin-bottom: 6px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.message-row-me .quoted-bubble-snippet {
+  border-left-color: #fde047;
+  background: rgba(0, 0, 0, 0.12);
+  color: #ffffff;
+}
+
+.quoted-bubble-snippet:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.quoted-bubble-author {
+  font-weight: 700;
+  font-size: 0.72rem;
+  margin-bottom: 1px;
+  opacity: 0.9;
+}
+
+.quoted-bubble-text {
+  font-size: 0.78rem;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
+/* Active Reply Context Banner Above Input Bar */
+.active-reply-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(246, 243, 232, 0.95);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--glass-border);
+  border-left: 3px solid var(--primary);
+  animation: slideDown 0.15s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.active-reply-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.active-reply-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.active-reply-body {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 1px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active-reply-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justifyContent: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.active-reply-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--foreground);
+}
+
+/* Mobile Swipe Reply Icon */
+.swipe-reply-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) scale(0.85);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(11, 77, 36, 0.12);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justifyContent: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 10;
+}
+
+.swipe-reply-icon.swipe-left {
+  left: 12px;
+}
+
+.swipe-reply-icon.swipe-right {
+  right: 12px;
+}
+
+/* Date separator badges in chat history */
+.chat-date-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0 10px;
+  position: relative;
+}
+
+.chat-date-separator::before {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 50%;
+  height: 1px;
+  background: var(--glass-border);
+  z-index: 1;
+}
+
+.chat-date-separator span {
+  position: relative;
+  z-index: 2;
+  background: rgba(246, 243, 232, 0.96);
+  backdrop-filter: blur(6px);
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
 }
 
 .chat-input-bar {

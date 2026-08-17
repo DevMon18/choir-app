@@ -25,6 +25,20 @@ export interface ConversationItem {
   last_message_at: string;
 }
 
+export interface MessageReaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: string;
+}
+
+export interface ReplySnippet {
+  id: string;
+  sender_name: string;
+  body: string;
+}
+
 export interface MessageItem {
   id: string;
   conversation_id: string;
@@ -32,6 +46,9 @@ export interface MessageItem {
   body: string;
   created_at: string;
   read_at: string | null;
+  reply_to_id?: string | null;
+  reply_snippet?: ReplySnippet | null;
+  reactions?: MessageReaction[];
 }
 
 export async function getOrCreateConversation(targetUserId: string) {
@@ -217,8 +234,34 @@ export async function getMessages(conversationId: string) {
 
     if (msgErr) return { error: msgErr.message };
 
+    const msgIds = (msgs || []).map((m: any) => m.id);
+    const reactionsMap = new Map<string, MessageReaction[]>();
+    if (msgIds.length > 0) {
+      try {
+        const { data: reactionsData } = await supabase
+          .from('message_reactions')
+          .select('*')
+          .in('message_id', msgIds);
+
+        if (reactionsData) {
+          for (const r of reactionsData) {
+            const list = reactionsMap.get(r.message_id) || [];
+            list.push(r);
+            reactionsMap.set(r.message_id, list);
+          }
+        }
+      } catch {
+        // Fallback gracefully if table is not yet created
+      }
+    }
+
+    const enrichedMessages: MessageItem[] = (msgs || []).map((m: any) => ({
+      ...m,
+      reactions: reactionsMap.get(m.id) || [],
+    }));
+
     return {
-      messages: (msgs || []) as MessageItem[],
+      messages: enrichedMessages,
       otherUser: otherUser
         ? { ...otherUser, isDeletedUser: false }
         : { id: otherId, full_name: 'Removed Account', avatar_url: null, voice_part: null, role: 'member', isDeletedUser: true },
@@ -229,7 +272,12 @@ export async function getMessages(conversationId: string) {
   }
 }
 
-export async function sendMessage(conversationId: string, body: string) {
+export async function sendMessage(
+  conversationId: string,
+  body: string,
+  replyToId?: string | null,
+  replySnippet?: ReplySnippet | null
+) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -243,19 +291,39 @@ export async function sendMessage(conversationId: string, body: string) {
 
     if (!body.trim()) return { error: 'Message cannot be empty' };
 
-    // Insert message verifying with .select()
-    const { data: inserted, error: insertErr } = await supabase
+    const insertPayload: any = {
+      conversation_id: conversationId,
+      sender_id: user.id,
+      body: body.trim(),
+    };
+    if (replyToId) insertPayload.reply_to_id = replyToId;
+    if (replySnippet) insertPayload.reply_snippet = replySnippet;
+
+    let inserted: any = null;
+    const { data, error: insertErr } = await supabase
       .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        body: body.trim(),
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
-    if (insertErr || !inserted) {
-      return { error: insertErr?.message || 'Failed to send message' };
+    if (insertErr) {
+      // Graceful fallback if reply_to_id/reply_snippet columns don't exist yet
+      const { data: fallbackData, error: fallbackErr } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          body: body.trim(),
+        })
+        .select()
+        .single();
+
+      if (fallbackErr || !fallbackData) {
+        return { error: fallbackErr?.message || 'Failed to send message' };
+      }
+      inserted = fallbackData;
+    } else {
+      inserted = data;
     }
 
     // Update last_message_at timestamp on conversation
@@ -302,6 +370,46 @@ export async function sendMessage(conversationId: string, body: string) {
     return { message: inserted as MessageItem };
   } catch (err: any) {
     return { error: err.message || 'Send message failed' };
+  }
+}
+
+export async function toggleReactionAction(messageId: string, emoji: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: 'Unauthorized' };
+
+    const { data: existing } = await supabase
+      .from('message_reactions')
+      .select('id')
+      .eq('message_id', messageId)
+      .eq('user_id', user.id)
+      .eq('emoji', emoji)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase.from('message_reactions').delete().eq('id', existing.id);
+      return { action: 'removed', emoji, messageId, userId: user.id };
+    } else {
+      const { data: created, error: insertErr } = await supabase
+        .from('message_reactions')
+        .insert({
+          message_id: messageId,
+          user_id: user.id,
+          emoji,
+        })
+        .select()
+        .single();
+
+      if (insertErr) {
+        return { error: insertErr.message };
+      }
+
+      return { action: 'added', reaction: created };
+    }
+  } catch (err: any) {
+    return { error: err.message || 'Reaction action failed' };
   }
 }
 
