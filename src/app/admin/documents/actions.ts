@@ -674,22 +674,40 @@ export async function getDocumentRecipientsAction(documentId: string) {
   try {
     const { supabase } = await getAdminContext();
 
-    const { data: sigs, error } = await supabase
+    const { data: sigs, error: sigsErr } = await supabase
       .from('document_signatures')
-      .select(`
-        id, primary_member_id, status, created_at, signed_at, verified_at,
-        signer_type, signer_printed_name,
-        profiles:primary_member_id ( id, full_name, email, role, voice_part, phone, avatar_url )
-      `)
+      .select('id, primary_member_id, status, created_at, updated_at')
       .eq('document_id', documentId)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      return { error: `Failed to load recipients: ${error.message}` };
+    if (sigsErr) {
+      return { error: `Failed to load recipients: ${sigsErr.message}` };
     }
 
-    const recipients: RecipientInfo[] = (sigs || []).map((s: any) => {
-      const p = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles;
+    if (!sigs || sigs.length === 0) {
+      return {
+        success: true,
+        recipients: [],
+        totalCount: 0,
+        pendingCount: 0,
+        submittedCount: 0,
+        verifiedCount: 0,
+        rejectedCount: 0,
+        completionRate: 0,
+      };
+    }
+
+    const memberIds = Array.from(new Set(sigs.map((s: any) => s.primary_member_id).filter(Boolean)));
+
+    const { data: profilesData, error: profErr } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, role, voice_part, phone, avatar_url')
+      .in('id', memberIds);
+
+    const profileMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
+
+    const recipients: RecipientInfo[] = sigs.map((s: any) => {
+      const p = profileMap.get(s.primary_member_id);
       return {
         signatureId: s.id,
         memberId: s.primary_member_id,
@@ -701,10 +719,10 @@ export async function getDocumentRecipientsAction(documentId: string) {
         avatarUrl: p?.avatar_url || null,
         status: s.status,
         assignedAt: s.created_at,
-        signedAt: s.signed_at,
-        verifiedAt: s.verified_at,
-        signerType: s.signer_type,
-        signerPrintedName: s.signer_printed_name,
+        signedAt: s.status !== 'pending' ? s.updated_at : null,
+        verifiedAt: s.status === 'verified' || s.status === 'verified_manual' ? s.updated_at : null,
+        signerType: null,
+        signerPrintedName: null,
       };
     });
 
