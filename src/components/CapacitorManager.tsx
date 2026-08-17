@@ -53,8 +53,23 @@ export const CapacitorManager = () => {
       }
     });
 
+    // Proactively refresh session whenever the mobile app comes to the foreground
+    const appStateListener = App.addListener('appStateChange', async (state) => {
+      if (state.isActive) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            await supabase.auth.refreshSession();
+          }
+        } catch (err) {
+          // Non-critical background refresh attempt
+        }
+      }
+    });
+
     return () => {
       appUrlListener.then((h) => h.remove());
+      appStateListener.then((h) => h.remove());
     };
   }, []);
 

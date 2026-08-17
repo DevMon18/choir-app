@@ -127,9 +127,17 @@ export const proxy = async (request: NextRequest) => {
     },
   });
   
-  // Preserve any cookies set during the Supabase client instantiation/refresh
+  // Preserve any cookies set during the Supabase client instantiation/refresh with 1-year persistence
   originalResponse.cookies.getAll().forEach((c) => {
-    supabaseResponse.cookies.set(c.name, c.value);
+    supabaseResponse.cookies.set({
+      name: c.name,
+      value: c.value,
+      maxAge: 60 * 60 * 24 * 365, // 1 Year permanent session
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+      sameSite: 'lax',
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+    });
   });
 
   // If logged in and attempting to access login/signup/join, redirect to home

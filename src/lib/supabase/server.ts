@@ -15,12 +15,13 @@ export const createClient = async () => {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              // Force long persistence for Supabase authentication cookies
+              // Force permanent 1-year persistence for all Supabase session cookies
               const cookieOptions = { ...options };
-              if (name.includes('sb-') || name.includes('supabase')) {
-                cookieOptions.maxAge = 60 * 60 * 24 * 365; // 1 year
-                cookieOptions.expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
-              }
+              cookieOptions.maxAge = 60 * 60 * 24 * 365; // 1 year (31,536,000s)
+              cookieOptions.expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
+              cookieOptions.sameSite = 'lax';
+              cookieOptions.path = '/';
+              cookieOptions.secure = process.env.NODE_ENV === 'production';
               cookieStore.set(name, value, cookieOptions);
             });
           } catch {
