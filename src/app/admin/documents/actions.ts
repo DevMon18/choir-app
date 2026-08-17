@@ -8,9 +8,28 @@ import { requireUser, requireRole } from '@/lib/auth/permissions';
 import { checkRateLimitMutation, checkRateLimitUpload } from '@/lib/ratelimit';
 import { generateCombinedWaiverPdf, WaiverContent, DEFAULT_WAIVER_CONTENT } from '@/lib/pdf-generator';
 
+import { sendPushToUser } from '@/lib/push';
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type DocumentType = 'activity_waiver' | 'wedding_waiver' | 'wake_guide' | 'general';
+
+export interface RecipientInfo {
+  signatureId: string;
+  memberId: string;
+  fullName: string;
+  email: string;
+  role: string;
+  voicePart: string | null;
+  phone: string | null;
+  avatarUrl: string | null;
+  status: 'pending' | 'submitted' | 'verified' | 'verified_manual' | 'rejected';
+  assignedAt: string;
+  signedAt: string | null;
+  verifiedAt: string | null;
+  signerType: 'self' | 'parent_guardian' | null;
+  signerPrintedName: string | null;
+}
 
 export interface DocumentRow {
   id: string;
@@ -644,6 +663,129 @@ export async function saveWaiverTemplateAction(input: {
   } catch (err: any) {
     console.error('[saveWaiverTemplateAction] unexpected:', err);
     return { error: err.message || 'An unexpected error occurred.' };
+  }
+}
+
+/**
+ * Fetch all assigned recipients of a document and their real-time signing/submission status.
+ * (Identifies who has submitted and who hasn't submitted yet).
+ */
+export async function getDocumentRecipientsAction(documentId: string) {
+  try {
+    const { supabase } = await getAdminContext();
+
+    const { data: sigs, error } = await supabase
+      .from('document_signatures')
+      .select(`
+        id, primary_member_id, status, created_at, signed_at, verified_at,
+        signer_type, signer_printed_name,
+        profiles:primary_member_id ( id, full_name, email, role, voice_part, phone, avatar_url )
+      `)
+      .eq('document_id', documentId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return { error: `Failed to load recipients: ${error.message}` };
+    }
+
+    const recipients: RecipientInfo[] = (sigs || []).map((s: any) => {
+      const p = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles;
+      return {
+        signatureId: s.id,
+        memberId: s.primary_member_id,
+        fullName: p?.full_name || 'Unknown Member',
+        email: p?.email || '',
+        role: p?.role || 'member',
+        voicePart: p?.voice_part || null,
+        phone: p?.phone || null,
+        avatarUrl: p?.avatar_url || null,
+        status: s.status,
+        assignedAt: s.created_at,
+        signedAt: s.signed_at,
+        verifiedAt: s.verified_at,
+        signerType: s.signer_type,
+        signerPrintedName: s.signer_printed_name,
+      };
+    });
+
+    const pendingRecipients = recipients.filter((r) => r.status === 'pending');
+    const submittedRecipients = recipients.filter((r) => r.status === 'submitted');
+    const verifiedRecipients = recipients.filter((r) => r.status === 'verified' || r.status === 'verified_manual');
+    const rejectedRecipients = recipients.filter((r) => r.status === 'rejected');
+
+    return {
+      success: true,
+      recipients,
+      totalCount: recipients.length,
+      pendingCount: pendingRecipients.length,
+      submittedCount: submittedRecipients.length,
+      verifiedCount: verifiedRecipients.length,
+      rejectedCount: rejectedRecipients.length,
+      completionRate:
+        recipients.length > 0
+          ? Math.round(((submittedRecipients.length + verifiedRecipients.length) / recipients.length) * 100)
+          : 0,
+    };
+  } catch (err: any) {
+    return { error: err.message || 'An unexpected error occurred.' };
+  }
+}
+
+/**
+ * Send a notification/reminder to members who have not yet submitted their waiver.
+ */
+export async function sendWaiverReminderAction(input: {
+  documentId: string;
+  documentTitle: string;
+  memberIds?: string[];
+}) {
+  try {
+    const { user, supabase } = await getAdminContext();
+
+    const rateLimit = await checkRateLimitMutation(user.id);
+    if (!rateLimit.success) {
+      return { error: 'Too many requests. Please slow down.' };
+    }
+
+    let query = supabase
+      .from('document_signatures')
+      .select('primary_member_id')
+      .eq('document_id', input.documentId)
+      .eq('status', 'pending');
+
+    if (input.memberIds && input.memberIds.length > 0) {
+      query = query.in('primary_member_id', input.memberIds);
+    }
+
+    const { data: pendingSigs, error } = await query;
+    if (error) {
+      return { error: `Failed to query pending members: ${error.message}` };
+    }
+
+    const targetUserIds = Array.from(new Set((pendingSigs || []).map((s: any) => s.primary_member_id)));
+
+    if (targetUserIds.length === 0) {
+      return { success: true, count: 0, message: 'All members have already submitted their waiver!' };
+    }
+
+    // Send push notification to all pending members
+    await Promise.allSettled(
+      targetUserIds.map((userId) =>
+        sendPushToUser(userId, {
+          title: '⚠️ Action Required: Pending Waiver Signature',
+          body: `Please review and sign "${input.documentTitle}". Tap here to complete.`,
+          url: '/dashboard',
+        })
+      )
+    );
+
+    return {
+      success: true,
+      count: targetUserIds.length,
+      message: `Sent reminder to ${targetUserIds.length} member${targetUserIds.length !== 1 ? 's' : ''} who haven't submitted yet.`,
+    };
+  } catch (err: any) {
+    return { error: err.message || 'Failed to send waiver reminder.' };
   }
 }
 

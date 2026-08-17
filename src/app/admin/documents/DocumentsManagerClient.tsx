@@ -20,6 +20,11 @@ import {
   ArrowLeft,
   X,
   Sparkles,
+  Users,
+  Bell,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
@@ -36,6 +41,9 @@ import {
   moveDocumentAction,
   createWaiverFromDocumentAction,
   saveWaiverTemplateAction,
+  getDocumentRecipientsAction,
+  sendWaiverReminderAction,
+  RecipientInfo,
   DocumentRow,
   DocumentType,
   MemberOption,
@@ -980,6 +988,15 @@ const DistributeModal = ({ document, members, sequences, onClose, onDistributed 
   const [activityId, setActivityId] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [assignedMemberIds, setAssignedMemberIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    getDocumentRecipientsAction(document.id).then((res) => {
+      if (res.recipients) {
+        setAssignedMemberIds(new Set(res.recipients.map((r) => r.memberId)));
+      }
+    });
+  }, [document.id]);
 
   const filteredMembers = useMemo(() => {
     const q = search.toLowerCase();
@@ -989,6 +1006,7 @@ const DistributeModal = ({ document, members, sequences, onClose, onDistributed 
   }, [members, search]);
 
   const under18Members = useMemo(() => members.filter((m) => isUnder18(m.birthdate)), [members]);
+  const unassignedMembers = useMemo(() => members.filter((m) => !assignedMemberIds.has(m.id)), [members, assignedMemberIds]);
 
   const toggleMember = (id: string) => {
     setSelectedIds((prev) => {
@@ -1005,6 +1023,10 @@ const DistributeModal = ({ document, members, sequences, onClose, onDistributed 
     } else {
       setSelectedIds(new Set(filteredMembers.map((m) => m.id)));
     }
+  };
+
+  const handleSelectUnassigned = () => {
+    setSelectedIds(new Set(unassignedMembers.map((m) => m.id)));
   };
 
   const handleQuickSelectUnder18 = () => {
@@ -1092,27 +1114,36 @@ const DistributeModal = ({ document, members, sequences, onClose, onDistributed 
               ))}
             </select>
           </div>
+
+          {errorMsg && (
+            <div className="alert alert-error" style={{ marginTop: '14px', fontSize: '0.85rem' }}>
+              {errorMsg}
+            </div>
+          )}
         </div>
 
-        {/* Error */}
-        {errorMsg && (
-          <div className="alert alert-error" style={{ margin: '12px 28px 0', fontSize: '0.88rem' }}>
-            {errorMsg}
-          </div>
-        )}
-
-        {/* Controls bar */}
-        <div style={{ padding: '16px 28px 0', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ flex: 1, minWidth: '180px' }}>
+        {/* Search & Bulk Select Toolbar */}
+        <div style={{ padding: '12px 28px', borderBottom: '1px solid var(--glass-border)', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '180px' }}>
             <input
-              type="search"
+              type="text"
               className="input-field"
-              placeholder="🔍 Search members…"
+              placeholder="Search member name or email…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ padding: '8px 12px', fontSize: '0.9rem' }}
             />
           </div>
+          {unassignedMembers.length > 0 && assignedMemberIds.size > 0 && (
+            <button
+              onClick={handleSelectUnassigned}
+              className="btn btn-secondary"
+              style={{ fontSize: '0.8rem', padding: '8px 12px', whiteSpace: 'nowrap', color: 'var(--primary)', fontWeight: 700 }}
+              type="button"
+            >
+              ➕ Unassigned ({unassignedMembers.length})
+            </button>
+          )}
           {under18Members.length > 0 && (
             <button
               onClick={handleQuickSelectUnder18}
@@ -1144,6 +1175,7 @@ const DistributeModal = ({ document, members, sequences, onClose, onDistributed 
               {filteredMembers.map((m) => {
                 const checked = selectedIds.has(m.id);
                 const under18 = isUnder18(m.birthdate);
+                const isAlreadyAssigned = assignedMemberIds.has(m.id);
                 return (
                   <label
                     key={m.id}
@@ -1168,10 +1200,15 @@ const DistributeModal = ({ document, members, sequences, onClose, onDistributed 
                       style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', flexShrink: 0 }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {m.full_name}
                         </span>
+                        {isAlreadyAssigned && (
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', background: 'rgba(37,99,235,0.1)', color: '#2563eb', whiteSpace: 'nowrap' }}>
+                            Already Assigned
+                          </span>
+                        )}
                         {under18 && (
                           <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '1px 6px', borderRadius: '20px', background: 'rgba(197,160,89,0.18)', color: 'var(--accent)', whiteSpace: 'nowrap' }}>
                             &lt;18
@@ -1204,6 +1241,630 @@ const DistributeModal = ({ document, members, sequences, onClose, onDistributed 
               {loading ? 'Distributing…' : `Distribute to ${selectedIds.size}`}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Track Recipients & Submission Status Modal ──────────────────────────────
+
+interface TrackRecipientsModalProps {
+  document: DocumentRow;
+  onClose: () => void;
+  onOpenDistribute?: () => void;
+}
+
+const TrackRecipientsModal = ({ document, onClose, onOpenDistribute }: TrackRecipientsModalProps) => {
+  const { addToast } = useToast();
+  const router = useRouter();
+  const [recipients, setRecipients] = useState<RecipientInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'submitted' | 'verified'>('pending');
+  const [search, setSearch] = useState('');
+  const [remindingAll, setRemindingAll] = useState(false);
+  const [remindingId, setRemindingId] = useState<string | null>(null);
+
+  const fetchRecipients = useCallback(async () => {
+    setLoading(true);
+    setErrorMsg('');
+    const res = await getDocumentRecipientsAction(document.id);
+    setLoading(false);
+    if (res.error) {
+      setErrorMsg(res.error);
+    } else {
+      setRecipients(res.recipients || []);
+    }
+  }, [document.id]);
+
+  useEffect(() => {
+    fetchRecipients();
+  }, [fetchRecipients]);
+
+  const pendingList = useMemo(() => recipients.filter((r) => r.status === 'pending'), [recipients]);
+  const submittedList = useMemo(() => recipients.filter((r) => r.status === 'submitted'), [recipients]);
+  const verifiedList = useMemo(
+    () => recipients.filter((r) => r.status === 'verified' || r.status === 'verified_manual'),
+    [recipients]
+  );
+  const rejectedList = useMemo(() => recipients.filter((r) => r.status === 'rejected'), [recipients]);
+
+  const totalCount = recipients.length;
+  const completedCount = submittedList.length + verifiedList.length;
+  const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  const filteredRecipients = useMemo(() => {
+    let list = recipients;
+    if (activeTab === 'pending') list = pendingList;
+    else if (activeTab === 'submitted') list = submittedList;
+    else if (activeTab === 'verified') list = verifiedList;
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (r) =>
+          r.fullName.toLowerCase().includes(q) ||
+          r.email.toLowerCase().includes(q) ||
+          (r.voicePart && r.voicePart.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [recipients, activeTab, pendingList, submittedList, verifiedList, search]);
+
+  const handleRemindAll = async () => {
+    if (pendingList.length === 0) return;
+    setRemindingAll(true);
+    const res = await sendWaiverReminderAction({
+      documentId: document.id,
+      documentTitle: document.title,
+    });
+    setRemindingAll(false);
+    if (res.error) {
+      addToast({ type: 'error', title: 'Reminder Failed', message: res.error });
+    } else {
+      addToast({
+        type: 'success',
+        title: 'Reminders Sent!',
+        message: res.message || `Notified ${res.count} members who haven't submitted yet.`,
+      });
+    }
+  };
+
+  const handleRemindSingle = async (memberId: string, memberName: string) => {
+    setRemindingId(memberId);
+    const res = await sendWaiverReminderAction({
+      documentId: document.id,
+      documentTitle: document.title,
+      memberIds: [memberId],
+    });
+    setRemindingId(null);
+    if (res.error) {
+      addToast({ type: 'error', title: 'Reminder Failed', message: res.error });
+    } else {
+      addToast({
+        type: 'success',
+        title: 'Reminder Sent',
+        message: `Notified ${memberName} to sign their waiver.`,
+      });
+    }
+  };
+
+  const getVoiceColor = (voice: string | null) => {
+    switch (voice) {
+      case 'Soprano':
+        return '#6366f1';
+      case 'Alto':
+        return '#7c3aed';
+      case 'Tenor':
+        return '#0ea5e9';
+      case 'Bass':
+        return '#0b4d24';
+      default:
+        return 'var(--muted)';
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        background: 'rgba(15,23,42,0.55)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="glass-container docs-modal-container"
+        style={{
+          width: '100%',
+          maxWidth: '680px',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '0',
+          overflow: 'hidden',
+          borderRadius: '20px',
+          background: '#ffffff',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ padding: '24px 28px 18px', borderBottom: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.8)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    background: 'rgba(11,77,36,0.1)',
+                    color: 'var(--primary)',
+                  }}
+                >
+                  <Users size={16} />
+                </span>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>
+                  Waiver Submission Tracker
+                </h3>
+              </div>
+              <p style={{ fontSize: '0.88rem', color: 'var(--muted)', margin: 0, fontStyle: 'italic' }}>
+                "{document.title}"
+              </p>
+            </div>
+
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--muted)',
+                padding: '6px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Progress Bar & Summary Stats */}
+          <div style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', fontSize: '0.825rem' }}>
+              <span style={{ fontWeight: 700, color: 'var(--foreground)' }}>
+                Overall Submission Progress
+              </span>
+              <span style={{ fontWeight: 800, color: completionRate === 100 ? 'var(--primary)' : '#d97706' }}>
+                {completedCount} of {totalCount} Submitted ({completionRate}%)
+              </span>
+            </div>
+
+            {/* Progress Bar */}
+            <div style={{ width: '100%', height: '8px', borderRadius: '999px', background: 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+              <div
+                style={{
+                  width: `${completionRate}%`,
+                  height: '100%',
+                  background: completionRate === 100 ? 'var(--primary)' : 'linear-gradient(90deg, #d97706, #0b4d24)',
+                  borderRadius: '999px',
+                  transition: 'width 0.5s ease',
+                }}
+              />
+            </div>
+
+            {/* Quick Stat Pill Buttons */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '14px' }}>
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  background: activeTab === 'pending' ? 'rgba(217,119,6,0.12)' : 'rgba(0,0,0,0.03)',
+                  border: activeTab === 'pending' ? '1.5px solid #d97706' : '1px solid var(--glass-border)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onClick={() => setActiveTab('pending')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#d97706', fontSize: '0.78rem', fontWeight: 700 }}>
+                  <Clock size={14} /> Not Submitted
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#d97706', marginTop: '2px' }}>
+                  {pendingList.length}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  background: activeTab === 'submitted' ? 'rgba(37,99,235,0.12)' : 'rgba(0,0,0,0.03)',
+                  border: activeTab === 'submitted' ? '1.5px solid #2563eb' : '1px solid var(--glass-border)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onClick={() => setActiveTab('submitted')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#2563eb', fontSize: '0.78rem', fontWeight: 700 }}>
+                  <Send size={14} /> Submitted
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#2563eb', marginTop: '2px' }}>
+                  {submittedList.length}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  background: activeTab === 'verified' ? 'rgba(11,77,36,0.12)' : 'rgba(0,0,0,0.03)',
+                  border: activeTab === 'verified' ? '1.5px solid var(--primary)' : '1px solid var(--glass-border)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onClick={() => setActiveTab('verified')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)', fontSize: '0.78rem', fontWeight: 700 }}>
+                  <CheckCircle2 size={14} /> Verified
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', marginTop: '2px' }}>
+                  {verifiedList.length}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Toolbar (Search & Actions) */}
+        <div
+          style={{
+            padding: '12px 28px',
+            background: '#fafafa',
+            borderBottom: '1px solid var(--glass-border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}
+        >
+          {/* Search */}
+          <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+            <Search
+              size={15}
+              style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }}
+            />
+            <input
+              type="text"
+              placeholder="Search member by name, voice, email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px 8px 34px',
+                borderRadius: '8px',
+                border: '1px solid var(--glass-border)',
+                background: '#ffffff',
+                fontSize: '0.85rem',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {pendingList.length > 0 && (
+              <button
+                type="button"
+                onClick={handleRemindAll}
+                disabled={remindingAll}
+                className="btn btn-primary"
+                style={{
+                  padding: '7px 14px',
+                  fontSize: '0.825rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: '#d97706',
+                  borderColor: '#d97706',
+                }}
+                title="Send notification to all members who have not submitted yet"
+              >
+                <Bell size={14} />
+                {remindingAll ? 'Reminding...' : `Remind Unsubmitted (${pendingList.length})`}
+              </button>
+            )}
+
+            {onOpenDistribute && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenDistribute();
+                }}
+                className="btn btn-secondary"
+                style={{ padding: '7px 12px', fontSize: '0.825rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <Send size={13} /> Distribute More
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Recipients List */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 28px' }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
+              <div className="spinner" style={{ width: '28px', height: '28px', margin: '0 auto 12px' }} />
+              <p style={{ margin: 0, fontSize: '0.9rem' }}>Loading recipient submission status...</p>
+            </div>
+          ) : errorMsg ? (
+            <div className="alert alert-error" style={{ fontSize: '0.875rem' }}>
+              {errorMsg}
+            </div>
+          ) : totalCount === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: 'rgba(0,0,0,0.04)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 12px',
+                  color: 'var(--muted)',
+                }}
+              >
+                <Users size={28} />
+              </div>
+              <h4 style={{ margin: '0 0 6px', fontWeight: 700, color: 'var(--foreground)' }}>
+                No Members Assigned Yet
+              </h4>
+              <p style={{ margin: '0 0 16px', fontSize: '0.875rem' }}>
+                This waiver has not been distributed to any choir members.
+              </p>
+              {onOpenDistribute && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenDistribute();
+                  }}
+                  className="btn btn-primary"
+                  style={{ fontSize: '0.875rem' }}
+                >
+                  <Send size={14} style={{ marginRight: '6px' }} /> Distribute Waiver Now
+                </button>
+              )}
+            </div>
+          ) : filteredRecipients.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--muted)' }}>
+              <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                {activeTab === 'pending'
+                  ? '🎉 Great news! All assigned members have submitted this waiver!'
+                  : 'No recipients match the selected filter or search.'}
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {filteredRecipients.map((recipient) => {
+                const isPending = recipient.status === 'pending';
+                const isSubmitted = recipient.status === 'submitted';
+                const isVerified = recipient.status === 'verified' || recipient.status === 'verified_manual';
+                const isRejected = recipient.status === 'rejected';
+
+                const voiceColor = getVoiceColor(recipient.voicePart);
+
+                return (
+                  <div
+                    key={recipient.signatureId}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      background: isPending ? 'rgba(217,119,6,0.03)' : '#ffffff',
+                      border: isPending ? '1px solid rgba(217,119,6,0.25)' : '1px solid var(--glass-border)',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                    }}
+                  >
+                    {/* Member Info */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                      <div
+                        style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '10px',
+                          background: `${voiceColor}15`,
+                          color: voiceColor,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 800,
+                          fontSize: '0.9rem',
+                          flexShrink: 0,
+                          border: `1px solid ${voiceColor}30`,
+                        }}
+                      >
+                        {recipient.fullName.charAt(0).toUpperCase()}
+                      </div>
+
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--foreground)' }}>
+                            {recipient.fullName}
+                          </span>
+                          {recipient.voicePart && (
+                            <span
+                              style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                background: `${voiceColor}15`,
+                                color: voiceColor,
+                              }}
+                            >
+                              {recipient.voicePart}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: '2px' }}>
+                          {recipient.email || 'No email registered'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status & Action */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                      {isPending && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span
+                            className="badge"
+                            style={{
+                              background: 'rgba(217,119,6,0.15)',
+                              color: '#b45309',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <Clock size={12} /> Not Submitted
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemindSingle(recipient.memberId, recipient.fullName)}
+                            disabled={remindingId === recipient.memberId}
+                            className="btn btn-secondary"
+                            style={{
+                              padding: '5px 10px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              color: '#b45309',
+                              borderColor: 'rgba(217,119,6,0.3)',
+                            }}
+                            title={`Remind ${recipient.fullName}`}
+                          >
+                            <Bell size={12} />
+                            {remindingId === recipient.memberId ? 'Sending...' : 'Remind'}
+                          </button>
+                        </div>
+                      )}
+
+                      {isSubmitted && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span
+                            className="badge"
+                            style={{
+                              background: 'rgba(37,99,235,0.12)',
+                              color: '#1d4ed8',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <Send size={12} /> Submitted
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => router.push('/admin/verifications')}
+                            className="btn btn-secondary"
+                            style={{
+                              padding: '5px 10px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              color: '#1d4ed8',
+                            }}
+                          >
+                            Review →
+                          </button>
+                        </div>
+                      )}
+
+                      {isVerified && (
+                        <span
+                          className="badge"
+                          style={{
+                            background: 'rgba(11,77,36,0.12)',
+                            color: 'var(--primary)',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <CheckCircle2 size={12} /> Verified
+                        </span>
+                      )}
+
+                      {isRejected && (
+                        <span
+                          className="badge"
+                          style={{
+                            background: 'rgba(239,68,68,0.12)',
+                            color: '#dc2626',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                          }}
+                        >
+                          Rejected
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            padding: '14px 28px',
+            borderTop: '1px solid var(--glass-border)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'rgba(255,255,255,0.9)',
+          }}
+        >
+          <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 600 }}>
+            {filteredRecipients.length} of {totalCount} member{totalCount !== 1 ? 's' : ''} shown
+          </span>
+          <button type="button" onClick={onClose} className="btn btn-secondary" style={{ padding: '7px 18px', fontSize: '0.85rem' }}>
+            Close
+          </button>
         </div>
       </div>
     </div>
@@ -1429,6 +2090,7 @@ const FileActionMenu = ({
   onRename,
   onMove,
   onDistribute,
+  onTrackRecipients,
   onCreateWaiver,
   onEditWaiver,
   onDelete,
@@ -1438,6 +2100,7 @@ const FileActionMenu = ({
   onRename: () => void;
   onMove: () => void;
   onDistribute: () => void;
+  onTrackRecipients: () => void;
   onCreateWaiver: () => void;
   onEditWaiver: () => void;
   onDelete: () => void;
@@ -1564,6 +2227,13 @@ const FileActionMenu = ({
         style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
       >
         <Send size={15} style={{ color: 'var(--primary)' }} /> Distribute
+      </button>
+      <button
+        type="button"
+        onClick={() => { setOpen(false); onTrackRecipients(); }}
+        style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'rgba(37,99,235,0.06)', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, color: '#1d4ed8', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+      >
+        <Users size={15} style={{ color: '#1d4ed8' }} /> Track Submissions
       </button>
       <div style={{ height: '1px', background: 'var(--glass-border)', margin: '4px 0' }} />
       <button
@@ -2123,6 +2793,7 @@ export const DocumentsManagerClient = ({
   const [showUpload, setShowUpload] = useState(false);
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [distributeTarget, setDistributeTarget] = useState<DocumentRow | null>(null);
+  const [trackingTarget, setTrackingTarget] = useState<DocumentRow | null>(null);
   const [previewTarget, setPreviewTarget] = useState<DocumentRow | null>(null);
   const [renameTarget, setRenameTarget] = useState<DocumentRow | null>(null);
   const [moveTarget, setMoveTarget] = useState<DocumentRow | null>(null);
@@ -2615,15 +3286,38 @@ export const DocumentsManagerClient = ({
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                      <button
-                        onClick={() => setPreviewTarget(doc)}
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 14px', fontSize: '0.825rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
-                        title="Preview File"
-                      >
-                        <Eye size={14} /> Preview
-                      </button>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.05)', gap: '6px' }}>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          onClick={() => setPreviewTarget(doc)}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 10px', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
+                          title="Preview File"
+                        >
+                          <Eye size={13} /> Preview
+                        </button>
+                        {(doc.type === 'activity_waiver' || doc.type === 'wedding_waiver') && (
+                          <button
+                            onClick={() => setTrackingTarget(doc)}
+                            className="btn btn-secondary"
+                            style={{
+                              padding: '6px 10px',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              cursor: 'pointer',
+                              color: '#1d4ed8',
+                              borderColor: 'rgba(37,99,235,0.3)',
+                              background: 'rgba(37,99,235,0.05)',
+                            }}
+                            title="View who has signed and who hasn't submitted yet"
+                          >
+                            <Users size={13} /> Tracker
+                          </button>
+                        )}
+                      </div>
 
                       <FileActionMenu
                         doc={doc}
@@ -2631,6 +3325,7 @@ export const DocumentsManagerClient = ({
                         onRename={() => setRenameTarget(doc)}
                         onMove={() => setMoveTarget(doc)}
                         onDistribute={() => setDistributeTarget(doc)}
+                        onTrackRecipients={() => setTrackingTarget(doc)}
                         onCreateWaiver={() => setCreatingWaiverTarget(doc)}
                         onEditWaiver={() => setEditingWaiverTarget(doc)}
                         onDelete={() => setDeleteTargetId(doc.id)}
@@ -2703,20 +3398,39 @@ export const DocumentsManagerClient = ({
                           </span>
                         </td>
                         <td data-label="Actions">
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <button
                               onClick={() => setPreviewTarget(doc)}
                               className="btn btn-secondary"
-                              style={{ padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer' }}
+                              style={{ padding: '4px 8px', fontSize: '0.78rem', cursor: 'pointer' }}
                             >
                               Preview
                             </button>
+                            {(doc.type === 'activity_waiver' || doc.type === 'wedding_waiver') && (
+                              <button
+                                onClick={() => setTrackingTarget(doc)}
+                                className="btn btn-secondary"
+                                style={{
+                                  padding: '4px 8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  color: '#1d4ed8',
+                                  borderColor: 'rgba(37,99,235,0.3)',
+                                  background: 'rgba(37,99,235,0.05)',
+                                }}
+                                title="Submission Tracker"
+                              >
+                                Tracker
+                              </button>
+                            )}
                             <FileActionMenu
                               doc={doc}
                               onPreview={() => setPreviewTarget(doc)}
                               onRename={() => setRenameTarget(doc)}
                               onMove={() => setMoveTarget(doc)}
                               onDistribute={() => setDistributeTarget(doc)}
+                              onTrackRecipients={() => setTrackingTarget(doc)}
                               onCreateWaiver={() => setCreatingWaiverTarget(doc)}
                               onEditWaiver={() => setEditingWaiverTarget(doc)}
                               onDelete={() => setDeleteTargetId(doc.id)}
@@ -2830,7 +3544,21 @@ export const DocumentsManagerClient = ({
           members={initialMembers}
           sequences={initialSequences}
           onClose={() => setDistributeTarget(null)}
-          onDistributed={() => setDistributeTarget(null)}
+          onDistributed={() => {
+            setDistributeTarget(null);
+            router.refresh();
+          }}
+        />
+      )}
+
+      {trackingTarget && (
+        <TrackRecipientsModal
+          document={trackingTarget}
+          onClose={() => setTrackingTarget(null)}
+          onOpenDistribute={() => {
+            setDistributeTarget(trackingTarget);
+            setTrackingTarget(null);
+          }}
         />
       )}
 
