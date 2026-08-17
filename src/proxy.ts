@@ -34,10 +34,15 @@ export const proxy = async (request: NextRequest) => {
     }
   );
 
-  // 1. Get authenticated user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // 1. Get authenticated user safely
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data?.user || null;
+  } catch (err) {
+    // Refresh token expired or revoked (e.g., refresh_token_not_found)
+    user = null;
+  }
 
   const path = request.nextUrl.pathname;
 

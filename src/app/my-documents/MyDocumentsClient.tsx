@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { useToast } from '@/components/Toast';
 import { PdfCanvasViewer } from '@/components/PdfCanvasViewer';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 export interface FolderItem {
   id: string;
@@ -48,6 +49,8 @@ export interface MemberSignatureRow {
   is_archived?: boolean;
   signature_path: string | null;
   selfie_path: string | null;
+  signed_pdf_path?: string | null;
+  signedPdfSignedUrl?: string | null;
   created_at: string;
   updated_at: string;
   documents?: DocumentTemplate | null;
@@ -95,6 +98,16 @@ export default function MyDocumentsClient({
 }: Props) {
   const router = useRouter();
   const { addToast } = useToast();
+
+  // Live real-time sync for member documents, folders, and assigned waivers
+  useRealtimeSync({
+    channelName: `my-docs-sync-${currentUserProfile.id}`,
+    tables: [
+      { table: 'document_signatures', filter: `primary_member_id=eq.${currentUserProfile.id}` },
+      { table: 'documents' },
+      { table: 'document_folders' },
+    ],
+  });
 
   const [activeTab, setActiveTab] = useState<'storage' | 'waivers'>('storage');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -723,6 +736,27 @@ export default function MyDocumentsClient({
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        {sig.signedPdfSignedUrl && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviewDoc({
+                                id: sig.id,
+                                title: `${doc?.title || 'Signed Waiver'} (Stamped Copy)`,
+                                type: docType,
+                                file_path: '',
+                                folder_id: null,
+                                created_at: sig.created_at,
+                                signedUrl: sig.signedPdfSignedUrl!,
+                              })
+                            }
+                            className="btn btn-secondary"
+                            style={{ padding: '9px 14px', fontSize: '0.825rem', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--primary)' }}
+                          >
+                            📄 Stamped PDF
+                          </button>
+                        )}
+
                         <Link
                           href={`/sign/${sig.id}`}
                           className={`btn ${isUrgent ? 'btn-primary' : 'btn-secondary'}`}

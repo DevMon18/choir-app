@@ -143,7 +143,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
         }
 
         // Generate unique channel topic per mount to prevent topic collision after re-renders
-        const channelTopic = `navbar-unread-${user.id}-${Math.random().toString(36).substring(2, 7)}`;
+        const channelTopic = `navbar-live-${user.id}-${Math.random().toString(36).substring(2, 7)}`;
 
         channel = supabase
           .channel(channelTopic)
@@ -164,21 +164,78 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               }
             }
           )
+          .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'document_signatures', filter: `primary_member_id=eq.${user.id}` },
+            () => {
+              addToast({
+                type: 'info',
+                title: '📄 New Waiver Assigned',
+                message: 'A new document waiver has been assigned to your account.',
+              });
+              router.refresh();
+            }
+          )
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'document_signatures', filter: `primary_member_id=eq.${user.id}` },
+            (payload) => {
+              const updated = payload.new as any;
+              if (updated?.status === 'verified' || updated?.status === 'verified_manual') {
+                addToast({
+                  type: 'success',
+                  title: '🎉 Waiver Verified',
+                  message: 'Your submitted waiver has been approved and verified by the choir director.',
+                });
+                router.refresh();
+              } else if (updated?.status === 'rejected') {
+                addToast({
+                  type: 'error',
+                  title: '⚠️ Waiver Requires Re-signing',
+                  message: 'Your submitted waiver was rejected. Please review and sign again.',
+                });
+                router.refresh();
+              }
+            }
+          )
+          .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'announcements' },
+            (payload) => {
+              const ann = payload.new as any;
+              addToast({
+                type: 'info',
+                title: '📢 New Announcement',
+                message: ann?.title || 'A new choir announcement was posted.',
+              });
+              router.refresh();
+            }
+          )
           .subscribe();
       } catch (err) {
-        console.error('Navbar unread count listener error:', err);
+        console.error('Navbar real-time listener error:', err);
       }
     }
 
     fetchUnread();
 
+    // Mobile App / Browser tab resume revalidation
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUnread();
+        router.refresh();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
     return () => {
       isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibility);
       if (channel) {
         supabase.removeChannel(channel);
       }
     };
-  }, [supabase, pathname, addToast]);
+  }, [supabase, pathname, addToast, router]);
 
   // Close dropdown on outside click
   useEffect(() => {

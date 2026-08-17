@@ -98,6 +98,20 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
     signature.additional_names || []
   );
 
+  // Medical Authorization State
+  const [knownAllergies, setKnownAllergies] = useState(
+    (signature as any).known_allergies || ''
+  );
+  const [noAllergies, setNoAllergies] = useState(
+    (signature as any).no_allergies || false
+  );
+  const [currentMedications, setCurrentMedications] = useState(
+    (signature as any).current_medications || ''
+  );
+  const [noMedications, setNoMedications] = useState(
+    (signature as any).no_medications || false
+  );
+
   // Signature Pad State
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -309,6 +323,10 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
       fd.append('signerPrintedName', signerPrintedName.trim());
       fd.append('signerRelationship', signerRelationship);
       fd.append('additionalNames', JSON.stringify(validDependents));
+      fd.append('knownAllergies', knownAllergies);
+      fd.append('noAllergies', noAllergies ? 'true' : 'false');
+      fd.append('currentMedications', currentMedications);
+      fd.append('noMedications', noMedications ? 'true' : 'false');
       fd.append('signatureFile', sigBlob, 'signature.png');
       fd.append('selfieFile', selfieFile, 'selfie.jpg');
 
@@ -491,13 +509,16 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
               </div>
             </div>
 
-            {/* Section 2: Multi-Dependent Input Form */}
+            {/* Section 2: Multi-Dependent / Sibling Input Form */}
             <div className="glass-container" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
-                  2. Dependents &amp; Additional Names
+                  2. Siblings &amp; Additional Family Members
                 </h3>
               </div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '0 0 14px' }}>
+                Signing for siblings or family members who don't have separate accounts? Add their full names below so this waiver covers them as participants.
+              </p>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                 <input
@@ -513,7 +534,7 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                   style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
                 />
                 <label htmlFor="hasDependents" style={{ fontSize: '0.925rem', fontWeight: 600, color: 'var(--foreground)', cursor: 'pointer' }}>
-                  Are you signing on behalf of any dependents or family members?
+                  Are you signing on behalf of siblings, dependents, or family members?
                 </label>
               </div>
 
@@ -524,7 +545,7 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                       <input
                         type="text"
                         className="input-field"
-                        placeholder={`Dependent #${idx + 1} Full Name`}
+                        placeholder={`Sibling / Family Member #${idx + 1} Full Name`}
                         value={dep}
                         onChange={(e) => handleUpdateDependent(idx, e.target.value)}
                         style={{ flex: 1 }}
@@ -534,7 +555,7 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                         onClick={() => handleRemoveDependent(idx)}
                         className="btn btn-secondary"
                         style={{ padding: '10px 14px', color: 'var(--error)', borderColor: 'var(--error)' }}
-                        aria-label="Remove dependent"
+                        aria-label="Remove family member"
                       >
                         ✕
                       </button>
@@ -547,18 +568,98 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                     className="btn btn-secondary"
                     style={{ alignSelf: 'flex-start', fontSize: '0.85rem', marginTop: '4px' }}
                   >
-                    + Add Another Name
+                    + Add Sibling / Family Member
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Section 3: Signature Pad Canvas */}
+            {/* Section 3: Medical Authorization */}
+            <div className="glass-container" style={{ padding: '24px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: '0 0 4px' }}>
+                3. Medical Authorization
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '0 0 14px' }}>
+                Please provide any emergency medical details or check the box if none apply.
+              </p>
+
+              {/* Allergies / Conditions */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
+                <label className="input-label" htmlFor="known-allergies" style={{ display: 'block', margin: 0, fontWeight: 700 }}>
+                  Allergies / Medical Conditions
+                </label>
+                {!noAllergies && (
+                  <input
+                    id="known-allergies"
+                    type="text"
+                    className="input-field"
+                    value={knownAllergies}
+                    onChange={(e) => {
+                      setKnownAllergies(e.target.value);
+                      if (e.target.value.trim()) setNoAllergies(false);
+                    }}
+                    placeholder="e.g. Peanut allergy, Asthma, Diabetes"
+                  />
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                  <input
+                    type="checkbox"
+                    id="noAllergies"
+                    checked={noAllergies}
+                    onChange={(e) => {
+                      setNoAllergies(e.target.checked);
+                      if (e.target.checked) setKnownAllergies('');
+                    }}
+                    style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="noAllergies" style={{ fontSize: '0.875rem', fontWeight: noAllergies ? 700 : 500, color: noAllergies ? 'var(--primary)' : 'var(--foreground)', cursor: 'pointer' }}>
+                    [ ✓ ] No known allergies or medical conditions
+                  </label>
+                </div>
+              </div>
+
+              {/* Current Medications */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label className="input-label" htmlFor="current-medications" style={{ display: 'block', margin: 0, fontWeight: 700 }}>
+                  Current Medications
+                </label>
+                {!noMedications && (
+                  <input
+                    id="current-medications"
+                    type="text"
+                    className="input-field"
+                    value={currentMedications}
+                    onChange={(e) => {
+                      setCurrentMedications(e.target.value);
+                      if (e.target.value.trim()) setNoMedications(false);
+                    }}
+                    placeholder="e.g. Inhaler as needed, Allergy medicine"
+                  />
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                  <input
+                    type="checkbox"
+                    id="noMedications"
+                    checked={noMedications}
+                    onChange={(e) => {
+                      setNoMedications(e.target.checked);
+                      if (e.target.checked) setCurrentMedications('');
+                    }}
+                    style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="noMedications" style={{ fontSize: '0.875rem', fontWeight: noMedications ? 700 : 500, color: noMedications ? 'var(--primary)' : 'var(--foreground)', cursor: 'pointer' }}>
+                    [ ✓ ] No current routine medications
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Signature Pad Canvas */}
             <div className="glass-container" style={{ padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <div>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
-                    3. Digital Signature *
+                    4. Digital Signature *
                   </h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '2px 0 0' }}>
                     Draw your signature inside the box below.
@@ -623,10 +724,10 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
               </div>
             </div>
 
-            {/* Section 4: Selfie Photo Capture */}
+            {/* Section 5: Selfie Photo Capture */}
             <div className="glass-container" style={{ padding: '24px' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: '0 0 4px' }}>
-                4. Selfie Verification Photo *
+                5. Selfie Verification Photo *
               </h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '0 0 14px' }}>
                 Take a quick photo of yourself to verify identity for choir records.

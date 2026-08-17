@@ -9,6 +9,7 @@ interface PdfCanvasViewerProps {
 }
 
 export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewerProps) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -25,7 +26,13 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const viewport = page.getViewport({ scale: 1.2 });
+      const unscaledViewport = page.getViewport({ scale: 1.0 });
+      const containerWidth = containerRef.current?.clientWidth || window.innerWidth || 600;
+      const padding = window.innerWidth < 640 ? 16 : 32;
+      const targetWidth = Math.min(containerWidth - padding, 740);
+      const scale = targetWidth > 0 ? targetWidth / unscaledViewport.width : 1.0;
+
+      const viewport = page.getViewport({ scale: Math.max(scale, 0.55) });
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
@@ -48,7 +55,6 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
 
     const loadPdfJs = async () => {
       try {
-        // Ensure pdfjsLib is loaded in browser window
         if (!(window as any).pdfjsLib) {
           await new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
@@ -81,7 +87,7 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
 
         setTimeout(() => {
           if (isMounted) renderPage(1);
-        }, 50);
+        }, 60);
       } catch (err) {
         console.error('[PdfCanvasViewer] Failed to load PDF:', err);
         if (isMounted) {
@@ -100,11 +106,25 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
     };
   }, [url, renderPage]);
 
-  const changePage = (delta: number) => {
-    const next = currentPage + delta;
-    if (next >= 1 && next <= numPages) {
-      setCurrentPage(next);
-      renderPage(next);
+  // Re-render on window resize for responsive scaling
+  useEffect(() => {
+    const handleResize = () => {
+      if (pdfDocRef.current && currentPage) {
+        renderPage(currentPage);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [currentPage, renderPage]);
+
+  const changePage = (nextPage: number) => {
+    if (nextPage >= 1 && nextPage <= numPages) {
+      setCurrentPage(nextPage);
+      renderPage(nextPage);
+      // Scroll canvas viewport to top when switching page
+      if (containerRef.current) {
+        containerRef.current.scrollTop = 0;
+      }
     }
   };
 
@@ -119,6 +139,8 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
         display: 'flex',
         flexDirection: 'column',
         boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+        height: '100%',
+        width: '100%',
       }}
     >
       {/* Top Controls Toolbar */}
@@ -127,14 +149,14 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '10px 16px',
+          padding: '10px 14px',
           background: 'rgba(11,77,36,0.06)',
           borderBottom: '1px solid var(--glass-border)',
           flexWrap: 'wrap',
           gap: '8px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--primary)' }}>
             📄 {title || 'Document Preview'}
           </span>
@@ -153,35 +175,33 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {numPages > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={() => changePage(-1)}
-                disabled={currentPage <= 1}
-                className="btn btn-secondary"
-                style={{ padding: '4px 10px', fontSize: '0.78rem' }}
-              >
-                ◀ Prev
-              </button>
+            <div style={{ display: 'flex', gap: '4px' }}>
               <button
                 type="button"
                 onClick={() => changePage(1)}
-                disabled={currentPage >= numPages}
-                className="btn btn-secondary"
-                style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                className={`btn ${currentPage === 1 ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: 600 }}
               >
-                Next ▶
+                Page 1 (Letter)
               </button>
-            </>
+              <button
+                type="button"
+                onClick={() => changePage(2)}
+                className={`btn ${currentPage === 2 ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: 600 }}
+              >
+                Page 2 (Waiver)
+              </button>
+            </div>
           )}
 
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-primary"
+            className="btn btn-secondary"
             style={{ padding: '5px 12px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
           >
             <span>Open PDF ↗</span>
@@ -189,31 +209,35 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
         </div>
       </div>
 
-      {/* PDF Viewport Body */}
+      {/* PDF Viewport Body (Scrollable Container) */}
       <div
+        ref={containerRef}
         style={{
           flex: 1,
-          minHeight: height,
-          maxHeight: '70vh',
-          overflow: 'auto',
+          width: '100%',
+          maxHeight: '68vh',
+          minHeight: '340px',
+          overflowY: 'auto',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'flex-start',
           background: '#525659',
-          padding: '16px',
-          position: 'relative',
+          padding: '16px 8px',
+          boxSizing: 'border-box',
         }}
       >
         {loading && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: '#ffffff' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: '#ffffff', margin: 'auto' }}>
             <div style={{ width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.2)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Loading PDF document…</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Loading document page…</span>
           </div>
         )}
 
         {error && !loading && (
-          <div style={{ textAlign: 'center', color: '#ffffff', padding: '32px 16px', maxWidth: '380px' }}>
+          <div style={{ textAlign: 'center', color: '#ffffff', padding: '32px 16px', maxWidth: '380px', margin: 'auto' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📄</div>
             <p style={{ fontWeight: 700, fontSize: '1rem', margin: '0 0 6px' }}>
               Document Ready
@@ -239,11 +263,34 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
             maxWidth: '100%',
             height: 'auto',
             display: loading || error ? 'none' : 'block',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
             borderRadius: '4px',
             background: '#ffffff',
+            margin: '0 auto',
           }}
         />
+
+        {numPages > 1 && !loading && !error && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px', padding: '8px 16px', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', borderRadius: '999px', color: '#fff', fontSize: '0.8rem' }}>
+            <button
+              type="button"
+              onClick={() => changePage(currentPage - 1)}
+              disabled={currentPage <= 1}
+              style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', opacity: currentPage <= 1 ? 0.4 : 1, fontWeight: 700 }}
+            >
+              ◀ Prev Page
+            </button>
+            <span>Page {currentPage} of {numPages}</span>
+            <button
+              type="button"
+              onClick={() => changePage(currentPage + 1)}
+              disabled={currentPage >= numPages}
+              style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', opacity: currentPage >= numPages ? 0.4 : 1, fontWeight: 700 }}
+            >
+              Next Page ▶
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

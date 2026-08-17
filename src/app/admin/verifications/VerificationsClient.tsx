@@ -11,8 +11,12 @@ import {
   singleVerifySignatureAction,
   rejectSignatureAction,
   manualVerifySignatureAction,
+  deleteSignatureAction,
 } from './actions';
-import { Check, X, ShieldCheck, FileCheck, Eye, Search, CheckSquare, Square } from 'lucide-react';
+import { Check, X, ShieldCheck, FileCheck, Eye, Search, CheckSquare, Square, LayoutGrid, List, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { PdfCanvasViewer } from '@/components/PdfCanvasViewer';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 interface Profile {
   id: string;
@@ -33,18 +37,39 @@ const DOC_TYPE_LABELS: Record<string, string> = {
 };
 
 export default function VerificationsClient({ currentUserProfile, initialVerifications }: Props) {
+  const router = useRouter();
   const { addToast } = useToast();
+
+  // Real-time listener for incoming member signatures and verification changes
+  useRealtimeSync({
+    channelName: 'admin-verifications-live',
+    tables: [
+      { table: 'document_signatures' },
+    ],
+    onEvent: (payload) => {
+      if (payload.eventType === 'INSERT' || (payload.eventType === 'UPDATE' && payload.new?.status === 'submitted')) {
+        addToast({
+          type: 'info',
+          title: '✍️ New Waiver Submitted',
+          message: 'A choir member has submitted a signed waiver for verification.',
+        });
+      }
+    },
+  });
   const [isPending, startTransition] = useTransition();
 
   const [verifications, setVerifications] = useState<VerificationCardData[]>(initialVerifications);
   const [activeTab, setActiveTab] = useState<'submitted' | 'verified' | 'rejected' | 'all'>('submitted');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'member_asc' | 'doc_asc'>('newest');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lightboxUrl, setLightboxUrl] = useState<{ url: string; title: string } | null>(null);
   const [dependentsModal, setDependentsModal] = useState<{ memberName: string; names: string[] } | null>(null);
+  const [pdfPreviewModal, setPdfPreviewModal] = useState<{ url: string; title: string } | null>(null);
 
   const filteredItems = useMemo(() => {
-    return verifications.filter((item) => {
+    const items = verifications.filter((item) => {
       // Tab filter
       let matchesTab = true;
       if (activeTab === 'submitted') matchesTab = item.status === 'submitted';
@@ -59,7 +84,23 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
 
       return matchesTab && matchesSearch;
     });
-  }, [verifications, activeTab, searchQuery]);
+
+    return items.sort((a, b) => {
+      if (sortBy === 'newest') {
+        return new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime();
+      }
+      if (sortBy === 'oldest') {
+        return new Date(a.updated_at || a.created_at).getTime() - new Date(b.updated_at || b.created_at).getTime();
+      }
+      if (sortBy === 'member_asc') {
+        return (a.member?.full_name || '').localeCompare(b.member?.full_name || '');
+      }
+      if (sortBy === 'doc_asc') {
+        return (a.document?.title || '').localeCompare(b.document?.title || '');
+      }
+      return 0;
+    });
+  }, [verifications, activeTab, searchQuery, sortBy]);
 
   const submittedCount = useMemo(
     () => verifications.filter((v) => v.status === 'submitted').length,
@@ -114,22 +155,32 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
   };
 
   const handleReject = (id: string) => {
-    if (!confirm('Reject this signature submission? The member will be asked to re-sign.')) return;
-
     startTransition(async () => {
       const res = await rejectSignatureAction(id);
       if (res.success) {
-        addToast({ type: 'info', title: 'Signature rejected. Member will be prompted to re-sign.' });
+        addToast({ type: 'info', title: 'Signature rejected', message: 'Record moved to Rejected tab. Member will be prompted to re-sign.' });
         setVerifications((prev) =>
           prev.map((v) =>
             v.id === id
-              ? { ...v, status: 'rejected', signature_path: null, selfie_path: null, signatureSignedUrl: null, selfieSignedUrl: null }
+              ? {
+                  ...v,
+                  status: 'rejected',
+                  signature_path: null,
+                  selfie_path: null,
+                  signed_pdf_path: null,
+                  signatureSignedUrl: null,
+                  selfieSignedUrl: null,
+                  signedPdfSignedUrl: null,
+                  signer_printed_name: null,
+                  additional_names: [],
+                }
               : v
           )
         );
         setSelectedIds((prev) => prev.filter((i) => i !== id));
+        router.refresh();
       } else {
-        addToast({ type: 'error', title: res.error || 'Failed to reject' });
+        addToast({ type: 'error', title: 'Failed to Reject', message: res.error || 'Database permission error' });
       }
     });
   };
@@ -149,40 +200,52 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
     });
   };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      <div className="bg-orb bg-orb-1" style={{ width: '450px', height: '450px' }} />
-      <div className="bg-orb bg-orb-2" style={{ width: '400px', height: '400px' }} />
+  const handleDelete = (id: string) => {
+    startTransition(async () => {
+      const res = await deleteSignatureAction(id);
+      if (res.success) {
+        addToast({ type: 'info', title: 'Submission deleted', message: 'Record and storage files purged successfully.' });
+        setVerifications((prev) => prev.filter((v) => v.id !== id));
+        setSelectedIds((prev) => prev.filter((i) => i !== id));
+        router.refresh();
+      } else {
+        addToast({ type: 'error', title: 'Failed to Delete', message: res.error || 'Database permission error' });
+      }
+    });
+  };
 
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--background)', color: 'var(--foreground)' }}>
       <Navbar profile={currentUserProfile} />
 
-      <main style={{ flex: 1, maxWidth: '1200px', margin: '0 auto', width: '100%', padding: '24px 16px 120px' }}>
-        {/* Top Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 16px 64px' }}>
+        {/* Header Title */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary)' }}>
                 Waiver Verifications
               </h1>
               {submittedCount > 0 && (
-                <span className="badge" style={{ background: '#dc2626', color: '#fff', fontWeight: 700, fontSize: '0.825rem' }}>
-                  {submittedCount} Pending Review
+                <span className="badge badge-danger" style={{ fontSize: '0.85rem', padding: '4px 10px' }}>
+                  {submittedCount} PENDING REVIEW
                 </span>
               )}
             </div>
-            <p style={{ color: 'var(--muted)', margin: '4px 0 0', fontSize: '0.925rem' }}>
+            <p style={{ margin: '6px 0 0', color: 'var(--muted)', fontSize: '0.92rem' }}>
               Review submitted digital signatures, selfies, and multi-dependent waivers.
             </p>
           </div>
 
-          <Link href="/admin/documents" className="btn btn-secondary" style={{ fontSize: '0.88rem', padding: '8px 16px' }}>
+          <Link href="/admin/documents" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
             ← Back to Documents Manager
           </Link>
         </div>
 
-        {/* Filters & Search */}
-        <div className="glass-container" style={{ padding: '16px 20px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {/* Filters & Control Toolbar Bar */}
+        <div className="glass-container" style={{ padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+          {/* Status Tabs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <button
               onClick={() => setActiveTab('submitted')}
               className={`btn ${activeTab === 'submitted' ? 'btn-danger' : 'btn-secondary'}`}
@@ -213,21 +276,90 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
             </button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', maxWidth: '320px' }}>
-            <div style={{ position: 'relative', width: '100%' }}>
+          {/* Search, Sort Dropdown, and View Mode Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', width: '100%', maxWidth: '580px', justifyContent: 'flex-end' }}>
+            {/* Search Input */}
+            <div style={{ position: 'relative', flex: 1, minWidth: '180px' }}>
               <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
               <input
                 type="text"
                 placeholder="Search member or document..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ width: '100%', padding: '8px 12px 8px 36px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--foreground)', fontSize: '0.875rem' }}
+                style={{ width: '100%', padding: '8px 12px 8px 36px', borderRadius: '10px', border: '1px solid var(--border)', background: '#ffffff', color: 'var(--foreground)', fontSize: '0.85rem' }}
               />
+            </div>
+
+            {/* Sort Select */}
+            <select
+              value={sortBy}
+              onChange={(e: any) => setSortBy(e.target.value)}
+              style={{
+                padding: '8px 10px',
+                borderRadius: '10px',
+                border: '1px solid var(--border)',
+                background: '#ffffff',
+                color: 'var(--foreground)',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <option value="newest">🕒 Newest First</option>
+              <option value="oldest">⏳ Oldest First</option>
+              <option value="member_asc">🔤 Member (A-Z)</option>
+              <option value="doc_asc">📄 Document (A-Z)</option>
+            </select>
+
+            {/* View Mode Toggle */}
+            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: '10px', padding: '2px' }}>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                title="Card Grid View"
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: viewMode === 'grid' ? '#ffffff' : 'transparent',
+                  color: viewMode === 'grid' ? 'var(--primary)' : 'var(--muted)',
+                  cursor: 'pointer',
+                  boxShadow: viewMode === 'grid' ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                }}
+              >
+                <LayoutGrid size={15} /> Grid
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                title="Table List View"
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: viewMode === 'list' ? '#ffffff' : 'transparent',
+                  color: viewMode === 'list' ? 'var(--primary)' : 'var(--muted)',
+                  cursor: 'pointer',
+                  boxShadow: viewMode === 'list' ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                }}
+              >
+                <List size={15} /> List
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Select All Bar (when viewing submitted tab) */}
+        {/* Bulk Action Bar (when viewing submitted tab & items selected) */}
         {activeTab === 'submitted' && filteredItems.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', padding: '0 8px' }}>
             <button
@@ -244,13 +376,24 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                 : 'Select All Submitted'}
             </button>
 
+            {selectedIds.length > 0 && (
+              <button
+                onClick={handleBulkApprove}
+                disabled={isPending}
+                className="btn btn-primary"
+                style={{ fontSize: '0.85rem', padding: '6px 16px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Check size={16} /> Approve Selected ({selectedIds.length})
+              </button>
+            )}
+
             <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
               Showing {filteredItems.length} submission{filteredItems.length === 1 ? '' : 's'}
             </span>
           </div>
         )}
 
-        {/* Verification Grid */}
+        {/* Verification Submissions View (Grid or Table List) */}
         {filteredItems.length === 0 ? (
           <div className="glass-container" style={{ textAlign: 'center', padding: '64px 20px', color: 'var(--muted)' }}>
             <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📋</div>
@@ -263,7 +406,146 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                 : `No records match status "${activeTab}".`}
             </p>
           </div>
+        ) : viewMode === 'list' ? (
+          /* Compact Table List View (Mobile Responsive with Touch Scroll) */
+          <div className="glass-container" style={{ padding: '0', overflow: 'hidden', borderRadius: '16px' }}>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <table style={{ width: '100%', minWidth: '760px', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(11,77,36,0.06)', borderBottom: '1px solid var(--border)' }}>
+                    {activeTab === 'submitted' && <th style={{ padding: '12px 16px', width: '36px' }}></th>}
+                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>Member</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>Document</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>Signer & Family</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>Thumbnails</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>Status</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', textAlign: 'right', whiteSpace: 'nowrap' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredItems.map((item) => {
+                    const isSelected = selectedIds.includes(item.id);
+                    return (
+                      <tr key={item.id} style={{ borderBottom: '1px solid var(--glass-border)', background: isSelected ? 'rgba(11,77,36,0.04)' : undefined }}>
+                        {activeTab === 'submitted' && (
+                          <td style={{ padding: '12px 16px' }}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelect(item.id)}
+                              style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                            />
+                          </td>
+                        )}
+                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ position: 'relative', width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(30,58,138,0.1)', flexShrink: 0 }}>
+                              {item.member?.avatar_url ? (
+                                <Image src={item.member.avatar_url} alt={item.member.full_name} fill style={{ objectFit: 'cover' }} />
+                              ) : (
+                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--primary)', fontSize: '0.8rem' }}>
+                                  {item.member?.full_name?.substring(0, 2).toUpperCase() || 'M'}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 700, color: 'var(--foreground)' }}>{item.member?.full_name}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{item.member?.role} • {item.member?.voice_part || 'Vocalist'}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>{item.document?.title}</div>
+                          {item.signedPdfSignedUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setPdfPreviewModal({ url: item.signedPdfSignedUrl!, title: `${item.document?.title || 'Signed Waiver'} — ${item.member?.full_name}` })}
+                              style={{ background: 'none', border: 'none', color: 'var(--primary)', padding: 0, fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', marginTop: '2px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                            >
+                              📄 View Stamped PDF
+                            </button>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ fontWeight: 600 }}>{item.signer_printed_name || 'Self'} ({item.signer_relationship || 'Member'})</div>
+                          {item.additional_names && item.additional_names.length > 0 && (
+                            <button
+                              onClick={() => setDependentsModal({ memberName: item.member?.full_name || 'Member', names: item.additional_names })}
+                              style={{ background: 'rgba(30,58,138,0.1)', color: 'var(--primary)', border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', marginTop: '4px' }}
+                            >
+                              👥 +{item.additional_names.length} Dependents
+                            </button>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            {item.signatureSignedUrl && (
+                              <img
+                                src={item.signatureSignedUrl}
+                                alt="Signature"
+                                onClick={() => setLightboxUrl({ url: item.signatureSignedUrl!, title: `Signature: ${item.member?.full_name}` })}
+                                style={{ width: '48px', height: '32px', objectFit: 'contain', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', background: '#fff' }}
+                              />
+                            )}
+                            {item.selfieSignedUrl && (
+                              <img
+                                src={item.selfieSignedUrl}
+                                alt="Selfie"
+                                onClick={() => setLightboxUrl({ url: item.selfieSignedUrl!, title: `Selfie: ${item.member?.full_name}` })}
+                                style={{ width: '32px', height: '32px', objectFit: 'cover', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer' }}
+                              />
+                            )}
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span className={`badge ${item.status === 'verified' || item.status === 'verified_manual' ? 'badge-success' : item.status === 'rejected' ? 'badge-danger' : 'badge-warning'}`} style={{ fontSize: '0.72rem' }}>
+                            {item.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                            {item.status !== 'verified' && item.status !== 'verified_manual' && (
+                              <button
+                                onClick={() => handleSingleApprove(item.id)}
+                                disabled={isPending}
+                                className="btn btn-primary"
+                                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                title="Approve Signature"
+                              >
+                                <Check size={13} />
+                              </button>
+                            )}
+                            {item.status !== 'rejected' && (
+                              <button
+                                onClick={() => handleReject(item.id)}
+                                disabled={isPending}
+                                className="btn btn-secondary"
+                                style={{ padding: '4px 8px', fontSize: '0.75rem', color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)' }}
+                                title="Reject Signature"
+                              >
+                                <X size={13} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              disabled={isPending}
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 8px', fontSize: '0.75rem', color: '#991b1b', borderColor: 'rgba(153,27,27,0.3)' }}
+                              title="Delete Record & Purge Files"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         ) : (
+          /* Card Grid View */
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
             {filteredItems.map((item) => {
               const isSelected = selectedIds.includes(item.id);
@@ -305,43 +587,35 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                           )}
                         </div>
                         <div>
-                          <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
-                            {item.member?.full_name || 'Choir Member'}
-                          </h4>
-                          <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
-                            {item.member?.role ? item.member.role.replace('_', ' ') : 'Member'} • {item.member?.voice_part || 'Vocalist'}
-                          </span>
+                          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--foreground)' }}>
+                            {item.member?.full_name}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+                            {item.member?.role} • {item.member?.voice_part || 'Vocalist'}
+                          </div>
                         </div>
                       </div>
 
-                      <span
-                        className={`badge ${
-                          item.status === 'pending' ? 'badge-danger' :
-                          item.status === 'submitted' ? 'badge-accent' :
-                          item.status === 'rejected' ? 'badge-danger' :
-                          'badge-success'
-                        }`}
-                        style={{ fontSize: '0.75rem', fontWeight: 600 }}
-                      >
-                        {item.status === 'pending' ? 'Pending' :
-                         item.status === 'submitted' ? 'Submitted' :
-                         item.status === 'rejected' ? 'Rejected' :
-                         item.status === 'verified_manual' ? 'Verified (Manual)' :
-                         'Verified'}
+                      <span className={`badge ${item.status === 'verified' || item.status === 'verified_manual' ? 'badge-success' : item.status === 'rejected' ? 'badge-danger' : 'badge-warning'}`}>
+                        {item.status === 'verified_manual' ? 'VERIFIED (MANUAL)' : item.status.toUpperCase()}
                       </span>
                     </div>
 
-                    {/* Document Title & Type */}
-                    <div style={{ background: 'rgba(255,255,255,0.4)', borderRadius: '10px', padding: '10px 12px', marginBottom: '14px', border: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 600 }}>Document</div>
-                      <div style={{ fontSize: '0.925rem', fontWeight: 700, color: 'var(--primary)' }}>
-                        {item.document?.title || 'Waiver Document'}
+                    {/* Document Details */}
+                    <div style={{ padding: '12px', borderRadius: '10px', background: 'rgba(0,0,0,0.02)', border: '1px solid var(--border)', marginBottom: '16px' }}>
+                      <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '0.5px' }}>
+                        Document
                       </div>
+                      <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem', marginTop: '2px' }}>
+                        {item.document?.title}
+                      </div>
+
                       {item.signer_printed_name && (
-                        <div style={{ fontSize: '0.8rem', color: 'var(--foreground)', marginTop: '4px' }}>
-                          Signed by: <strong>{item.signer_printed_name}</strong> {item.signer_relationship && <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>({item.signer_relationship})</span>}
+                        <div style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: '4px' }}>
+                          Signed by: <strong style={{ color: 'var(--foreground)' }}>{item.signer_printed_name}</strong> ({item.signer_relationship || 'Self'})
                         </div>
                       )}
+
                       {hasDependents && (
                         <button
                           onClick={() => setDependentsModal({ memberName: item.member?.full_name || 'Member', names: item.additional_names })}
@@ -357,15 +631,14 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                             fontSize: '0.75rem',
                           }}
                         >
-                          👥 +{item.additional_names.length} Dependents (View)
+                          👥 +{item.additional_names.length} DEPENDENTS (VIEW)
                         </button>
                       )}
 
                       {item.signedPdfSignedUrl && (
-                        <a
-                          href={item.signedPdfSignedUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          type="button"
+                          onClick={() => setPdfPreviewModal({ url: item.signedPdfSignedUrl!, title: `${item.document?.title || 'Signed Waiver'} — ${item.member?.full_name}` })}
                           className="badge"
                           style={{
                             marginTop: '6px',
@@ -376,11 +649,26 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                             color: 'var(--primary)',
                             fontWeight: 700,
                             fontSize: '0.75rem',
-                            textDecoration: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
                           }}
                         >
-                          📄 View Stamped PDF ↗
-                        </a>
+                          📄 VIEW STAMPED PDF
+                        </button>
+                      )}
+
+                      {(item.known_allergies || item.current_medications || item.no_allergies || item.no_medications) && (
+                        <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--glass-border)', fontSize: '0.8rem' }}>
+                          <div style={{ fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem' }}>
+                            🩺 Medical Authorization Info:
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--foreground)', marginTop: '2px' }}>
+                            <strong>Allergies/Conditions:</strong> {item.no_allergies ? <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>None indicated</span> : (item.known_allergies || 'None')}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--foreground)', marginTop: '2px' }}>
+                            <strong>Medications:</strong> {item.no_medications ? <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>None indicated</span> : (item.current_medications || 'None')}
+                          </div>
+                        </div>
                       )}
                     </div>
 
@@ -454,7 +742,7 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                           onClick={() => handleSingleApprove(item.id)}
                           disabled={isPending}
                           className="btn btn-primary"
-                          style={{ flex: 1, padding: '8px 10px', fontSize: '0.8rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                          style={{ flex: 1, padding: '8px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                         >
                           <Check size={14} /> Approve
                         </button>
@@ -471,17 +759,27 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                         </button>
                       )}
 
-                      {item.status !== 'verified_manual' && (
+                      {item.status !== 'verified_manual' && item.status !== 'verified' && (
                         <button
                           onClick={() => handleManualVerify(item.id)}
                           disabled={isPending}
                           className="btn btn-secondary"
                           style={{ padding: '8px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                          title="Verify manually if paper signed waiver is on file"
+                          title="Verify manually with paper file"
                         >
                           <FileCheck size={14} /> Paper
                         </button>
                       )}
+
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        disabled={isPending}
+                        className="btn btn-secondary"
+                        style={{ padding: '8px 10px', fontSize: '0.8rem', color: '#991b1b', borderColor: 'rgba(153,27,27,0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        title="Delete Record & Purge Files"
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -489,72 +787,78 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
             })}
           </div>
         )}
-
-        {/* Sticky Bottom Bulk Action Bar */}
-        {selectedIds.length > 0 && (
-          <div
-            style={{
-              position: 'fixed',
-              bottom: '24px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'var(--primary)',
-              color: '#ffffff',
-              padding: '12px 24px',
-              borderRadius: '30px',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              zIndex: 100,
-            }}
-          >
-            <span style={{ fontWeight: 700, fontSize: '0.925rem' }}>
-              {selectedIds.length} Signature{selectedIds.length === 1 ? '' : 's'} Selected
-            </span>
-
-            <button
-              onClick={handleBulkApprove}
-              disabled={isPending}
-              className="btn btn-primary"
-              style={{
-                background: '#ffffff',
-                color: 'var(--primary)',
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                padding: '8px 18px',
-                borderRadius: '20px',
-              }}
-            >
-              {isPending ? 'Verifying...' : 'Approve Selected →'}
-            </button>
-
-            <button
-              onClick={() => setSelectedIds([])}
-              style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline' }}
-            >
-              Cancel
-            </button>
-          </div>
-        )}
       </main>
 
-      {/* Lightbox Preview Modal */}
+      {/* Image Lightbox Modal */}
       {lightboxUrl && (
-        <div className="modal-backdrop" onClick={() => setLightboxUrl(null)}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1100,
+            background: 'rgba(15,23,42,0.65)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={() => setLightboxUrl(null)}
+        >
           <div
-            className="modal-content glass-container"
+            className="glass-container"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '600px', width: '90%', padding: '24px', textAlign: 'center' }}
+            style={{
+              maxWidth: '540px',
+              width: '100%',
+              maxHeight: '90vh',
+              padding: '20px',
+              background: '#ffffff',
+              borderRadius: '20px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+            }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--primary)' }}>{lightboxUrl.title}</h3>
-              <button onClick={() => setLightboxUrl(null)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: 'var(--muted)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary)' }}>
+                {lightboxUrl.title}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setLightboxUrl(null)}
+                style={{
+                  background: 'rgba(0,0,0,0.06)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.1rem',
+                  cursor: 'pointer',
+                  color: 'var(--foreground)',
+                }}
+                aria-label="Close"
+              >
                 &times;
               </button>
             </div>
 
-            <div style={{ position: 'relative', width: '100%', height: '360px', borderRadius: '12px', overflow: 'hidden', background: '#ffffff', border: '1px solid var(--border)' }}>
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: 'min(360px, 50vh)',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                background: '#f8fafc',
+                border: '1px solid var(--border)',
+              }}
+            >
               <Image src={lightboxUrl.url} alt={lightboxUrl.title} fill style={{ objectFit: 'contain' }} />
             </div>
           </div>
@@ -563,32 +867,159 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
 
       {/* Dependents Modal */}
       {dependentsModal && (
-        <div className="modal-backdrop" onClick={() => setDependentsModal(null)}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1100,
+            background: 'rgba(15,23,42,0.65)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={() => setDependentsModal(null)}
+        >
           <div
-            className="modal-content glass-container"
+            className="glass-container"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '450px', width: '90%', padding: '24px' }}
+            style={{
+              maxWidth: '460px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '24px',
+              background: '#ffffff',
+              borderRadius: '20px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+            }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--primary)' }}>
-                👥 Dependents List ({dependentsModal.memberName})
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                👥 Covered Participants ({dependentsModal.memberName})
               </h3>
-              <button onClick={() => setDependentsModal(null)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: 'var(--muted)' }}>
+              <button
+                type="button"
+                onClick={() => setDependentsModal(null)}
+                style={{
+                  background: 'rgba(0,0,0,0.06)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.1rem',
+                  cursor: 'pointer',
+                  color: 'var(--foreground)',
+                }}
+                aria-label="Close"
+              >
                 &times;
               </button>
             </div>
 
-            <p style={{ fontSize: '0.88rem', color: 'var(--muted)', margin: '0 0 12px' }}>
-              The signer registered the following dependents on this waiver:
+            <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: 0 }}>
+              The signer registered the following dependents / family members on this digital waiver:
             </p>
 
-            <ul style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
               {dependentsModal.names.map((name, idx) => (
-                <li key={idx} style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--foreground)' }}>
-                  {name}
-                </li>
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    background: 'rgba(11,77,36,0.06)',
+                    border: '1px solid var(--border)',
+                    fontSize: '0.925rem',
+                    fontWeight: 600,
+                    color: 'var(--foreground)',
+                  }}
+                >
+                  <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontSize: '0.725rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {idx + 1}
+                  </span>
+                  <span>{name}</span>
+                </div>
               ))}
-            </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stamped PDF In-App Preview Modal */}
+      {pdfPreviewModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1100,
+            background: 'rgba(15,23,42,0.65)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '12px',
+          }}
+          onClick={() => setPdfPreviewModal(null)}
+        >
+          <div
+            className="glass-container"
+            style={{
+              width: '96%',
+              maxWidth: '880px',
+              height: '90vh',
+              maxHeight: '820px',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '0',
+              overflow: 'hidden',
+              borderRadius: '16px',
+              background: '#ffffff',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Top Bar */}
+            <div
+              style={{
+                padding: '14px 20px',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: '#ffffff',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  📄 {pdfPreviewModal.title}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPdfPreviewModal(null)}
+                className="btn btn-secondary"
+                style={{ padding: '6px 14px', fontSize: '0.82rem', fontWeight: 600 }}
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {/* Modal Canvas Viewer Body */}
+            <div style={{ flex: 1, padding: '12px', overflow: 'hidden', background: '#f8fafc' }}>
+              <PdfCanvasViewer url={pdfPreviewModal.url} title={pdfPreviewModal.title} height="100%" />
+            </div>
           </div>
         </div>
       )}

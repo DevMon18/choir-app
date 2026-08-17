@@ -15,10 +15,14 @@ export interface Profile {
  * Safe to call multiple times in the same request rendering lifecycle.
  */
 export const getCachedUser = cache(async () => {
-  const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return null;
-  return user;
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) return null;
+    return user;
+  } catch (err) {
+    return null;
+  }
 });
 
 /**

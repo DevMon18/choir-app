@@ -21,10 +21,12 @@ import {
   X,
   Sparkles,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { useToast } from '@/components/Toast';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { PdfCanvasViewer } from '@/components/PdfCanvasViewer';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import {
   uploadDocumentAction,
   deleteDocumentAction,
@@ -32,11 +34,14 @@ import {
   getDocumentSignedUrl,
   renameDocumentAction,
   moveDocumentAction,
+  createWaiverFromDocumentAction,
+  saveWaiverTemplateAction,
   DocumentRow,
   DocumentType,
   MemberOption,
   SequenceOption,
 } from './actions';
+import { DEFAULT_WAIVER_CONTENT, WaiverContent } from '@/lib/waiver-types';
 import {
   createFolderAction,
   updateFolderAction,
@@ -484,6 +489,379 @@ const UploadModal = ({ folders, onClose, onUploaded }: UploadModalProps) => {
   );
 };
 
+// ─── Waiver Editor Modal (Full Text & Clause Customization) ────────────────────
+
+interface WaiverEditorModalProps {
+  document: DocumentRow;
+  isCreating?: boolean;
+  onClose: () => void;
+  onSaved: (docOrId: DocumentRow | string, title: string) => void;
+}
+
+const WaiverEditorModal = ({ document, isCreating = false, onClose, onSaved }: WaiverEditorModalProps) => {
+  const { addToast } = useToast();
+  const existingWaiver = (document as any).waiver_content as WaiverContent | undefined;
+
+  const [title, setTitle] = useState(
+    isCreating ? `${document.title} — Consent & Waiver` : document.title
+  );
+  const [headerNote, setHeaderNote] = useState(
+    existingWaiver?.headerNote || DEFAULT_WAIVER_CONTENT.headerNote || ''
+  );
+
+  const [clause1Title, setClause1Title] = useState(
+    existingWaiver?.clause1Title || DEFAULT_WAIVER_CONTENT.clause1Title || ''
+  );
+  const [clause1Text, setClause1Text] = useState(
+    existingWaiver?.clause1Text || DEFAULT_WAIVER_CONTENT.clause1Text || ''
+  );
+
+  const [clause2Title, setClause2Title] = useState(
+    existingWaiver?.clause2Title || DEFAULT_WAIVER_CONTENT.clause2Title || ''
+  );
+  const [clause2Text, setClause2Text] = useState(
+    existingWaiver?.clause2Text || DEFAULT_WAIVER_CONTENT.clause2Text || ''
+  );
+
+  const [clause3Title, setClause3Title] = useState(
+    existingWaiver?.clause3Title || DEFAULT_WAIVER_CONTENT.clause3Title || ''
+  );
+  const [clause3Text, setClause3Text] = useState(
+    existingWaiver?.clause3Text || DEFAULT_WAIVER_CONTENT.clause3Text || ''
+  );
+
+  const [clause4Title, setClause4Title] = useState(
+    existingWaiver?.clause4Title || DEFAULT_WAIVER_CONTENT.clause4Title || ''
+  );
+  const [clause4Text, setClause4Text] = useState(
+    existingWaiver?.clause4Text || DEFAULT_WAIVER_CONTENT.clause4Text || ''
+  );
+
+  const [clause5Title, setClause5Title] = useState(
+    existingWaiver?.clause5Title || DEFAULT_WAIVER_CONTENT.clause5Title || ''
+  );
+  const [clause5Text, setClause5Text] = useState(
+    existingWaiver?.clause5Text || DEFAULT_WAIVER_CONTENT.clause5Text || ''
+  );
+
+  const [specialInstructions, setSpecialInstructions] = useState(
+    existingWaiver?.specialInstructions || ''
+  );
+
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleResetDefaults = () => {
+    setHeaderNote(DEFAULT_WAIVER_CONTENT.headerNote || '');
+    setClause1Title(DEFAULT_WAIVER_CONTENT.clause1Title || '');
+    setClause1Text(DEFAULT_WAIVER_CONTENT.clause1Text || '');
+    setClause2Title(DEFAULT_WAIVER_CONTENT.clause2Title || '');
+    setClause2Text(DEFAULT_WAIVER_CONTENT.clause2Text || '');
+    setClause3Title(DEFAULT_WAIVER_CONTENT.clause3Title || '');
+    setClause3Text(DEFAULT_WAIVER_CONTENT.clause3Text || '');
+    setClause4Title(DEFAULT_WAIVER_CONTENT.clause4Title || '');
+    setClause4Text(DEFAULT_WAIVER_CONTENT.clause4Text || '');
+    setClause5Title(DEFAULT_WAIVER_CONTENT.clause5Title || '');
+    setClause5Text(DEFAULT_WAIVER_CONTENT.clause5Text || '');
+    setSpecialInstructions('');
+    addToast({ type: 'info', title: 'Reset to Standard Clauses', message: 'Restored the 5 standard legal clauses.' });
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) {
+      setErrorMsg('Waiver title is required.');
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg('');
+
+    const waiverContent: WaiverContent = {
+      headerNote: headerNote.trim(),
+      clause1Title: clause1Title.trim(),
+      clause1Text: clause1Text.trim(),
+      clause2Title: clause2Title.trim(),
+      clause2Text: clause2Text.trim(),
+      clause3Title: clause3Title.trim(),
+      clause3Text: clause3Text.trim(),
+      clause4Title: clause4Title.trim(),
+      clause4Text: clause4Text.trim(),
+      clause5Title: clause5Title.trim(),
+      clause5Text: clause5Text.trim(),
+      specialInstructions: specialInstructions.trim(),
+    };
+
+    let res: { success?: boolean; error?: string; id?: string; document?: DocumentRow };
+
+    if (isCreating) {
+      res = await createWaiverFromDocumentAction({
+        documentId: document.id,
+        customTitle: title.trim(),
+        waiverContent,
+      });
+    } else {
+      res = await saveWaiverTemplateAction({
+        documentId: document.id,
+        title: title.trim(),
+        waiverContent,
+      });
+    }
+
+    setLoading(false);
+
+    if (res.error) {
+      setErrorMsg(res.error);
+    } else {
+      addToast({
+        type: 'success',
+        title: isCreating ? 'Activity Waiver Created!' : 'Waiver Clauses Saved',
+        message: isCreating
+          ? `Generated combined 2-page Waiver: "${title}"`
+          : 'Updated waiver clauses & re-compiled PDF template.',
+      });
+      onSaved(res.document || res.id || document.id, title.trim());
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+      onClick={onClose}
+    >
+      <div
+        className="glass-container docs-modal-container"
+        style={{ width: '100%', maxWidth: '780px', maxHeight: '92vh', overflowY: 'auto', padding: '28px' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(11,77,36,0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Sparkles size={22} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+                {isCreating ? 'Create & Edit Activity Waiver' : 'Edit Waiver Clauses'}
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: '2px 0 0' }}>
+                Source Document: "{document.title}"
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleResetDefaults}
+            className="btn btn-secondary"
+            style={{ fontSize: '0.78rem', padding: '6px 12px' }}
+            title="Reset to default legal wording"
+          >
+            🔄 Reset Standard Text
+          </button>
+        </div>
+
+        {errorMsg && (
+          <div className="alert alert-error" style={{ marginBottom: '16px', fontSize: '0.88rem' }}>
+            {errorMsg}
+          </div>
+        )}
+
+        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div>
+            <label htmlFor="waiver-title" style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: 'var(--foreground)', marginBottom: '6px' }}>
+              Waiver Title *
+            </label>
+            <input
+              id="waiver-title"
+              type="text"
+              className="input-field"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Summer Choir Activity Consent & Waiver"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="header-note" style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: 'var(--foreground)', marginBottom: '6px' }}>
+              Header Subtitle / Acknowledgement Note
+            </label>
+            <textarea
+              id="header-note"
+              className="input-field"
+              rows={2}
+              value={headerNote}
+              onChange={(e) => setHeaderNote(e.target.value)}
+              style={{ fontSize: '0.85rem' }}
+            />
+          </div>
+
+          {/* Clause 1 */}
+          <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-border)' }}>
+            <label htmlFor="clause1-title" style={{ display: 'block', fontWeight: 700, fontSize: '0.825rem', color: 'var(--primary)', marginBottom: '4px' }}>
+              Clause 1 Title
+            </label>
+            <input
+              id="clause1-title"
+              type="text"
+              className="input-field"
+              value={clause1Title}
+              onChange={(e) => setClause1Title(e.target.value)}
+              style={{ marginBottom: '8px', fontSize: '0.875rem' }}
+            />
+            <label htmlFor="clause1-text" style={{ display: 'block', fontWeight: 700, fontSize: '0.825rem', color: 'var(--muted)', marginBottom: '4px' }}>
+              Clause 1 Wording
+            </label>
+            <textarea
+              id="clause1-text"
+              className="input-field"
+              rows={2}
+              value={clause1Text}
+              onChange={(e) => setClause1Text(e.target.value)}
+              style={{ fontSize: '0.85rem' }}
+            />
+          </div>
+
+          {/* Clause 2 */}
+          <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-border)' }}>
+            <label htmlFor="clause2-title" style={{ display: 'block', fontWeight: 700, fontSize: '0.825rem', color: 'var(--primary)', marginBottom: '4px' }}>
+              Clause 2 Title
+            </label>
+            <input
+              id="clause2-title"
+              type="text"
+              className="input-field"
+              value={clause2Title}
+              onChange={(e) => setClause2Title(e.target.value)}
+              style={{ marginBottom: '8px', fontSize: '0.875rem' }}
+            />
+            <label htmlFor="clause2-text" style={{ display: 'block', fontWeight: 700, fontSize: '0.825rem', color: 'var(--muted)', marginBottom: '4px' }}>
+              Clause 2 Wording
+            </label>
+            <textarea
+              id="clause2-text"
+              className="input-field"
+              rows={2}
+              value={clause2Text}
+              onChange={(e) => setClause2Text(e.target.value)}
+              style={{ fontSize: '0.85rem' }}
+            />
+          </div>
+
+          {/* Clause 3 */}
+          <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-border)' }}>
+            <label htmlFor="clause3-title" style={{ display: 'block', fontWeight: 700, fontSize: '0.825rem', color: 'var(--primary)', marginBottom: '4px' }}>
+              Clause 3 Title (Medical Authorization)
+            </label>
+            <input
+              id="clause3-title"
+              type="text"
+              className="input-field"
+              value={clause3Title}
+              onChange={(e) => setClause3Title(e.target.value)}
+              style={{ marginBottom: '8px', fontSize: '0.875rem' }}
+            />
+            <label htmlFor="clause3-text" style={{ display: 'block', fontWeight: 700, fontSize: '0.825rem', color: 'var(--muted)', marginBottom: '4px' }}>
+              Clause 3 Wording
+            </label>
+            <textarea
+              id="clause3-text"
+              className="input-field"
+              rows={2}
+              value={clause3Text}
+              onChange={(e) => setClause3Text(e.target.value)}
+              style={{ fontSize: '0.85rem' }}
+            />
+          </div>
+
+          {/* Clause 4 */}
+          <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-border)' }}>
+            <label htmlFor="clause4-title" style={{ display: 'block', fontWeight: 700, fontSize: '0.825rem', color: 'var(--primary)', marginBottom: '4px' }}>
+              Clause 4 Title
+            </label>
+            <input
+              id="clause4-title"
+              type="text"
+              className="input-field"
+              value={clause4Title}
+              onChange={(e) => setClause4Title(e.target.value)}
+              style={{ marginBottom: '8px', fontSize: '0.875rem' }}
+            />
+            <label htmlFor="clause4-text" style={{ display: 'block', fontWeight: 700, fontSize: '0.825rem', color: 'var(--muted)', marginBottom: '4px' }}>
+              Clause 4 Wording
+            </label>
+            <textarea
+              id="clause4-text"
+              className="input-field"
+              rows={2}
+              value={clause4Text}
+              onChange={(e) => setClause4Text(e.target.value)}
+              style={{ fontSize: '0.85rem' }}
+            />
+          </div>
+
+          {/* Clause 5 */}
+          <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-border)' }}>
+            <label htmlFor="clause5-title" style={{ display: 'block', fontWeight: 700, fontSize: '0.825rem', color: 'var(--primary)', marginBottom: '4px' }}>
+              Clause 5 Title
+            </label>
+            <input
+              id="clause5-title"
+              type="text"
+              className="input-field"
+              value={clause5Title}
+              onChange={(e) => setClause5Title(e.target.value)}
+              style={{ marginBottom: '8px', fontSize: '0.875rem' }}
+            />
+            <label htmlFor="clause5-text" style={{ display: 'block', fontWeight: 700, fontSize: '0.825rem', color: 'var(--muted)', marginBottom: '4px' }}>
+              Clause 5 Wording
+            </label>
+            <textarea
+              id="clause5-text"
+              className="input-field"
+              rows={2}
+              value={clause5Text}
+              onChange={(e) => setClause5Text(e.target.value)}
+              style={{ fontSize: '0.85rem' }}
+            />
+          </div>
+
+          {/* Special Instructions */}
+          <div>
+            <label htmlFor="special-instructions" style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', color: 'var(--foreground)', marginBottom: '6px' }}>
+              Special Instructions / Venue Rules (Optional)
+            </label>
+            <textarea
+              id="special-instructions"
+              className="input-field"
+              rows={2}
+              value={specialInstructions}
+              onChange={(e) => setSpecialInstructions(e.target.value)}
+              placeholder="e.g. Call time is 8:00 AM at St. Peter Parish. Formal choir uniform required."
+              style={{ fontSize: '0.85rem' }}
+            />
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
+            <button type="button" onClick={onClose} className="btn btn-secondary" style={{ padding: '10px 20px', fontSize: '0.875rem' }}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary"
+              style={{ padding: '10px 24px', fontSize: '0.875rem', fontWeight: 700 }}
+            >
+              {loading ? (isCreating ? 'Generating Combined PDF…' : 'Saving Clauses…') : isCreating ? '⚡ Generate & Create Waiver' : '💾 Save Waiver Clauses'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ─── PDF Preview Modal (For existing documents) ───────────────────────────────
 
 interface DocPreviewModalProps {
@@ -518,25 +896,25 @@ const DocPreviewModal = ({ document, onClose }: DocPreviewModalProps) => {
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px' }}
       onClick={onClose}
     >
       <div
         className="glass-container docs-modal-container"
-        style={{ width: '100%', maxWidth: '880px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', padding: '0', overflow: 'hidden' }}
+        style={{ width: '96%', maxWidth: '920px', height: '90vh', maxHeight: '820px', display: 'flex', flexDirection: 'column', padding: '0', overflow: 'hidden', borderRadius: '16px' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(11,77,36,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', background: '#ffffff' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(11,77,36,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
               </svg>
             </div>
-            <div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>{document.title}</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+            <div style={{ minWidth: 0 }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{document.title}</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
                 <span className="badge" style={{ background: DOC_TYPE_COLORS[document.type], color: DOC_TYPE_TEXT[document.type], fontWeight: 600, fontSize: '0.75rem' }}>
                   {DOC_TYPE_LABELS[document.type]}
                 </span>
@@ -549,7 +927,7 @@ const DocPreviewModal = ({ document, onClose }: DocPreviewModalProps) => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {signedUrl && (
               <a
                 href={signedUrl}
@@ -558,17 +936,17 @@ const DocPreviewModal = ({ document, onClose }: DocPreviewModalProps) => {
                 className="btn btn-secondary"
                 style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                <span>↗ Open in New Tab</span>
+                <span>↗ Open PDF</span>
               </a>
             )}
-            <button onClick={onClose} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-              Close
+            <button onClick={onClose} className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}>
+              ✕ Close
             </button>
           </div>
         </div>
 
         {/* Modal Viewer Body */}
-        <div style={{ flex: 1, padding: '16px', background: 'rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', minHeight: '360px', overflow: 'hidden' }}>
+        <div style={{ flex: 1, padding: '12px', background: 'rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
           {loading ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', gap: '10px', minHeight: '300px' }}>
               <div style={{ width: '24px', height: '24px', border: '3px solid rgba(11,77,36,0.2)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
@@ -577,7 +955,7 @@ const DocPreviewModal = ({ document, onClose }: DocPreviewModalProps) => {
           ) : errorMsg ? (
             <div className="alert alert-error" style={{ margin: 'auto' }}>{errorMsg}</div>
           ) : (
-            <PdfCanvasViewer url={signedUrl!} title={document.title} height="55vh" />
+            <PdfCanvasViewer url={signedUrl!} title={document.title} height="100%" />
           )}
         </div>
       </div>
@@ -1051,6 +1429,8 @@ const FileActionMenu = ({
   onRename,
   onMove,
   onDistribute,
+  onCreateWaiver,
+  onEditWaiver,
   onDelete,
 }: {
   doc: DocumentRow;
@@ -1058,6 +1438,8 @@ const FileActionMenu = ({
   onRename: () => void;
   onMove: () => void;
   onDistribute: () => void;
+  onCreateWaiver: () => void;
+  onEditWaiver: () => void;
   onDelete: () => void;
 }) => {
   const [open, setOpen] = useState(false);
@@ -1074,8 +1456,8 @@ const FileActionMenu = ({
     e.stopPropagation();
     if (!open && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
-      const menuWidth = 160;
-      const menuHeight = 215;
+      const menuWidth = 180;
+      const menuHeight = 250;
 
       let left = rect.right - menuWidth;
       if (left < 12) left = 12;
@@ -1130,7 +1512,7 @@ const FileActionMenu = ({
         borderRadius: '12px',
         border: '1px solid var(--glass-border)',
         boxShadow: '0 12px 30px rgba(0,0,0,0.18)',
-        width: '160px',
+        width: '185px',
         overflow: 'hidden',
         padding: '4px',
       }}
@@ -1143,6 +1525,25 @@ const FileActionMenu = ({
       >
         <Eye size={15} style={{ color: 'var(--primary)' }} /> Preview
       </button>
+
+      {doc.type === 'activity_waiver' ? (
+        <button
+          type="button"
+          onClick={() => { setOpen(false); onEditWaiver(); }}
+          style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'rgba(11,77,36,0.06)', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <Sparkles size={15} style={{ color: 'var(--primary)' }} /> Edit Waiver Clauses
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => { setOpen(false); onCreateWaiver(); }}
+          style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'rgba(197,160,89,0.12)', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <Sparkles size={15} style={{ color: 'var(--accent)' }} /> Create Waiver
+        </button>
+      )}
+
       <button
         type="button"
         onClick={() => { setOpen(false); onRename(); }}
@@ -1705,6 +2106,18 @@ export const DocumentsManagerClient = ({
   initialSequences,
 }: Props) => {
   const { addToast } = useToast();
+  const router = useRouter();
+
+  // Real-time sync for documents, folders, and waiver signature statuses
+  useRealtimeSync({
+    channelName: 'admin-docs-manager-live',
+    tables: [
+      { table: 'documents' },
+      { table: 'document_folders' },
+      { table: 'document_signatures' },
+    ],
+  });
+
   const [documents, setDocuments] = useState<DocumentRow[]>(initialDocuments);
   const [folders, setFolders] = useState<FolderItem[]>(initialFolders);
   const [showUpload, setShowUpload] = useState(false);
@@ -1713,6 +2126,8 @@ export const DocumentsManagerClient = ({
   const [previewTarget, setPreviewTarget] = useState<DocumentRow | null>(null);
   const [renameTarget, setRenameTarget] = useState<DocumentRow | null>(null);
   const [moveTarget, setMoveTarget] = useState<DocumentRow | null>(null);
+  const [creatingWaiverTarget, setCreatingWaiverTarget] = useState<DocumentRow | null>(null);
+  const [editingWaiverTarget, setEditingWaiverTarget] = useState<DocumentRow | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -2216,6 +2631,8 @@ export const DocumentsManagerClient = ({
                         onRename={() => setRenameTarget(doc)}
                         onMove={() => setMoveTarget(doc)}
                         onDistribute={() => setDistributeTarget(doc)}
+                        onCreateWaiver={() => setCreatingWaiverTarget(doc)}
+                        onEditWaiver={() => setEditingWaiverTarget(doc)}
                         onDelete={() => setDeleteTargetId(doc.id)}
                       />
                     </div>
@@ -2300,6 +2717,8 @@ export const DocumentsManagerClient = ({
                               onRename={() => setRenameTarget(doc)}
                               onMove={() => setMoveTarget(doc)}
                               onDistribute={() => setDistributeTarget(doc)}
+                              onCreateWaiver={() => setCreatingWaiverTarget(doc)}
+                              onEditWaiver={() => setEditingWaiverTarget(doc)}
                               onDelete={() => setDeleteTargetId(doc.id)}
                             />
                           </div>
@@ -2412,6 +2831,34 @@ export const DocumentsManagerClient = ({
           sequences={initialSequences}
           onClose={() => setDistributeTarget(null)}
           onDistributed={() => setDistributeTarget(null)}
+        />
+      )}
+
+      {creatingWaiverTarget && (
+        <WaiverEditorModal
+          document={creatingWaiverTarget}
+          isCreating
+          onClose={() => setCreatingWaiverTarget(null)}
+          onSaved={(createdDocOrId, newTitle) => {
+            setCreatingWaiverTarget(null);
+            if (typeof createdDocOrId === 'object') {
+              setDocuments((prev) => prev.map((d) => (d.id === createdDocOrId.id ? createdDocOrId : d)));
+            }
+            router.refresh();
+            addToast({ type: 'success', title: 'Activity Waiver Created', message: `"${newTitle}" is now an Activity Waiver with appended consent page.` });
+          }}
+        />
+      )}
+
+      {editingWaiverTarget && (
+        <WaiverEditorModal
+          document={editingWaiverTarget}
+          isCreating={false}
+          onClose={() => setEditingWaiverTarget(null)}
+          onSaved={(docId, updatedTitle) => {
+            setEditingWaiverTarget(null);
+            setDocuments((prev) => prev.map((d) => (d.id === docId ? { ...d, title: updatedTitle } : d)));
+          }}
         />
       )}
 

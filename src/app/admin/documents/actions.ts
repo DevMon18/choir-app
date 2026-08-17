@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { requireUser, requireRole } from '@/lib/auth/permissions';
 import { checkRateLimitMutation, checkRateLimitUpload } from '@/lib/ratelimit';
+import { generateCombinedWaiverPdf, WaiverContent, DEFAULT_WAIVER_CONTENT } from '@/lib/pdf-generator';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -265,6 +266,60 @@ export async function distributeDocumentAction(input: {
 
 // ─── Data Fetchers ────────────────────────────────────────────────────────────
 
+// ─── Data Fetchers ────────────────────────────────────────────────────────────
+
+function getStorageClient(userSupabase: any) {
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      return createAdminClient();
+    } catch {
+      // Fallback
+    }
+  }
+  return userSupabase;
+}
+
+async function fetchPdfBuffer(supabase: any, storageSupabase: any, filePath: string): Promise<Buffer | null> {
+  try {
+    if (!filePath) return null;
+    let targetUrl = filePath;
+    if (!filePath.startsWith('http://') && !filePath.startsWith('https://')) {
+      const signedUrl = await getDocumentSignedUrl(filePath);
+      if (signedUrl) {
+        targetUrl = signedUrl;
+      }
+    }
+
+    if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
+      const res = await fetch(targetUrl);
+      if (res.ok) {
+        return Buffer.from(await res.arrayBuffer());
+      }
+    }
+
+    const { data: blob, error } = await storageSupabase.storage
+      .from('choir_documents')
+      .download(filePath);
+
+    if (!error && blob) {
+      return Buffer.from(await blob.arrayBuffer());
+    }
+
+    const { data: userBlob, error: userErr } = await supabase.storage
+      .from('choir_documents')
+      .download(filePath);
+
+    if (!userErr && userBlob) {
+      return Buffer.from(await userBlob.arrayBuffer());
+    }
+
+    return null;
+  } catch (err) {
+    console.error('[fetchPdfBuffer] Error:', err);
+    return null;
+  }
+}
+
 /**
  * Fetch all documents for the admin list.
  */
@@ -347,20 +402,52 @@ export async function getUpcomingSequences(): Promise<SequenceOption[]> {
  */
 export async function getDocumentSignedUrl(filePath: string): Promise<string | null> {
   try {
-    if (!filePath) return null;
-    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
-      return filePath;
-    }
-    const supabase = createAdminClient();
-    const { data, error } = await supabase.storage
-      .from('choir_documents')
-      .createSignedUrl(filePath, 3600);
+    if (!filePath || !filePath.trim()) return null;
+    let cleanPath = filePath.trim();
 
-    if (error) {
-      console.error('[getDocumentSignedUrl] Storage error:', error);
-      return null;
+    if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+      return cleanPath;
     }
-    return data?.signedUrl || null;
+
+    // Strip leading slashes or bucket name if prefixed
+    cleanPath = cleanPath.replace(/^\/+/, '');
+    if (cleanPath.startsWith('choir_documents/')) {
+      cleanPath = cleanPath.replace(/^choir_documents\//, '');
+    }
+
+    const supabase = await createClient();
+    const { data: userData, error: userErr } = await supabase.storage
+      .from('choir_documents')
+      .createSignedUrl(cleanPath, 3600);
+
+    if (!userErr && userData?.signedUrl) {
+      return userData.signedUrl;
+    }
+
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const adminSupabase = createAdminClient();
+        const { data: adminData, error: adminErr } = await adminSupabase.storage
+          .from('choir_documents')
+          .createSignedUrl(cleanPath, 3600);
+        if (!adminErr && adminData?.signedUrl) {
+          return adminData.signedUrl;
+        }
+      } catch (err) {
+        console.error('[getDocumentSignedUrl] Admin client failed:', err);
+      }
+    }
+
+    // Fallback: public URL
+    const { data: pubData } = supabase.storage
+      .from('choir_documents')
+      .getPublicUrl(cleanPath);
+
+    if (pubData?.publicUrl) {
+      return pubData.publicUrl;
+    }
+
+    return null;
   } catch (err) {
     console.error('[getDocumentSignedUrl] Unexpected error:', err);
     return null;
@@ -417,3 +504,146 @@ export async function moveDocumentAction(documentId: string, newFolderId: string
     return { error: err.message || 'An unexpected error occurred.' };
   }
 }
+
+/**
+ * Appends the Waiver Page (Page 2) directly onto an existing uploaded PDF document in-place,
+ * converting it to an Activity Waiver document without creating duplicate files.
+ */
+export async function createWaiverFromDocumentAction(input: {
+  documentId: string;
+  customTitle?: string;
+  waiverContent?: WaiverContent;
+}) {
+  try {
+    const { user, supabase } = await getAdminContext();
+    const storageSupabase = getStorageClient(supabase);
+
+    // Fetch original document row
+    const { data: doc, error: fetchErr } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('id', input.documentId)
+      .single();
+
+    if (fetchErr || !doc) {
+      return { error: 'Source document not found.' };
+    }
+
+    // Download original PDF from choir_documents bucket safely
+    const templatePdfBuffer = await fetchPdfBuffer(supabase, storageSupabase, doc.file_path);
+    if (!templatePdfBuffer) {
+      console.warn(`[createWaiverFromDocumentAction] Source PDF at ${doc.file_path} could not be downloaded. Generating standalone waiver page.`);
+    }
+
+    const title = input.customTitle?.trim() || doc.title;
+    const waiverContent = input.waiverContent || DEFAULT_WAIVER_CONTENT;
+
+    // Generate combined 2-page PDF (Page 1 = Original PDF, Page 2 = Waiver)
+    const combinedBytes = await generateCombinedWaiverPdf({
+      templatePdfBuffer: templatePdfBuffer || undefined,
+      title,
+      waiverContent,
+    });
+
+    // Overwrite combined PDF to the existing document's file_path in storage
+    const { error: uploadErr } = await storageSupabase.storage
+      .from('choir_documents')
+      .upload(doc.file_path, combinedBytes, {
+        contentType: 'application/pdf',
+        upsert: true,
+      });
+
+    if (uploadErr) {
+      return { error: `Failed to update document PDF in storage: ${uploadErr.message}` };
+    }
+
+    // Update existing document DB row to type = 'activity_waiver'
+    const { data: updatedDoc, error: updateErr } = await supabase
+      .from('documents')
+      .update({
+        title,
+        type: 'activity_waiver' as const,
+      })
+      .eq('id', doc.id)
+      .select('*, profiles:created_by(full_name)')
+      .single();
+
+    if (updateErr) {
+      return { error: `Database update failed: ${updateErr.message}` };
+    }
+
+    revalidatePath('/admin/documents');
+    revalidatePath('/my-documents');
+    return { success: true, id: updatedDoc.id, title, document: updatedDoc as DocumentRow };
+  } catch (err: any) {
+    console.error('[createWaiverFromDocumentAction] unexpected:', err);
+    return { error: err.message || 'An unexpected error occurred.' };
+  }
+}
+
+/**
+ * Saves updated waiver clauses and title for an Activity Waiver document,
+ * regenerating the combined PDF file in storage.
+ */
+export async function saveWaiverTemplateAction(input: {
+  documentId: string;
+  title: string;
+  waiverContent: WaiverContent;
+}) {
+  try {
+    const { user, supabase } = await getAdminContext();
+    const storageSupabase = getStorageClient(supabase);
+
+    // Fetch existing document row
+    const { data: doc, error: fetchErr } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('id', input.documentId)
+      .single();
+
+    if (fetchErr || !doc) {
+      return { error: 'Document not found.' };
+    }
+
+    const templateBuffer = await fetchPdfBuffer(supabase, storageSupabase, doc.file_path);
+
+    // Generate updated PDF
+    const updatedPdfBytes = await generateCombinedWaiverPdf({
+      templatePdfBuffer: templateBuffer || undefined,
+      title: input.title.trim(),
+      waiverContent: input.waiverContent,
+    });
+
+    // Re-upload to doc's storage path
+    const { error: uploadErr } = await storageSupabase.storage
+      .from('choir_documents')
+      .upload(doc.file_path, updatedPdfBytes, {
+        contentType: 'application/pdf',
+        upsert: true,
+      });
+
+    if (uploadErr) {
+      return { error: `Failed to update PDF in storage: ${uploadErr.message}` };
+    }
+
+    // Update DB row
+    const { error: updateErr } = await supabase
+      .from('documents')
+      .update({
+        title: input.title.trim(),
+      })
+      .eq('id', input.documentId);
+
+    if (updateErr) {
+      return { error: `Failed to update database record: ${updateErr.message}` };
+    }
+
+    revalidatePath('/admin/documents');
+    revalidatePath('/my-documents');
+    return { success: true };
+  } catch (err: any) {
+    console.error('[saveWaiverTemplateAction] unexpected:', err);
+    return { error: err.message || 'An unexpected error occurred.' };
+  }
+}
+

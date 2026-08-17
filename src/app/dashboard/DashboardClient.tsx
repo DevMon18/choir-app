@@ -11,6 +11,7 @@ import { uploadProfilePhotoAction, deleteProfilePhotoAction, uploadCoverPhotoAct
 import gsap from 'gsap';
 import { Camera, Move, Check, X, Plus, Tag, Megaphone, UserCheck, Shield } from 'lucide-react';
 import { useClientCache } from '@/context/ClientCacheContext';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 const PushNotificationManager = dynamicImport(
   () => import('@/components/PushNotificationManager').then((m) => m.PushNotificationManager),
@@ -77,6 +78,16 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
   const { addToast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // Live real-time sync for member waivers, announcements, and profile state
+  useRealtimeSync({
+    channelName: `dashboard-sync-${profile.id}`,
+    tables: [
+      { table: 'document_signatures', filter: `primary_member_id=eq.${profile.id}` },
+      { table: 'announcements' },
+      { table: 'profiles', filter: `id=eq.${profile.id}` },
+    ],
+  });
 
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
@@ -517,93 +528,58 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
             </div>
           </div>
 
-          {/* ── Action Required: Document Waiver Signature Banner ── */}
-          {(() => {
-            const urgentSignatures = pendingSignatures.filter((s) =>
-              ['pending', 'rejected'].includes(s.status)
-            );
-            if (urgentSignatures.length === 0) return null;
-            const target = urgentSignatures[0];
-
-            return (
-              <div
-                className="anim-card"
-                style={{
-                  padding: '20px 24px',
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, rgba(220,38,38,0.12) 0%, rgba(197,160,89,0.15) 100%)',
-                  border: '1.5px solid rgba(220,38,38,0.3)',
-                  boxShadow: '0 8px 24px rgba(220,38,38,0.12)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '16px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '220px' }}>
-                  <div
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '12px',
-                      background: '#dc2626',
-                      color: '#ffffff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.3rem',
-                      flexShrink: 0,
-                      boxShadow: '0 4px 12px rgba(220,38,38,0.3)',
-                    }}
-                  >
-                    ✍️
-                  </div>
-                  <div>
-                    <h4 style={{ margin: '0 0 3px', fontSize: '1.05rem', fontWeight: 700, color: 'var(--foreground)' }}>
-                      {urgentSignatures.length === 1
-                        ? 'Action Required: Document Signature Needed'
-                        : `${urgentSignatures.length} Documents Require Your Signature`}
-                    </h4>
-                    <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--muted)' }}>
-                      Please read and sign "{target?.documents?.title || 'Required Document'}" before participating in choir activities.
-                    </p>
-                  </div>
+          {/* ── Unified Assigned Waivers & Documents Section ── */}
+          {pendingSignatures && pendingSignatures.length > 0 && (
+            <div
+              className="glass-container anim-card"
+              style={{
+                padding: '20px',
+                borderRadius: '16px',
+                border: pendingSignatures.some((s) => ['pending', 'rejected'].includes(s.status))
+                  ? '1.5px solid rgba(220,38,38,0.3)'
+                  : undefined,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                    📄 Assigned Waivers &amp; Documents ({pendingSignatures.length})
+                  </h3>
+                  {pendingSignatures.some((s) => ['pending', 'rejected'].includes(s.status)) && (
+                    <span
+                      className="badge"
+                      style={{
+                        background: 'rgba(220,38,38,0.12)',
+                        color: '#dc2626',
+                        fontWeight: 700,
+                        fontSize: '0.72rem',
+                      }}
+                    >
+                      Action Needed
+                    </span>
+                  )}
                 </div>
 
                 <Link
-                  href={`/sign/${target?.id}`}
-                  className="btn btn-primary"
+                  href="/my-documents"
                   style={{
-                    background: '#dc2626',
-                    borderColor: '#dc2626',
-                    color: '#ffffff',
-                    padding: '12px 22px',
-                    fontWeight: 700,
-                    fontSize: '0.925rem',
-                    whiteSpace: 'nowrap',
-                    boxShadow: '0 6px 18px rgba(220,38,38,0.35)',
-                    borderRadius: '12px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    color: 'var(--primary)',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
                   }}
                 >
-                  Sign Document Now →
+                  View All Documents →
                 </Link>
-              </div>
-            );
-          })()}
-
-          {/* ── My Waivers & Documents List Section ── */}
-          {pendingSignatures && pendingSignatures.length > 0 && (
-            <div className="glass-container anim-card" style={{ padding: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
-                  📄 My Waivers &amp; Documents ({pendingSignatures.length})
-                </h3>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {pendingSignatures.map((sig) => {
-                  const isPending = sig.status === 'pending' || sig.status === 'rejected';
+                  const isUrgent = sig.status === 'pending' || sig.status === 'rejected';
+
                   return (
                     <div
                       key={sig.id}
@@ -611,54 +587,91 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '12px 16px',
+                        padding: '14px 16px',
                         borderRadius: '12px',
-                        background: 'rgba(255,255,255,0.4)',
-                        border: '1px solid var(--glass-border)',
+                        background: isUrgent
+                          ? 'linear-gradient(135deg, rgba(220,38,38,0.06) 0%, rgba(197,160,89,0.08) 100%)'
+                          : 'rgba(255,255,255,0.6)',
+                        border: isUrgent
+                          ? '1.5px solid rgba(220,38,38,0.25)'
+                          : '1px solid var(--glass-border)',
                         flexWrap: 'wrap',
-                        gap: '10px',
+                        gap: '12px',
+                        transition: 'all 0.2s ease',
                       }}
                     >
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <strong style={{ fontSize: '0.95rem', color: 'var(--foreground)' }}>
-                            {sig.documents?.title || 'Waiver Document'}
-                          </strong>
-                          <span
-                            className="badge"
-                            style={{
-                              fontSize: '0.725rem',
-                              fontWeight: 700,
-                              background:
-                                sig.status === 'pending' ? 'rgba(220,38,38,0.12)' :
-                                sig.status === 'submitted' ? 'rgba(197,160,89,0.18)' :
-                                sig.status === 'rejected' ? 'rgba(220,38,38,0.12)' :
-                                'rgba(11,77,36,0.12)',
-                              color:
-                                sig.status === 'pending' ? '#dc2626' :
-                                sig.status === 'submitted' ? 'var(--accent)' :
-                                sig.status === 'rejected' ? '#dc2626' :
-                                'var(--primary)',
-                            }}
-                          >
-                            {sig.status === 'pending' ? '✍️ Action Required' :
-                             sig.status === 'submitted' ? '⏳ Submitted' :
-                             sig.status === 'rejected' ? '❌ Rejected' :
-                             '✅ Verified'}
-                          </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '220px' }}>
+                        <div
+                          style={{
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '10px',
+                            background: isUrgent ? 'rgba(220,38,38,0.15)' : 'rgba(11,77,36,0.1)',
+                            color: isUrgent ? '#dc2626' : 'var(--primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.1rem',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {isUrgent ? '✍️' : '📄'}
                         </div>
-                        <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: 'var(--muted)' }}>
-                          Assigned: {new Date(sig.created_at).toLocaleDateString()}
-                        </p>
+
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <strong style={{ fontSize: '0.95rem', color: 'var(--foreground)' }}>
+                              {sig.documents?.title || 'Waiver Document'}
+                            </strong>
+                            <span
+                              className="badge"
+                              style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                background:
+                                  sig.status === 'pending' ? 'rgba(220,38,38,0.12)' :
+                                  sig.status === 'submitted' ? 'rgba(197,160,89,0.18)' :
+                                  sig.status === 'rejected' ? 'rgba(220,38,38,0.12)' :
+                                  'rgba(11,77,36,0.12)',
+                                color:
+                                  sig.status === 'pending' ? '#dc2626' :
+                                  sig.status === 'submitted' ? 'var(--accent)' :
+                                  sig.status === 'rejected' ? '#dc2626' :
+                                  'var(--primary)',
+                              }}
+                            >
+                              {sig.status === 'pending' ? '✍️ Action Required' :
+                               sig.status === 'submitted' ? '⏳ Submitted' :
+                               sig.status === 'rejected' ? '❌ Rejected' :
+                               '✅ Verified'}
+                            </span>
+                          </div>
+                          <p style={{ margin: '3px 0 0', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                            Assigned: {new Date(sig.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <Link
                           href={`/sign/${sig.id}`}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.8rem', padding: '6px 14px', fontWeight: 600 }}
+                          className={isUrgent ? 'btn btn-primary' : 'btn btn-secondary'}
+                          style={{
+                            fontSize: '0.85rem',
+                            padding: isUrgent ? '9px 18px' : '8px 14px',
+                            fontWeight: 700,
+                            whiteSpace: 'nowrap',
+                            minHeight: '40px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            background: isUrgent ? '#dc2626' : undefined,
+                            borderColor: isUrgent ? '#dc2626' : undefined,
+                            color: isUrgent ? '#ffffff' : undefined,
+                            boxShadow: isUrgent ? '0 4px 12px rgba(220,38,38,0.25)' : undefined,
+                            borderRadius: '10px',
+                          }}
                         >
-                          {isPending ? 'Sign Document →' : 'View Submission →'}
+                          {isUrgent ? 'Sign Waiver Now →' : 'View Submission →'}
                         </Link>
 
                         {(sig.status === 'verified' || sig.status === 'verified_manual') && (
@@ -675,7 +688,7 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                               }
                             }}
                             className="btn btn-secondary"
-                            style={{ fontSize: '0.78rem', padding: '6px 12px', color: 'var(--muted)' }}
+                            style={{ fontSize: '0.78rem', padding: '8px 12px', color: 'var(--muted)', minHeight: '40px', borderRadius: '10px' }}
                             title="Archive waiver off home feed"
                           >
                             📁 Archive
@@ -689,34 +702,7 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
             </div>
           )}
 
-          {/* ── My Photo Gallery Section ── */}
-          <div className="glass-container anim-card" style={{ padding: '20px' }}>
-            <PhotoGallery
-              photos={photos}
-              isOwner={true}
-              isAdmin={isAdmin}
-              onUpload={async (file: File) => {
-                const formData = new FormData();
-                formData.append('file', file);
-                const res = await uploadProfilePhotoAction(formData);
-                if (res.success && res.photo) {
-                  setPhotos((prev) => [res.photo, ...prev]);
-                  router.refresh();
-                }
-                return res;
-              }}
-              onDelete={async (photoId: string, storagePath: string) => {
-                const res = await deleteProfilePhotoAction(photoId, storagePath);
-                if (res.success) {
-                  setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-                  router.refresh();
-                }
-                return res;
-              }}
-            />
-          </div>
-
-          {/* ── Active Announcements Social Feed ── */}
+          {/* ── Active Announcements Social Feed (Elevated Priority) ── */}
           {activeVisibleAnnouncements.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -734,6 +720,7 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                     style={{
                       position: 'relative',
                       padding: '20px',
+                      borderRadius: '16px',
                       borderLeft: isUrgent ? '6px solid var(--error)' : '6px solid var(--primary)',
                       background: isUrgent
                         ? 'linear-gradient(135deg, rgba(159,28,28,0.08) 0%, rgba(197,160,89,0.1) 100%)'
@@ -790,9 +777,36 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
             </div>
           )}
 
-          {/* ── Quick Choir Shortcuts ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-            <Link href="/calendar" className="glass-container anim-card" style={{ padding: '16px', textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* ── My Photo Gallery Section ── */}
+          <div className="glass-container anim-card" style={{ padding: '20px', borderRadius: '16px' }}>
+            <PhotoGallery
+              photos={photos}
+              isOwner={true}
+              isAdmin={isAdmin}
+              onUpload={async (file: File) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                const res = await uploadProfilePhotoAction(formData);
+                if (res.success && res.photo) {
+                  setPhotos((prev) => [res.photo, ...prev]);
+                  router.refresh();
+                }
+                return res;
+              }}
+              onDelete={async (photoId: string, storagePath: string) => {
+                const res = await deleteProfilePhotoAction(photoId, storagePath);
+                if (res.success) {
+                  setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+                  router.refresh();
+                }
+                return res;
+              }}
+            />
+          </div>
+
+          {/* ── Quick Choir Shortcuts (Desktop View) ── */}
+          <div className="dashboard-shortcuts-grid">
+            <Link href="/calendar" className="glass-container anim-card" style={{ padding: '16px', textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '14px' }}>
               <span style={{ fontSize: '1.8rem' }}>📅</span>
               <div>
                 <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>Calendar & Birthdays</h4>
@@ -800,7 +814,7 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
               </div>
             </Link>
 
-            <Link href="/directory" className="glass-container anim-card" style={{ padding: '16px', textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Link href="/directory" className="glass-container anim-card" style={{ padding: '16px', textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '14px' }}>
               <span style={{ fontSize: '1.8rem' }}>👥</span>
               <div>
                 <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>Member Directory</h4>
@@ -808,7 +822,7 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
               </div>
             </Link>
 
-            <Link href="/repertoire" className="glass-container anim-card" style={{ padding: '16px', textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Link href="/repertoire" className="glass-container anim-card" style={{ padding: '16px', textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '14px' }}>
               <span style={{ fontSize: '1.8rem' }}>🎶</span>
               <div>
                 <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>Song Repertoire</h4>

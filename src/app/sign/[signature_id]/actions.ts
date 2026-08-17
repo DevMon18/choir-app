@@ -22,6 +22,10 @@ const SubmitSignatureSchema = z.object({
     .min(2, 'Relationship is required.')
     .default('Parent / Guardian'),
   additionalNames: z.array(z.string().trim()).default([]),
+  knownAllergies: z.string().trim().optional(),
+  noAllergies: z.boolean().default(false),
+  currentMedications: z.string().trim().optional(),
+  noMedications: z.boolean().default(false),
 });
 
 // ─── Data Fetchers ────────────────────────────────────────────────────────────
@@ -92,19 +96,168 @@ export async function getSignatureData(signatureId: string): Promise<SignPageDat
       return { error: 'Associated document template not found.' };
     }
 
-    // Generate signed URL for PDF template using admin client
     const supabaseAdmin = createAdminClient();
-    const { data: pdfData } = await supabaseAdmin.storage
-      .from('choir_documents')
-      .createSignedUrl(document.file_path, 3600); // 1 hour
+    let pdfSignedUrl: string | null = null;
+
+    const isAlreadySigned = ['submitted', 'verified', 'verified_manual'].includes(signature.status);
+
+    if (isAlreadySigned) {
+      let stampedPath = signature.signed_pdf_path;
+
+      // Auto-backfill stamped PDF if missing on submitted/verified record
+      if (!stampedPath && signature.signature_path && document.file_path) {
+        try {
+          const templateBuf = await fetchTemplateBuffer(document.file_path);
+          if (templateBuf) {
+            // Download signature PNG
+            let cleanSigPath = signature.signature_path.replace(/^\/+/, '');
+            if (cleanSigPath.startsWith('member_signatures/')) {
+              cleanSigPath = cleanSigPath.replace(/^member_signatures\//, '');
+            }
+            const { data: sigBlob } = await supabaseAdmin.storage
+              .from('member_signatures')
+              .download(cleanSigPath);
+
+            if (sigBlob) {
+              const sigBase64 = Buffer.from(await sigBlob.arrayBuffer()).toString('base64');
+              const formattedDate = new Date(signature.updated_at || signature.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              });
+
+              const { data: memberProf } = await supabaseAdmin
+                .from('profiles')
+                .select('full_name')
+                .eq('id', signature.primary_member_id)
+                .single();
+
+              const { generateSignedPdf } = await import('@/lib/pdf-stamper');
+              const stampedBytes = await generateSignedPdf({
+                templatePdfBuffer: templateBuf,
+                signaturePngBase64: sigBase64,
+                signerPrintedName: signature.signer_printed_name || memberProf?.full_name || 'Member',
+                signerRelationship: signature.signer_relationship || 'Parent / Guardian',
+                memberName: memberProf?.full_name || 'Member',
+                additionalNames: signature.additional_names || [],
+                signedAtDate: formattedDate,
+                verificationId: signature.id,
+                noAllergies: true,
+                noMedications: true,
+              });
+
+              const newSignedPath = `${signature.primary_member_id}/${signature.id}_signed_${Date.now()}.pdf`;
+              const { error: upErr } = await supabaseAdmin.storage
+                .from('member_signatures')
+                .upload(newSignedPath, stampedBytes, {
+                  contentType: 'application/pdf',
+                  upsert: true,
+                });
+
+              if (!upErr) {
+                stampedPath = newSignedPath;
+                await supabaseAdmin
+                  .from('document_signatures')
+                  .update({ signed_pdf_path: newSignedPath })
+                  .eq('id', signature.id);
+              }
+            }
+          }
+        } catch (bfErr) {
+          console.error('[getSignatureData] Stamped PDF auto-backfill error:', bfErr);
+        }
+      }
+
+      if (stampedPath) {
+        let cleanPath = stampedPath.replace(/^\/+/, '');
+        if (cleanPath.startsWith('member_signatures/')) {
+          cleanPath = cleanPath.replace(/^member_signatures\//, '');
+        }
+        const { data: stampedData } = await supabaseAdmin.storage
+          .from('member_signatures')
+          .createSignedUrl(cleanPath, 3600);
+        if (stampedData?.signedUrl) {
+          pdfSignedUrl = stampedData.signedUrl;
+        }
+      }
+    }
+
+    // Fallback to raw document template if not signed or stamped PDF unavailable
+    if (!pdfSignedUrl && document.file_path) {
+      let cleanDocPath = document.file_path.replace(/^\/+/, '');
+      if (cleanDocPath.startsWith('choir_documents/')) {
+        cleanDocPath = cleanDocPath.replace(/^choir_documents\//, '');
+      }
+      const { data: pdfData } = await supabaseAdmin.storage
+        .from('choir_documents')
+        .createSignedUrl(cleanDocPath, 3600); // 1 hour
+      pdfSignedUrl = pdfData?.signedUrl || null;
+    }
 
     return {
       signature: signature as any,
       document: document as any,
-      pdfSignedUrl: pdfData?.signedUrl || null,
+      pdfSignedUrl,
     };
   } catch (err: any) {
     return { error: err.message || 'An unexpected error occurred.' };
+  }
+}
+
+async function fetchTemplateBuffer(filePath: string): Promise<Buffer | null> {
+  try {
+    if (!filePath || !filePath.trim()) return null;
+    let cleanPath = filePath.trim();
+
+    if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+      const res = await fetch(cleanPath);
+      if (res.ok) return Buffer.from(await res.arrayBuffer());
+    }
+
+    cleanPath = cleanPath.replace(/^\/+/, '');
+    if (cleanPath.startsWith('choir_documents/')) {
+      cleanPath = cleanPath.replace(/^choir_documents\//, '');
+    }
+
+    const supabaseAdmin = createAdminClient();
+
+    // Direct download
+    const { data: blob, error: dlErr } = await supabaseAdmin.storage
+      .from('choir_documents')
+      .download(cleanPath);
+
+    if (!dlErr && blob) {
+      return Buffer.from(await blob.arrayBuffer());
+    }
+
+    // Signed URL download fallback
+    const { data: signedData } = await supabaseAdmin.storage
+      .from('choir_documents')
+      .createSignedUrl(cleanPath, 3600);
+
+    if (signedData?.signedUrl) {
+      const res = await fetch(signedData.signedUrl);
+      if (res.ok) {
+        return Buffer.from(await res.arrayBuffer());
+      }
+    }
+
+    // Public URL fallback
+    const { data: pubData } = supabaseAdmin.storage
+      .from('choir_documents')
+      .getPublicUrl(cleanPath);
+
+    if (pubData?.publicUrl) {
+      const res = await fetch(pubData.publicUrl);
+      if (res.ok) {
+        return Buffer.from(await res.arrayBuffer());
+      }
+    }
+
+    return null;
+  } catch (err) {
+    console.error('[fetchTemplateBuffer] Error:', err);
+    return null;
   }
 }
 
@@ -129,6 +282,10 @@ export async function submitSignatureAction(formData: FormData) {
     const signerPrintedName = formData.get('signerPrintedName') as string;
     const signerRelationship = (formData.get('signerRelationship') as string) || 'Parent / Guardian';
     const rawAdditionalNames = formData.get('additionalNames') as string;
+    const knownAllergies = (formData.get('knownAllergies') as string) || '';
+    const noAllergies = formData.get('noAllergies') === 'true';
+    const currentMedications = (formData.get('currentMedications') as string) || '';
+    const noMedications = formData.get('noMedications') === 'true';
 
     let additionalNames: string[] = [];
     if (rawAdditionalNames) {
@@ -145,6 +302,10 @@ export async function submitSignatureAction(formData: FormData) {
       signerPrintedName,
       signerRelationship,
       additionalNames,
+      knownAllergies,
+      noAllergies,
+      currentMedications,
+      noMedications,
     });
 
     if (!parsed.success) {
@@ -229,12 +390,9 @@ export async function submitSignatureAction(formData: FormData) {
 
     if (docFilePath) {
       try {
-        const { data: pdfBlob } = await supabaseAdmin.storage
-          .from('choir_documents')
-          .download(docFilePath);
+        const templateBuffer = await fetchTemplateBuffer(docFilePath);
 
-        if (pdfBlob) {
-          const templateBuffer = Buffer.from(await pdfBlob.arrayBuffer());
+        if (templateBuffer) {
           const sigArrayBuf = await signatureFile.arrayBuffer();
           const sigBase64 = Buffer.from(sigArrayBuf).toString('base64');
 
@@ -261,16 +419,27 @@ export async function submitSignatureAction(formData: FormData) {
             additionalNames: parsed.data.additionalNames,
             signedAtDate: formattedDate,
             verificationId: signatureId,
+            knownAllergies: parsed.data.knownAllergies,
+            noAllergies: parsed.data.noAllergies,
+            currentMedications: parsed.data.currentMedications,
+            noMedications: parsed.data.noMedications,
           });
 
           signedPdfPath = `${user.id}/${signatureId}_signed_${timestamp}.pdf`;
 
-          await supabaseAdmin.storage
+          const { error: pdfUpErr } = await supabaseAdmin.storage
             .from('member_signatures')
             .upload(signedPdfPath, stampedPdfBytes, {
               contentType: 'application/pdf',
               upsert: true,
             });
+
+          if (pdfUpErr) {
+            console.error('[submitSignatureAction] Stamped PDF upload failed:', pdfUpErr);
+            signedPdfPath = null;
+          }
+        } else {
+          console.error('[submitSignatureAction] Could not download document template at:', docFilePath);
         }
       } catch (pdfErr) {
         console.error('[submitSignatureAction] Error generating stamped PDF:', pdfErr);

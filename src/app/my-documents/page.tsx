@@ -47,9 +47,13 @@ export default async function MyDocumentsPage() {
     (rawDocuments || []).map(async (doc) => {
       let signedUrl = '';
       if (doc.file_path) {
+        let cleanDocPath = doc.file_path.replace(/^\/+/, '');
+        if (cleanDocPath.startsWith('choir_documents/')) {
+          cleanDocPath = cleanDocPath.replace(/^choir_documents\//, '');
+        }
         const { data: signedData } = await supabase.storage
           .from('choir_documents')
-          .createSignedUrl(doc.file_path, 3600 * 2);
+          .createSignedUrl(cleanDocPath, 3600 * 2);
         signedUrl = signedData?.signedUrl || '';
       }
       return {
@@ -59,10 +63,31 @@ export default async function MyDocumentsPage() {
     })
   );
 
+  // Generate signed URLs for stamped signed PDFs
+  const signaturesWithSignedUrls = await Promise.all(
+    (signatures || []).map(async (sig) => {
+      let signedPdfSignedUrl: string | null = null;
+      if (sig.signed_pdf_path) {
+        let cleanSigPath = sig.signed_pdf_path.replace(/^\/+/, '');
+        if (cleanSigPath.startsWith('member_signatures/')) {
+          cleanSigPath = cleanSigPath.replace(/^member_signatures\//, '');
+        }
+        const { data: signedData } = await supabase.storage
+          .from('member_signatures')
+          .createSignedUrl(cleanSigPath, 3600 * 2);
+        signedPdfSignedUrl = signedData?.signedUrl || null;
+      }
+      return {
+        ...sig,
+        signedPdfSignedUrl,
+      };
+    })
+  );
+
   return (
     <MyDocumentsClient
       currentUserProfile={profile}
-      initialSignatures={(signatures as any) || []}
+      initialSignatures={signaturesWithSignedUrls as any}
       initialFolders={(folders as any) || []}
       initialDocuments={documentsWithSignedUrls}
     />
