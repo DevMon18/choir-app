@@ -293,17 +293,10 @@ export async function sendMessage(
 
     if (!body.trim()) return { error: 'Message cannot be empty' };
 
-    // Format body with embedded reply metadata for 100% database backwards-compatibility
-    let bodyToStore = body.trim();
-    if (replySnippet) {
-      const metaTag = `<!--reply:${JSON.stringify(replySnippet)}-->`;
-      bodyToStore = `${metaTag}${bodyToStore}`;
-    }
-
     const insertPayload: any = {
       conversation_id: conversationId,
       sender_id: user.id,
-      body: bodyToStore,
+      body: body.trim(),
     };
     if (replyToId) insertPayload.reply_to_id = replyToId;
     if (replySnippet) insertPayload.reply_snippet = replySnippet;
@@ -316,13 +309,13 @@ export async function sendMessage(
       .single();
 
     if (insertErr) {
-      // Graceful fallback if reply_to_id/reply_snippet columns don't exist in Supabase yet
+      // Graceful fallback if reply_to_id/reply_snippet columns are missing
       const { data: fallbackData, error: fallbackErr } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
           sender_id: user.id,
-          body: bodyToStore,
+          body: body.trim(),
         })
         .select()
         .single();

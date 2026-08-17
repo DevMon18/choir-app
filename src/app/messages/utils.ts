@@ -8,23 +8,25 @@ export function parseStoredMessage(raw: { body: string; reply_snippet?: any; rep
   cleanBody: string;
   replySnippet: ReplySnippet | null;
 } {
-  if (raw.reply_snippet) {
-    return { cleanBody: raw.body, replySnippet: raw.reply_snippet };
-  }
-  if (typeof raw.body === 'string' && raw.body.startsWith('<!--reply:')) {
-    const endIdx = raw.body.indexOf('-->');
+  let cleanBody = raw?.body || '';
+  let snippet: ReplySnippet | null = raw?.reply_snippet || null;
+
+  if (typeof cleanBody === 'string' && cleanBody.startsWith('<!--reply:')) {
+    const endIdx = cleanBody.indexOf('-->');
     if (endIdx !== -1) {
       try {
-        const jsonStr = raw.body.substring(10, endIdx);
-        const snippet = JSON.parse(jsonStr) as ReplySnippet;
-        const clean = raw.body.substring(endIdx + 3);
-        return { cleanBody: clean, replySnippet: snippet };
+        if (!snippet) {
+          const jsonStr = cleanBody.substring(10, endIdx);
+          snippet = JSON.parse(jsonStr) as ReplySnippet;
+        }
+        cleanBody = cleanBody.substring(endIdx + 3);
       } catch {
-        // Fallback
+        cleanBody = cleanBody.substring(endIdx + 3);
       }
     }
   }
-  return { cleanBody: raw.body, replySnippet: null };
+
+  return { cleanBody, replySnippet: snippet };
 }
 
 export function formatMessageTimestamp(dateString: string): string {
