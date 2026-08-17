@@ -33,11 +33,8 @@ export interface MessageReaction {
   created_at: string;
 }
 
-export interface ReplySnippet {
-  id: string;
-  sender_name: string;
-  body: string;
-}
+import { parseStoredMessage } from './utils';
+import type { ReplySnippet } from './utils';
 
 export interface MessageItem {
   id: string;
@@ -238,7 +235,7 @@ export async function getMessages(conversationId: string) {
     const reactionsMap = new Map<string, MessageReaction[]>();
     if (msgIds.length > 0) {
       try {
-        const { data: reactionsData } = await supabase
+        const { data: reactionsData } = await adminSupabase
           .from('message_reactions')
           .select('*')
           .in('message_id', msgIds);
@@ -251,14 +248,19 @@ export async function getMessages(conversationId: string) {
           }
         }
       } catch {
-        // Fallback gracefully if table is not yet created
+        // Fallback gracefully
       }
     }
 
-    const enrichedMessages: MessageItem[] = (msgs || []).map((m: any) => ({
-      ...m,
-      reactions: reactionsMap.get(m.id) || [],
-    }));
+    const enrichedMessages: MessageItem[] = (msgs || []).map((m: any) => {
+      const { cleanBody, replySnippet } = parseStoredMessage(m);
+      return {
+        ...m,
+        body: cleanBody,
+        reply_snippet: replySnippet || m.reply_snippet || null,
+        reactions: reactionsMap.get(m.id) || [],
+      };
+    });
 
     return {
       messages: enrichedMessages,
@@ -291,10 +293,17 @@ export async function sendMessage(
 
     if (!body.trim()) return { error: 'Message cannot be empty' };
 
+    // Format body with embedded reply metadata for 100% database backwards-compatibility
+    let bodyToStore = body.trim();
+    if (replySnippet) {
+      const metaTag = `<!--reply:${JSON.stringify(replySnippet)}-->`;
+      bodyToStore = `${metaTag}${bodyToStore}`;
+    }
+
     const insertPayload: any = {
       conversation_id: conversationId,
       sender_id: user.id,
-      body: body.trim(),
+      body: bodyToStore,
     };
     if (replyToId) insertPayload.reply_to_id = replyToId;
     if (replySnippet) insertPayload.reply_snippet = replySnippet;
@@ -307,13 +316,13 @@ export async function sendMessage(
       .single();
 
     if (insertErr) {
-      // Graceful fallback if reply_to_id/reply_snippet columns don't exist yet
+      // Graceful fallback if reply_to_id/reply_snippet columns don't exist in Supabase yet
       const { data: fallbackData, error: fallbackErr } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
           sender_id: user.id,
-          body: body.trim(),
+          body: bodyToStore,
         })
         .select()
         .single();
@@ -367,7 +376,14 @@ export async function sendMessage(
     revalidatePath('/messages');
     revalidatePath(`/messages/${conversationId}`);
 
-    return { message: inserted as MessageItem };
+    return {
+      message: {
+        ...inserted,
+        body: body.trim(),
+        reply_to_id: replyToId || null,
+        reply_snippet: replySnippet || null,
+      } as MessageItem,
+    };
   } catch (err: any) {
     return { error: err.message || 'Send message failed' };
   }
@@ -380,7 +396,9 @@ export async function toggleReactionAction(messageId: string, emoji: string) {
 
     if (!user) return { error: 'Unauthorized' };
 
-    const { data: existing } = await supabase
+    const adminSupabase = createAdminClient();
+
+    const { data: existing } = await adminSupabase
       .from('message_reactions')
       .select('id')
       .eq('message_id', messageId)
@@ -389,10 +407,10 @@ export async function toggleReactionAction(messageId: string, emoji: string) {
       .maybeSingle();
 
     if (existing) {
-      await supabase.from('message_reactions').delete().eq('id', existing.id);
+      await adminSupabase.from('message_reactions').delete().eq('id', existing.id);
       return { action: 'removed', emoji, messageId, userId: user.id };
     } else {
-      const { data: created, error: insertErr } = await supabase
+      const { data: created, error: insertErr } = await adminSupabase
         .from('message_reactions')
         .insert({
           message_id: messageId,
@@ -485,18 +503,25 @@ export async function deleteMessage(messageId: string) {
 
     if (!user) return { error: 'Unauthorized' };
 
-    const { data: msg } = await supabase
+    const adminSupabase = createAdminClient();
+    const { data: msg } = await adminSupabase
       .from('messages')
       .select('id, sender_id, conversation_id')
       .eq('id', messageId)
-      .single();
+      .maybeSingle();
 
     if (!msg || msg.sender_id !== user.id) {
       return { error: 'Unauthorized to delete this message' };
     }
 
-    const adminSupabase = createAdminClient();
-    await adminSupabase.from('messages').delete().eq('id', messageId);
+    const { error: delErr } = await adminSupabase
+      .from('messages')
+      .delete()
+      .eq('id', messageId);
+
+    if (delErr) {
+      return { error: delErr.message };
+    }
 
     revalidatePath(`/messages/${msg.conversation_id}`);
 

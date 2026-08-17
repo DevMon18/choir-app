@@ -4,16 +4,20 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
+import type { MessageItem, MessageReaction } from '../actions';
 import {
-  MessageItem,
-  MessageReaction,
-  ReplySnippet,
   sendMessage,
   markMessagesAsRead,
   deleteConversation,
   deleteMessage,
   toggleReactionAction,
 } from '../actions';
+import {
+  parseStoredMessage,
+  formatMessageTimestamp,
+  getDateSeparatorLabel,
+  type ReplySnippet,
+} from '../utils';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/Toast';
 import {
@@ -31,79 +35,6 @@ import {
 } from 'lucide-react';
 
 const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
-
-function formatMessageTimestamp(dateString: string): string {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  const now = new Date();
-
-  const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-
-  const isToday =
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear();
-
-  if (isToday) {
-    return timeStr;
-  }
-
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday =
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear();
-
-  if (isYesterday) {
-    return `Yesterday ${timeStr}`;
-  }
-
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  if (diffDays <= 6) {
-    const dayOfWeek = date.toLocaleDateString([], { weekday: 'short' });
-    return `${dayOfWeek} ${timeStr}`;
-  }
-
-  const isSameYear = date.getFullYear() === now.getFullYear();
-  if (isSameYear) {
-    const monthDay = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    return `${monthDay} ${timeStr}`;
-  }
-
-  const fullDate = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-  return `${fullDate} ${timeStr}`;
-}
-
-function getDateSeparatorLabel(dateString: string): string {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  const now = new Date();
-
-  const isToday =
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear();
-
-  if (isToday) return 'Today';
-
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday =
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear();
-
-  if (isYesterday) return 'Yesterday';
-
-  const isSameYear = date.getFullYear() === now.getFullYear();
-  if (isSameYear) {
-    return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-  }
-
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 interface OtherUser {
   id: string;
@@ -216,12 +147,22 @@ export const ChatClient: React.FC<Props> = ({
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          const newMsg = payload.new as MessageItem;
+          const rawMsg = payload.new as any;
+          const { cleanBody, replySnippet } = parseStoredMessage(rawMsg);
+          const newMsg: MessageItem = {
+            ...rawMsg,
+            body: cleanBody,
+            reply_snippet: replySnippet || rawMsg.reply_snippet || null,
+          };
+
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
 
             const tempIndex = prev.findIndex(
-              (m) => m.id.startsWith('temp-') && m.sender_id === newMsg.sender_id && m.body === newMsg.body
+              (m) =>
+                m.id.startsWith('temp-') &&
+                m.sender_id === newMsg.sender_id &&
+                m.body === newMsg.body
             );
 
             if (tempIndex !== -1) {
@@ -265,9 +206,19 @@ export const ChatClient: React.FC<Props> = ({
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          const updatedMsg = payload.new as MessageItem;
+          const rawMsg = payload.new as any;
+          const { cleanBody, replySnippet } = parseStoredMessage(rawMsg);
           setMessages((prev) =>
-            prev.map((m) => (m.id === updatedMsg.id ? { ...m, ...updatedMsg } : m))
+            prev.map((m) =>
+              m.id === rawMsg.id
+                ? {
+                    ...m,
+                    ...rawMsg,
+                    body: cleanBody,
+                    reply_snippet: replySnippet || m.reply_snippet || null,
+                  }
+                : m
+            )
           );
         }
       )
