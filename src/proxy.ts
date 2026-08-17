@@ -86,8 +86,8 @@ export const proxy = async (request: NextRequest) => {
         },
       });
     }
-  } else if (!isPublicPage) {
-    // Tier 4: Global Route Rate Limiting (120 reqs/min per IP)
+  } else if (!isPublicPage && request.method !== 'GET') {
+    // Tier 4: Global Mutation Rate Limiting (120 reqs/min per IP on state changes/API)
     const globalRes = await checkRateLimitGlobal(ip);
     if (!globalRes.success) {
       return new NextResponse('Too many requests. Please slow down and try again in a minute.', {

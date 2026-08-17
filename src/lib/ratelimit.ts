@@ -16,7 +16,7 @@ if (hasUpstashEnv) {
 }
 
 // ──────────────────────────────────────────────
-// IN-MEMORY SLIDING WINDOW FALLBACK (for Dev/Offline)
+// IN-MEMORY SLIDING WINDOW FALLBACK (for Dev/Offline/Timeout)
 // ──────────────────────────────────────────────
 interface MemoryRecord {
   timestamps: number[];
@@ -63,6 +63,13 @@ class MemoryRateLimiter {
 }
 
 const memoryLimiter = new MemoryRateLimiter();
+
+function withTimeout<T>(promise: Promise<T>, ms: number = 350): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('RateLimit timeout')), ms)),
+  ]);
+}
 
 // ──────────────────────────────────────────────
 // UPSTASH RATELIMIT INSTANCES
@@ -116,18 +123,26 @@ const globalRatelimit = redis
 // EXPORTED RATE LIMITER HELPER FUNCTIONS
 // ──────────────────────────────────────────────
 
-/** Tier 1: Auth & Security (Strict: 5 requests / 1 min per IP) */
+/** Tier 1: Auth & Security (30 requests / 1 min per IP) */
 export async function checkRateLimitAuth(identifier: string) {
   if (authRatelimit) {
-    return await authRatelimit.limit(identifier);
+    try {
+      return await withTimeout(authRatelimit.limit(identifier), 350);
+    } catch {
+      // Fallback on timeout
+    }
   }
   return await memoryLimiter.check(`auth:${identifier}`, 30, 60 * 1000);
 }
 
-/** Tier 2: Media Uploads (Moderate: 15 requests / 1 min per User ID) */
+/** Tier 2: Media Uploads (15 requests / 1 min per User ID) */
 export async function checkRateLimitUpload(identifier: string) {
   if (uploadRatelimit) {
-    return await uploadRatelimit.limit(identifier);
+    try {
+      return await withTimeout(uploadRatelimit.limit(identifier), 350);
+    } catch {
+      // Fallback on timeout
+    }
   }
   return await memoryLimiter.check(`upload:${identifier}`, 15, 60 * 1000);
 }
@@ -135,7 +150,11 @@ export async function checkRateLimitUpload(identifier: string) {
 /** Tier 2: Database Mutations (30 requests / 1 min per User ID) */
 export async function checkRateLimitMutation(identifier: string) {
   if (mutationRatelimit) {
-    return await mutationRatelimit.limit(identifier);
+    try {
+      return await withTimeout(mutationRatelimit.limit(identifier), 350);
+    } catch {
+      // Fallback on timeout
+    }
   }
   return await memoryLimiter.check(`mutation:${identifier}`, 30, 60 * 1000);
 }
@@ -143,7 +162,11 @@ export async function checkRateLimitMutation(identifier: string) {
 /** Tier 3: Direct Messaging (60 requests / 1 min per User ID) */
 export async function checkRateLimitMessage(identifier: string) {
   if (messageRatelimit) {
-    return await messageRatelimit.limit(identifier);
+    try {
+      return await withTimeout(messageRatelimit.limit(identifier), 350);
+    } catch {
+      // Fallback on timeout
+    }
   }
   return await memoryLimiter.check(`msg:${identifier}`, 60, 60 * 1000);
 }
@@ -151,7 +174,11 @@ export async function checkRateLimitMessage(identifier: string) {
 /** Tier 4: Global Route Rate Limiting (120 requests / 1 min per IP) */
 export async function checkRateLimitGlobal(identifier: string) {
   if (globalRatelimit) {
-    return await globalRatelimit.limit(identifier);
+    try {
+      return await withTimeout(globalRatelimit.limit(identifier), 350);
+    } catch {
+      // Fallback on timeout
+    }
   }
   return await memoryLimiter.check(`global:${identifier}`, 120, 60 * 1000);
 }
