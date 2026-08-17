@@ -37,7 +37,6 @@ export async function getAnnouncements() {
 }
 
 export async function getActiveAnnouncements() {
-  // ✅ FIX: Cache for 60s — dashboard loaded this fresh on every visit
   const cacheKey = 'announcements:active';
   const cached = await getCache<any[]>(cacheKey);
   if (cached) return cached;
@@ -49,7 +48,6 @@ export async function getActiveAnnouncements() {
     const { data, error } = await supabase
       .from('announcements')
       .select('*, profiles:created_by(full_name)')
-      .lte('starts_at', now)
       .or(`ends_at.is.null,ends_at.gte.${now}`)
       .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false });
@@ -60,7 +58,7 @@ export async function getActiveAnnouncements() {
     }
 
     const result = data || [];
-    await setCache(cacheKey, result, 60);
+    await setCache(cacheKey, result, 30);
     return result;
   } catch (err) {
     console.error('getActiveAnnouncements failed:', err);

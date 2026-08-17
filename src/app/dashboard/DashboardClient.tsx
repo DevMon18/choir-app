@@ -125,9 +125,10 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
     }
   };
 
+  const announcementsList = (announcements && announcements.length > 0) ? announcements : initialAnnouncements;
   const activeVisibleAnnouncements = useMemo(() => {
-    return announcements.filter((a) => !dismissedIds.includes(a.id));
-  }, [announcements, dismissedIds]);
+    return (announcementsList || []).filter((a) => !dismissedIds.includes(a.id));
+  }, [announcementsList, dismissedIds]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -528,6 +529,87 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
             </div>
           </div>
 
+          {/* ── Active Announcements Social Feed (Elevated Top Priority) ── */}
+          {activeVisibleAnnouncements.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📢 Choir Announcements ({activeVisibleAnnouncements.length})
+                </h2>
+              </div>
+
+              {activeVisibleAnnouncements.map((ann) => {
+                const isUrgent = ann.priority === 'urgent';
+                return (
+                  <div
+                    key={ann.id}
+                    className="glass-container anim-card"
+                    style={{
+                      position: 'relative',
+                      padding: '20px',
+                      borderRadius: '16px',
+                      borderLeft: isUrgent ? '6px solid var(--error)' : '6px solid var(--primary)',
+                      background: isUrgent
+                        ? 'linear-gradient(135deg, rgba(159,28,28,0.08) 0%, rgba(197,160,89,0.1) 100%)'
+                        : 'var(--glass-bg)',
+                      boxShadow: isUrgent ? '0 4px 20px rgba(220,38,38,0.15)' : undefined,
+                    }}
+                  >
+                    <button
+                      onClick={() => handleDismissAnnouncement(ann.id)}
+                      style={{
+                        position: 'absolute',
+                        top: '14px',
+                        right: '14px',
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '1.2rem',
+                        color: 'var(--muted)',
+                        cursor: 'pointer',
+                        padding: '4px 8px',
+                      }}
+                      aria-label="Dismiss announcement"
+                    >
+                      &times;
+                    </button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                      {isUrgent ? (
+                        <span className="badge" style={{ background: 'var(--error)', color: '#fff', fontWeight: 700 }}>
+                          🚨 URGENT
+                        </span>
+                      ) : (
+                        <span className="badge" style={{ background: 'rgba(11,77,36,0.1)', color: 'var(--primary)', fontWeight: 600 }}>
+                          📢 ANNOUNCEMENT
+                        </span>
+                      )}
+                      {ann.is_pinned && (
+                        <span style={{ fontSize: '0.78rem', color: 'var(--accent)', fontWeight: 700 }}>
+                          📌 Pinned
+                        </span>
+                      )}
+                      {ann.starts_at && (
+                        <span className="badge" style={{ background: 'rgba(30,58,138,0.08)', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600 }}>
+                          🗓️ Schedule: {new Date(ann.starts_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                        </span>
+                      )}
+                      <span suppressHydrationWarning style={{ fontSize: '0.78rem', color: 'var(--muted)', marginLeft: 'auto', marginRight: '24px' }}>
+                        Posted {new Date(ann.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: isUrgent ? 'var(--error)' : 'var(--primary)', margin: '0 0 8px 0' }}>
+                      {ann.title}
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--foreground)', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+                      {ann.body}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* ── Unified Assigned Waivers & Documents Section ── */}
           {pendingSignatures && pendingSignatures.length > 0 && (
             <div
@@ -699,81 +781,6 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                   );
                 })}
               </div>
-            </div>
-          )}
-
-          {/* ── Active Announcements Social Feed (Elevated Priority) ── */}
-          {activeVisibleAnnouncements.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
-                  📢 Choir Announcements
-                </h2>
-              </div>
-
-              {activeVisibleAnnouncements.map((ann) => {
-                const isUrgent = ann.priority === 'urgent';
-                return (
-                  <div
-                    key={ann.id}
-                    className="glass-container anim-card"
-                    style={{
-                      position: 'relative',
-                      padding: '20px',
-                      borderRadius: '16px',
-                      borderLeft: isUrgent ? '6px solid var(--error)' : '6px solid var(--primary)',
-                      background: isUrgent
-                        ? 'linear-gradient(135deg, rgba(159,28,28,0.08) 0%, rgba(197,160,89,0.1) 100%)'
-                        : 'var(--glass-bg)',
-                    }}
-                  >
-                    <button
-                      onClick={() => handleDismissAnnouncement(ann.id)}
-                      style={{
-                        position: 'absolute',
-                        top: '14px',
-                        right: '14px',
-                        background: 'none',
-                        border: 'none',
-                        fontSize: '1.2rem',
-                        color: 'var(--muted)',
-                        cursor: 'pointer',
-                        padding: '4px 8px',
-                      }}
-                      aria-label="Dismiss announcement"
-                    >
-                      &times;
-                    </button>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      {isUrgent ? (
-                        <span className="badge" style={{ background: 'var(--error)', color: '#fff', fontWeight: 700 }}>
-                          🚨 URGENT
-                        </span>
-                      ) : (
-                        <span className="badge" style={{ background: 'rgba(11,77,36,0.1)', color: 'var(--primary)', fontWeight: 600 }}>
-                          📢 ANNOUNCEMENT
-                        </span>
-                      )}
-                      {ann.is_pinned && (
-                        <span style={{ fontSize: '0.78rem', color: 'var(--accent)', fontWeight: 700 }}>
-                          📌 Pinned
-                        </span>
-                      )}
-                      <span suppressHydrationWarning style={{ fontSize: '0.78rem', color: 'var(--muted)', marginLeft: 'auto', marginRight: '24px' }}>
-                        {new Date(ann.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: isUrgent ? 'var(--error)' : 'var(--primary)', margin: '0 0 8px 0' }}>
-                      {ann.title}
-                    </h3>
-                    <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--foreground)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-                      {ann.body}
-                    </p>
-                  </div>
-                );
-              })}
             </div>
           )}
 
