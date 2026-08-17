@@ -12,6 +12,7 @@ import gsap from 'gsap';
 
 import { useDebounce } from '@/hooks/useDebounce';
 import { useClientCache } from '@/context/ClientCacheContext';
+import { useDirectory } from '@/hooks/useDirectory';
 
 interface DirectoryMember {
   id: string;
@@ -45,7 +46,9 @@ const VOICE_COLORS: Record<string, string> = {
 };
 
 export const DirectoryClient = ({ profile, members: initialMembers }: Props) => {
-  const { data: members } = useClientCache('directory_members', initialMembers);
+  const { allMembers: members } = useDirectory({
+    initialMembers: initialMembers as any,
+  });
   const router = useRouter();
   const { addToast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);

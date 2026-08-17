@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { ChordProRenderer, ChordProControls, usePersistedFontSize, usePersistedFontWeight } from '@/components/ChordProRenderer';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
@@ -53,10 +54,6 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
     return () => ctx.revert();
   }, []);
 
-  const handleBack = () => {
-    router.push('/repertoire');
-  };
-
   const tags = song.categories && song.categories.length > 0
     ? song.categories
     : song.category
@@ -71,28 +68,28 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
       <Navbar profile={currentUserProfile} />
 
       <main style={{ flex: 1, padding: '40px 20px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-        {/* Back navigation */}
-        <button
-          onClick={handleBack}
+        {/* Back navigation with Next.js prefetching */}
+        <Link
+          href="/repertoire"
           style={{
             background: 'none',
             border: 'none',
             color: 'var(--primary)',
             fontWeight: 600,
             fontSize: '0.9rem',
-            cursor: 'pointer',
-            display: 'flex',
+            textDecoration: 'none',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
             marginBottom: '24px',
-            padding: 0,
+            padding: '4px 0',
           }}
         >
           <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
           </svg>
           Back to Repertoire
-        </button>
+        </Link>
 
         {/* Header card info */}
         <div className="glass-container anim-header" style={{ padding: '30px', marginBottom: '24px' }}>

@@ -260,10 +260,10 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
       <nav className="nav-bar">
         {/* Brand and Children */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div
+          <Link
+            href="/dashboard"
             className="nav-brand"
-            onClick={() => router.push('/dashboard')}
-            style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}
           >
             <Image
               src="/collective-logo.png"
@@ -274,7 +274,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               style={{ borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }}
             />
             <span>Choir Collective</span>
-          </div>
+          </Link>
           {children}
         </div>
 

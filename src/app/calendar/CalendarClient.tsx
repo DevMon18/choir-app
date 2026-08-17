@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { CalendarEvent } from './actions';
+import { useCalendar } from '@/hooks/useCalendar';
 
 interface Profile {
   id: string;
@@ -58,7 +59,10 @@ const TYPE_CONFIG: Record<
   },
 };
 
-export const CalendarClient = ({ currentUserProfile, events }: Props) => {
+export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Props) => {
+  const { events } = useCalendar({
+    initialEvents: initialEvents as any,
+  });
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'auto' | 'grid' | 'agenda'>('auto');

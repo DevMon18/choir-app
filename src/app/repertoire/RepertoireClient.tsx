@@ -9,6 +9,7 @@ import { CategoryItem } from '@/app/admin/categories/actions';
 import { Music, Search, ChevronRight, ChevronDown, ChevronUp, X, BookOpen, SortAsc, Layers, ListFilter, Filter } from 'lucide-react';
 import gsap from 'gsap';
 import { useClientCache } from '@/context/ClientCacheContext';
+import { useRepertoire } from '@/hooks/useRepertoire';
 
 interface Profile {
   id: string;
@@ -69,7 +70,9 @@ export const RepertoireClient = ({
   query: initialQuery,
   categoriesParam = '',
 }: RepertoireClientProps) => {
-  const { data: songs } = useClientCache('repertoire_songs', initialSongs);
+  const { allSongs: songs } = useRepertoire({
+    initialSongs,
+  });
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
