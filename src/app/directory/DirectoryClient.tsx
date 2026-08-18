@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { logout } from '../actions';
 import { Navbar } from '@/components/Navbar';
+import { Avatar } from '@/components/Avatar';
 import { getOrCreateConversation } from '@/app/messages/actions';
 import { useToast } from '@/components/Toast';
 import { MessageSquare } from 'lucide-react';
@@ -78,8 +79,8 @@ export const DirectoryClient = ({ profile, members: initialMembers }: Props) => 
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-      tl.fromTo('.anim-header', { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.5 });
-      tl.from('.member-card', { opacity: 0, y: 20, duration: 0.5, stagger: 0.06 }, '-=0.2');
+      tl.fromTo('.anim-header', { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.35 });
+      tl.from('.member-card', { opacity: 0, y: 14, duration: 0.35, stagger: 0.03 }, '-=0.15');
     }, containerRef);
     return () => ctx.revert();
   }, []);
@@ -165,21 +166,12 @@ export const DirectoryClient = ({ profile, members: initialMembers }: Props) => 
                 >
                   {/* Avatar rendering — 40px circle matching IG/FB list standards */}
                   <Link href={`/directory/${m.id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                    <div style={{
-                      width: 40, height: 40, borderRadius: '50%',
-                      background: m.avatar_url ? 'none' : `linear-gradient(135deg, ${voiceColor}, ${voiceColor}99)`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', fontWeight: 600, fontSize: '0.95rem', flexShrink: 0,
-                      overflow: 'hidden',
-                      border: m.avatar_url ? '1px solid var(--glass-border)' : 'none'
-                    }}>
-                      {m.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={m.avatar_url} alt={m.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        m.full_name.charAt(0).toUpperCase()
-                      )}
-                    </div>
+                    <Avatar
+                      src={m.avatar_url}
+                      name={m.full_name}
+                      size={40}
+                      border
+                    />
                     <div style={{ overflow: 'hidden' }}>
                       <div style={{ fontWeight: 600, color: 'var(--primary)', fontSize: '15px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {m.full_name}

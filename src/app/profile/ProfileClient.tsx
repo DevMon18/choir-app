@@ -9,6 +9,7 @@ import { uploadProfilePhotoAction, deleteProfilePhotoAction } from '../directory
 import { PhotoGallery, PhotoItem } from '@/components/PhotoGallery';
 import { createClient } from '@/lib/supabase/client';
 import { Navbar } from '@/components/Navbar';
+import { Avatar } from '@/components/Avatar';
 import { useToast } from '@/components/Toast';
 import gsap from 'gsap';
 
@@ -69,12 +70,12 @@ const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientPr
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
       tl.from('.anim-header', 
-        { opacity: 0, y: -20, duration: 0.7 }
+        { opacity: 0, y: -12, duration: 0.35 }
       );
 
       tl.from('.anim-card', 
-        { opacity: 0, y: 30, duration: 0.6, stagger: 0.1 },
-        '-=0.3'
+        { opacity: 0, y: 16, duration: 0.35, stagger: 0.035 },
+        '-=0.15'
       );
     }, containerRef);
 
@@ -246,16 +247,14 @@ const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientPr
             
             {/* Avatar Section — 88px circle matching IG/FB profile header standards */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '20px', flexWrap: 'wrap' }}>
-              <div style={{ position: 'relative', width: '88px', height: '88px', borderRadius: '50%', background: 'rgba(30,58,138,0.06)', overflow: 'hidden', border: '2px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <span style={{ fontSize: '2rem', fontWeight: 600, color: 'var(--primary)' }}>
-                    {fullName ? fullName.charAt(0).toUpperCase() : '?'}
-                  </span>
-                )}
-              </div>
+              <Avatar
+                src={avatarUrl}
+                name={fullName}
+                size="2xl"
+                border="2px solid var(--primary)"
+                shadow
+                priority
+              />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label className="input-label">Profile Picture</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

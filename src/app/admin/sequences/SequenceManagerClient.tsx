@@ -148,7 +148,7 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-      tl.from('.content-anim-item', { opacity: 0, y: 20, duration: 0.6, stagger: 0.08 });
+      tl.from('.content-anim-item', { opacity: 0, y: 14, duration: 0.35, stagger: 0.035 });
     }, containerRef);
     return () => ctx.revert();
   }, []);

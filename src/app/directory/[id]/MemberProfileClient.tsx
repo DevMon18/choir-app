@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
+import { Avatar } from '@/components/Avatar';
 import { PhotoGallery, PhotoItem } from '@/components/PhotoGallery';
 import { DetailedMemberProfile, uploadProfilePhotoAction, deleteProfilePhotoAction } from './actions';
 import { getOrCreateConversation } from '@/app/messages/actions';
@@ -137,31 +138,14 @@ export const MemberProfileClient: React.FC<Props> = ({
           <div style={{ padding: '0 20px 20px', position: 'relative' }}>
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: '-44px', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
               {/* 88px circle avatar */}
-              <div
-                style={{
-                  width: 88,
-                  height: 88,
-                  borderRadius: '50%',
-                  background: targetProfile.avatar_url ? 'none' : `linear-gradient(135deg, ${voiceColor}, ${voiceColor}99)`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontWeight: 700,
-                  fontSize: '2rem',
-                  flexShrink: 0,
-                  overflow: 'hidden',
-                  border: '3px solid var(--card-bg)',
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.15)'
-                }}
-              >
-                {targetProfile.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={targetProfile.avatar_url} alt={targetProfile.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  targetProfile.full_name.charAt(0).toUpperCase()
-                )}
-              </div>
+              <Avatar
+                src={targetProfile.avatar_url}
+                name={targetProfile.full_name}
+                size="2xl"
+                border="3px solid var(--card-bg)"
+                shadow
+                priority
+              />
 
               {/* Message CTA & Edit Profile Actions */}
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>

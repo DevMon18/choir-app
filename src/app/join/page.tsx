@@ -22,15 +22,15 @@ export const JoinPage = () => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       
       tl.fromTo(cardRef.current, 
-        { opacity: 0, y: 30, scale: 0.98 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.6, clearProps: 'opacity,transform' }
+        { opacity: 0, y: 16, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.35, clearProps: 'opacity,transform' }
       );
 
       tl.fromTo(
         '.stagger-item',
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, clearProps: 'opacity,transform' },
-        '-=0.3'
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.3, stagger: 0.03, clearProps: 'opacity,transform' },
+        '-=0.15'
       );
     });
 

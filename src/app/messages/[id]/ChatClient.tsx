@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
+import { Avatar } from '@/components/Avatar';
 import type { MessageItem, MessageReaction } from '../actions';
 import {
   sendMessage,
@@ -522,29 +523,12 @@ export const ChatClient: React.FC<Props> = ({
                 href={`/directory/${otherUser.id}`}
                 style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', flex: 1, overflow: 'hidden' }}
               >
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    background: otherUser.avatar_url ? 'none' : 'linear-gradient(135deg, var(--primary), #1e3a8a)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    overflow: 'hidden',
-                    flexShrink: 0,
-                    border: '1px solid var(--glass-border)',
-                  }}
-                >
-                  {otherUser.avatar_url ? (
-                    <img src={otherUser.avatar_url} alt={otherUser.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    otherUser.full_name.charAt(0).toUpperCase()
-                  )}
-                </div>
+                <Avatar
+                  src={otherUser.avatar_url}
+                  name={otherUser.full_name}
+                  size={40}
+                  border
+                />
 
                 <div>
                   <strong style={{ fontSize: '1.02rem', fontWeight: 600, color: 'var(--primary)', display: 'block', lineHeight: 1.2 }}>

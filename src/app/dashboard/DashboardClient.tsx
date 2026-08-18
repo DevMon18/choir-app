@@ -10,6 +10,7 @@ import { useToast } from '@/components/Toast';
 import { uploadProfilePhotoAction, deleteProfilePhotoAction, uploadCoverPhotoAction, updateInterestsAction, updateCoverPositionAction } from '../directory/[id]/actions';
 import gsap from 'gsap';
 import { Camera, Move, Check, X, Plus, Tag, Megaphone, UserCheck, Shield } from 'lucide-react';
+import { Avatar } from '@/components/Avatar';
 import { useClientCache } from '@/context/ClientCacheContext';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
@@ -135,12 +136,12 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
       tl.from('.anim-header', 
-        { opacity: 0, y: -20, duration: 0.7 }
+        { opacity: 0, y: -12, duration: 0.35 }
       );
 
       tl.from('.anim-card', 
-        { opacity: 0, y: 30, scale: 0.97, duration: 0.6, stagger: 0.08 },
-        '-=0.3'
+        { opacity: 0, y: 16, scale: 0.98, duration: 0.35, stagger: 0.035 },
+        '-=0.15'
       );
     });
 
@@ -371,29 +372,14 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
             <div style={{ padding: '0 20px 20px', position: 'relative' }}>
               {/* Avatar Row */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '-44px', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
-                <div style={{
-                  position: 'relative',
-                  width: '88px',
-                  height: '88px',
-                  borderRadius: '50%',
-                  background: 'var(--card-bg)',
-                  border: '3px solid var(--card-bg)',
-                  overflow: 'hidden',
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  {profile.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={profile.avatar_url} alt={profile.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <span style={{ fontSize: '2.2rem', fontWeight: 700, color: 'var(--primary)' }}>
-                      {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : '?'}
-                    </span>
-                  )}
-                </div>
+                <Avatar
+                  src={profile.avatar_url}
+                  name={profile.full_name}
+                  size="2xl"
+                  border="3px solid var(--card-bg)"
+                  shadow
+                  priority
+                />
 
                 {/* Profile Quick Action Buttons */}
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>

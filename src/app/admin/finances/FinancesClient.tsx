@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { FileText, BarChart3, DollarSign, Calendar, Search, Check, X } from 'lucide-react';
 import { recordInvoicePayment, toggleSinkingFund } from './actions';
 import { Navbar } from '@/components/Navbar';
+import { Avatar } from '@/components/Avatar';
 import { useToast } from '@/components/Toast';
 import gsap from 'gsap';
 
@@ -72,7 +73,7 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
       tl.from('.content-anim-item',
-        { opacity: 0, y: 25, duration: 0.6, stagger: 0.1 }
+        { opacity: 0, y: 14, duration: 0.35, stagger: 0.035 }
       );
     }, containerRef);
 
@@ -365,17 +366,12 @@ export const FinancesClient = ({ currentUserProfile, invoices: initialInvoices, 
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            {member.avatar_url ? (
-                              <img
-                                src={member.avatar_url}
-                                alt={member.full_name}
-                                style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--glass-border)' }}
-                              />
-                            ) : (
-                              <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#f1f5f9', color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '0.95rem' }}>
-                                {member.full_name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-                              </div>
-                            )}
+                            <Avatar
+                              src={member.avatar_url}
+                              name={member.full_name}
+                              size={42}
+                              border
+                            />
                             <div>
                               <strong style={{ display: 'block', fontSize: '1rem', color: 'var(--foreground)' }}>{member.full_name}</strong>
                               <span style={{ fontSize: '0.8rem', color: 'var(--muted)', textTransform: 'capitalize' }}>

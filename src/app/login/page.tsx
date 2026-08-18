@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { loginWithEmail, loginWithGoogle } from './actions';
 import { PasswordInput } from '@/components/PasswordInput';
 import gsap from 'gsap';
@@ -22,15 +23,15 @@ const LoginPage = () => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
       
       tl.fromTo(cardRef.current, 
-        { opacity: 0, y: 30, scale: 0.98 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.6, clearProps: 'opacity,transform' }
+        { opacity: 0, y: 16, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.35, clearProps: 'opacity,transform' }
       );
 
       tl.fromTo(
         '.stagger-item',
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, clearProps: 'opacity,transform' },
-        '-=0.3'
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.3, stagger: 0.03, clearProps: 'opacity,transform' },
+        '-=0.15'
       );
     });
 
@@ -120,7 +121,14 @@ const LoginPage = () => {
         onMouseLeave={handleMouseLeave}
       >
         <div className="auth-header stagger-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-          <img src="/collective-logo.png" alt="Choir Collective Logo" style={{ width: '84px', height: '84px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)', boxShadow: 'var(--card-shadow)' }} />
+          <Image
+            src="/collective-logo.png"
+            alt="Choir Collective Logo"
+            width={84}
+            height={84}
+            priority
+            style={{ borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)', boxShadow: 'var(--card-shadow)' }}
+          />
           <div>
             <h1 className="auth-title">Choir Collective</h1>
             <p className="auth-subtitle">Sign in to your account to continue</p>

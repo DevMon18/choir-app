@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
+import { Avatar } from '@/components/Avatar';
 import { ConversationItem, deleteConversation } from './actions';
 import { useToast } from '@/components/Toast';
 import { MessageSquare, Plus, Trash2, AlertCircle } from 'lucide-react';
@@ -128,34 +129,14 @@ export const MessagesInboxClient: React.FC<Props> = ({
                     position: 'relative',
                   }}
                 >
-                  {/* Avatar */}
-                  <Link href={`/messages/${c.id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: '50%',
-                        background: u.avatar_url ? 'none' : u.isDeletedUser ? 'linear-gradient(135deg, #64748b, #334155)' : 'linear-gradient(135deg, var(--primary), #1e3a8a)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#fff',
-                        fontWeight: 600,
-                        fontSize: '0.9rem',
-                        flexShrink: 0,
-                        overflow: 'hidden',
-                        border: '1px solid var(--glass-border)',
-                      }}
-                    >
-                      {u.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={u.avatar_url} alt={u.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : u.isDeletedUser ? (
-                        <AlertCircle size={18} />
-                      ) : (
-                        u.full_name.charAt(0).toUpperCase()
-                      )}
-                    </div>
+                  {/* Avatar Icon */}
+                  <Link href={`/directory/${u.id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+                    <Avatar
+                      src={u.avatar_url}
+                      name={u.full_name}
+                      size={40}
+                      border
+                    />
                   </Link>
 
                   {/* Main Link Content */}
