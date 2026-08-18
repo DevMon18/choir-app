@@ -20,6 +20,7 @@
   --error: #9f1c1c;
   --warning: #b45309;
   
+  --card-bg: #ffffff;
   --card-shadow: 0 12px 48px -12px rgba(11, 77, 36, 0.12), 0 1px 3px 0 rgba(0, 0, 0, 0.01);
   --hover-shadow: 0 24px 64px -10px rgba(11, 77, 36, 0.18), 0 8px 16px -8px rgba(0, 0, 0, 0.02);
   --glow-shadow: 0 4px 16px rgba(11, 77, 36, 0.18);
@@ -2223,6 +2224,14 @@ input::-webkit-contacts-auto-fill-button {
   display: flex; /* visible on desktop */
 }
 
+.tasks-mobile-fab {
+  display: none; /* hidden on desktop */
+}
+
+.tasks-desktop-create {
+  display: flex; /* visible on desktop */
+}
+
 @media (max-width: 768px) {
   .docs-mobile-fab {
     display: flex;
@@ -2242,6 +2251,28 @@ input::-webkit-contacts-auto-fill-button {
     justify-content: center;
   }
   .docs-desktop-create {
+    display: none;
+  }
+
+  /* Tasks Manager: primary action FAB (mobile) / header button (desktop) */
+  .tasks-mobile-fab {
+    display: flex;
+    position: fixed;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 150;
+    min-height: 52px;
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 99px;
+    box-shadow: 0 8px 24px rgba(11, 77, 36, 0.35);
+    white-space: nowrap;
+    align-items: center;
+    justify-content: center;
+  }
+  .tasks-desktop-create {
     display: none;
   }
 

@@ -24,7 +24,8 @@ import {
   FileText,
   MessageSquare,
   ShieldCheck,
-  ChevronDown
+  ChevronDown,
+  ListTodo
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -41,6 +42,7 @@ type Role = string;
 const getAdminItems = (role: Role) => {
   const iconSize = 16;
   const all = [
+    { href: '/admin/tasks',     label: 'Manage Tasks',  icon: <ListTodo size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
     { href: '/admin/users',     label: 'Manage Users',  icon: <Users size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
     { href: '/admin/roster',    label: 'Choir Roster',  icon: <Music size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
     { href: '/admin/attendance',label: 'Attendance',    icon: <ClipboardList size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
@@ -310,6 +312,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           } />
+          <NavLink href="/tasks" label="Tasks" pathname={pathname} matchFn={p => p.startsWith('/tasks')} icon={<ListTodo size={16} />} />
           <NavLink
             href={isFinanceAdmin ? '/admin/finances' : '/dues'}
             label="Dues"
@@ -487,6 +490,12 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               <Link href="/repertoire" className={`mobile-sheet-link ${pathname.startsWith('/repertoire') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
                 <span className="mobile-sheet-link-icon">🎶</span>
                 <span>Repertoire & Songbook</span>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+
+              <Link href="/tasks" className={`mobile-sheet-link ${pathname.startsWith('/tasks') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
+                <span className="mobile-sheet-link-icon">📋</span>
+                <span>My Tasks & Responsibilities</span>
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
 

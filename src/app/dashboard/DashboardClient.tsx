@@ -383,6 +383,9 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
 
                 {/* Profile Quick Action Buttons */}
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <Link href="/tasks" className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    📋 Tasks
+                  </Link>
                   <Link href="/messages" className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                     💬 Messages
                   </Link>
