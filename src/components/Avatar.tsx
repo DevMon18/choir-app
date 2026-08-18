@@ -18,13 +18,13 @@ interface AvatarProps {
   badge?: React.ReactNode;
 }
 
-const SIZE_MAP: Record<string, { px: number; textClass: string; fontSize: string }> = {
-  xs: { px: 28, textClass: 'text-xs', fontSize: '0.75rem' },
-  sm: { px: 36, textClass: 'text-sm', fontSize: '0.85rem' },
-  md: { px: 44, textClass: 'text-base', fontSize: '1rem' },
-  lg: { px: 56, textClass: 'text-lg', fontSize: '1.25rem' },
-  xl: { px: 72, textClass: 'text-xl', fontSize: '1.6rem' },
-  '2xl': { px: 88, textClass: 'text-2xl', fontSize: '2rem' },
+const SIZE_MAP: Record<string, { px: number; fontSize: string }> = {
+  xs: { px: 28, fontSize: '0.75rem' },
+  sm: { px: 36, fontSize: '0.85rem' },
+  md: { px: 44, fontSize: '1rem' },
+  lg: { px: 56, fontSize: '1.25rem' },
+  xl: { px: 72, fontSize: '1.6rem' },
+  '2xl': { px: 88, fontSize: '2rem' },
 };
 
 export const Avatar: React.FC<AvatarProps> = ({
@@ -65,15 +65,25 @@ export const Avatar: React.FC<AvatarProps> = ({
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center rounded-full overflow-hidden flex-shrink-0 select-none ${className}`}
+      className={className}
       style={{
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         width: `${dimension}px`,
         height: `${dimension}px`,
         minWidth: `${dimension}px`,
         minHeight: `${dimension}px`,
+        maxWidth: `${dimension}px`,
+        maxHeight: `${dimension}px`,
+        borderRadius: '50%',
+        overflow: 'hidden',
+        flexShrink: 0,
+        userSelect: 'none',
         background: hasValidImage ? 'var(--card-bg)' : 'linear-gradient(135deg, rgba(30,58,138,0.12) 0%, rgba(197,160,89,0.18) 100%)',
         border: borderStyle || undefined,
-        boxShadow: shadow ? '0 4px 12px rgba(0,0,0,0.1)' : undefined,
+        boxShadow: shadow ? '0 4px 14px rgba(0,0,0,0.15)' : undefined,
         ...style,
       }}
       aria-label={name ? `${name}'s avatar` : 'User avatar'}
@@ -85,7 +95,7 @@ export const Avatar: React.FC<AvatarProps> = ({
           fill
           sizes={`${dimension}px`}
           priority={priority}
-          style={{ objectFit: 'cover' }}
+          style={{ objectFit: 'cover', borderRadius: '50%' }}
           onError={() => setImageError(true)}
         />
       ) : (
@@ -102,7 +112,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       )}
 
       {badge && (
-        <div className="absolute bottom-0 right-0 z-10">
+        <div style={{ position: 'absolute', bottom: 0, right: 0, zIndex: 10 }}>
           {badge}
         </div>
       )}
