@@ -13,6 +13,7 @@ import { TaskTimelineModal } from './components/TaskTimelineModal';
 import { CustomGroupModal } from './components/CustomGroupModal';
 import { ForwardTaskModal } from './components/ForwardTaskModal';
 import { MergeTasksModal } from './components/MergeTasksModal';
+import { ResolveCantCompleteModal } from './components/ResolveCantCompleteModal';
 import { CommentsDrawer } from '@/app/tasks/components/CommentsDrawer';
 import { findDuplicateTaskClusters } from './utils/similarity';
 import {
@@ -116,6 +117,10 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
     memberName: string;
     taskTitle: string;
     responsibility: string;
+  } | null>(null);
+  const [resolvingAssignment, setResolvingAssignment] = useState<{
+    assignment: TaskAssignmentItem;
+    taskTitle?: string;
   } | null>(null);
   const [timelineTask, setTimelineTask] = useState<TaskItem | null>(null);
   const [selectedCommentAssignment, setSelectedCommentAssignment] = useState<{ assignment: TaskAssignmentItem; taskTitle: string } | null>(null);
@@ -302,21 +307,12 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
     }
   };
 
-  const handleResolveCantComplete = async (assignment: TaskAssignmentItem) => {
-    const note = prompt(`Enter resolution note or assistance instructions for ${assignment.member?.full_name}:`, 'Issue resolved by Officer');
-    if (note === null) return; // user cancelled
-
-    const res = await resolveCantComplete(assignment.id, note);
-    if (res.error) {
-      addToast({ type: 'error', title: 'Resolution Failed', message: res.error });
-    } else {
-      addToast({
-        type: 'success',
-        title: 'Status Resolved',
-        message: `Task resumed for ${assignment.member?.full_name}.`,
-      });
-      refreshData();
-    }
+  const handleResolveCantComplete = (assignment: TaskAssignmentItem) => {
+    const parentTask = tasks.find((t) => t.assignments?.some((a) => a.id === assignment.id));
+    setResolvingAssignment({
+      assignment,
+      taskTitle: parentTask?.title,
+    });
   };
 
   const startMergeCluster = (cluster: { primaryTask: TaskItem; duplicateTasks: TaskItem[] }) => {
@@ -1165,6 +1161,17 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
           isOpen={Boolean(timelineTask)}
           onClose={() => setTimelineTask(null)}
           task={timelineTask}
+        />
+      )}
+
+      {/* Resolve Can't Complete Modal */}
+      {resolvingAssignment && (
+        <ResolveCantCompleteModal
+          isOpen={Boolean(resolvingAssignment)}
+          onClose={() => setResolvingAssignment(null)}
+          assignment={resolvingAssignment.assignment}
+          taskTitle={resolvingAssignment.taskTitle}
+          onSuccess={refreshData}
         />
       )}
 

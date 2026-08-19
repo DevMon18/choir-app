@@ -110,6 +110,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [adminSheetOpen, setAdminSheetOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [activeTaskCount, setActiveTaskCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const supabase = useMemo(() => createClient(), []);
 
@@ -117,15 +118,35 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
   const isAdminPage = pathname.startsWith('/admin');
   const isFinanceAdmin = ['super_admin', 'director', 'treasurer'].includes(profile.role);
 
-  // Unread messages count & Realtime listener
+  // Unread messages & active tasks count & Realtime listener
   useEffect(() => {
     let channel: any;
     let isMounted = true;
+
+    async function fetchActiveTasks(userId: string) {
+      try {
+        const { data: assignments } = await supabase
+          .from('task_assignments')
+          .select('id, status, task:task_id(is_archived)')
+          .eq('member_id', userId)
+          .neq('status', 'completed');
+
+        if (isMounted && assignments) {
+          const count = assignments.filter((a: any) => !a.task?.is_archived).length;
+          setActiveTaskCount(count);
+        }
+      } catch (err) {
+        console.error('Navbar task count fetch error:', err);
+      }
+    }
 
     async function fetchUnread() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user || !isMounted) return;
+
+        // Initial task count fetch
+        fetchActiveTasks(user.id);
 
         const { data: convs } = await supabase
           .from('conversations')
@@ -164,6 +185,27 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                   });
                 }
               }
+            }
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'task_assignments', filter: `member_id=eq.${user.id}` },
+            (payload) => {
+              fetchActiveTasks(user.id);
+              if (payload.eventType === 'INSERT') {
+                addToast({
+                  type: 'info',
+                  title: '📋 New Task Assigned',
+                  message: 'A new choir task or responsibility has been assigned to you.',
+                });
+              }
+            }
+          )
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'tasks' },
+            () => {
+              fetchActiveTasks(user.id);
             }
           )
           .on(
@@ -312,7 +354,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           } />
-          <NavLink href="/tasks" label="Tasks" pathname={pathname} matchFn={p => p.startsWith('/tasks')} icon={<ListTodo size={16} />} />
+          <NavLink href="/tasks" label="Tasks" pathname={pathname} matchFn={p => p.startsWith('/tasks')} badge={activeTaskCount} icon={<ListTodo size={16} />} />
           <NavLink
             href={isFinanceAdmin ? '/admin/finances' : '/dues'}
             label="Dues"
@@ -444,18 +486,44 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
           <span>Messages</span>
         </Link>
 
-        <Link href="/calendar" className={`mobile-tab ${pathname === '/calendar' ? 'active' : ''}`}>
+        <Link href="/live" className={`mobile-tab ${pathname === '/live' ? 'active' : ''}`}>
           <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.348 14.652a3.75 3.75 0 010-5.304m5.304 0a3.75 3.75 0 010 5.304m-7.425 2.121a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M12 12h.008v.008H12V12z" />
           </svg>
-          <span>Calendar</span>
+          <span>Live Sync</span>
         </Link>
 
-        <Link href="/directory" className={`mobile-tab ${pathname.startsWith('/directory') ? 'active' : ''}`}>
-          <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <span>Directory</span>
+        <Link href="/tasks" className={`mobile-tab ${pathname.startsWith('/tasks') || pathname.startsWith('/admin/tasks') ? 'active' : ''}`}>
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            {activeTaskCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-6px',
+                  background: 'var(--error)',
+                  color: '#ffffff',
+                  fontSize: '0.6rem',
+                  fontWeight: 800,
+                  borderRadius: '999px',
+                  padding: '1px 4px',
+                  minWidth: '13px',
+                  height: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
+                  border: '1.5px solid #ffffff',
+                }}
+              >
+                {activeTaskCount > 9 ? '9+' : activeTaskCount}
+              </span>
+            )}
+          </div>
+          <span>Tasks</span>
         </Link>
 
         {/* 5th tab: Menu for all users */}
@@ -487,21 +555,21 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
 
+              <Link href="/calendar" className={`mobile-sheet-link ${pathname === '/calendar' ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
+                <span className="mobile-sheet-link-icon">📅</span>
+                <span>Choir Calendar & Events</span>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+
+              <Link href="/directory" className={`mobile-sheet-link ${pathname.startsWith('/directory') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
+                <span className="mobile-sheet-link-icon">👥</span>
+                <span>Member Directory</span>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+
               <Link href="/repertoire" className={`mobile-sheet-link ${pathname.startsWith('/repertoire') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
                 <span className="mobile-sheet-link-icon">🎶</span>
                 <span>Repertoire & Songbook</span>
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </Link>
-
-              <Link href="/tasks" className={`mobile-sheet-link ${pathname.startsWith('/tasks') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
-                <span className="mobile-sheet-link-icon">📋</span>
-                <span>My Tasks & Responsibilities</span>
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </Link>
-
-              <Link href="/live" className={`mobile-sheet-link ${pathname === '/live' ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
-                <span className="mobile-sheet-link-icon">🎙</span>
-                <span>Live Session Sync</span>
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
 
