@@ -111,17 +111,32 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
   const [adminSheetOpen, setAdminSheetOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [activeTaskCount, setActiveTaskCount] = useState(0);
+  const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const supabase = useMemo(() => createClient(), []);
 
   const adminItems = getAdminItems(profile.role);
   const isAdminPage = pathname.startsWith('/admin');
   const isFinanceAdmin = ['super_admin', 'director', 'treasurer'].includes(profile.role);
+  const canManageUsers = ['super_admin', 'director', 'secretary'].includes(profile.role);
 
-  // Unread messages & active tasks count & Realtime listener
+  // Unread messages & active tasks & pending signup approvals count & Realtime listener
   useEffect(() => {
     let channel: any;
     let isMounted = true;
+
+    async function fetchPendingApprovals() {
+      try {
+        const [profilesRes, joinRes] = await Promise.all([
+          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'pending'),
+          supabase.from('join_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        ]);
+        const count = (profilesRes.count || 0) + (joinRes.count || 0);
+        if (isMounted) setPendingApprovalCount(count);
+      } catch (err) {
+        console.error('Navbar pending approvals fetch error:', err);
+      }
+    }
 
     async function fetchActiveTasks(userId: string) {
       try {
@@ -147,6 +162,11 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
 
         // Initial task count fetch
         fetchActiveTasks(user.id);
+
+        // Initial pending signups fetch for super_admin and officers
+        if (canManageUsers) {
+          fetchPendingApprovals();
+        }
 
         const { data: convs } = await supabase
           .from('conversations')
@@ -206,6 +226,44 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
             { event: 'UPDATE', schema: 'public', table: 'tasks' },
             () => {
               fetchActiveTasks(user.id);
+            }
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'profiles' },
+            (payload) => {
+              if (canManageUsers) {
+                fetchPendingApprovals();
+                if (payload.eventType === 'INSERT') {
+                  const newProfile = payload.new as any;
+                  if (newProfile?.role === 'pending') {
+                    addToast({
+                      type: 'info',
+                      title: '👤 New Sign-Up Waiting for Approval',
+                      message: `${newProfile.full_name || 'A new user'} has signed up and is waiting for your approval.`,
+                    });
+                  }
+                }
+              }
+            }
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'join_requests' },
+            (payload) => {
+              if (canManageUsers) {
+                fetchPendingApprovals();
+                if (payload.eventType === 'INSERT') {
+                  const newReq = payload.new as any;
+                  if (newReq?.status === 'pending') {
+                    addToast({
+                      type: 'info',
+                      title: '📝 New Join Application Submitted',
+                      message: `${newReq.full_name || 'A new applicant'} applied to join the choir and is waiting for review.`,
+                    });
+                  }
+                }
+              }
             }
           )
           .on(
@@ -390,6 +448,28 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <span className="nav-dropdown-text">Admin</span>
+                {pendingApprovalCount > 0 && (
+                  <span
+                    style={{
+                      marginLeft: '4px',
+                      background: 'var(--error)',
+                      color: '#ffffff',
+                      fontSize: '0.62rem',
+                      fontWeight: 800,
+                      borderRadius: '999px',
+                      padding: '1px 5px',
+                      minWidth: '14px',
+                      height: '14px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 1,
+                      border: '1.5px solid #ffffff',
+                    }}
+                  >
+                    {pendingApprovalCount > 9 ? '9+' : pendingApprovalCount}
+                  </span>
+                )}
                 <svg
                   width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"
                   style={{ transition: 'transform 0.2s ease', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
@@ -410,7 +490,28 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                       onClick={() => setDropdownOpen(false)}
                     >
                       <span className="nav-dropdown-icon">{item.icon}</span>
-                      {item.label}
+                      <span>{item.label}</span>
+                      {item.href === '/admin/users' && pendingApprovalCount > 0 && (
+                        <span
+                          style={{
+                            marginLeft: 'auto',
+                            marginRight: pathname.startsWith(item.href) ? '6px' : '0',
+                            background: 'var(--error)',
+                            color: '#ffffff',
+                            fontSize: '0.62rem',
+                            fontWeight: 800,
+                            borderRadius: '999px',
+                            padding: '1px 6px',
+                            height: '15px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {pendingApprovalCount} pending
+                        </span>
+                      )}
                       {pathname.startsWith(item.href) && (
                         <span className="nav-dropdown-active-dot" />
                       )}
@@ -532,9 +633,35 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
           onClick={() => setAdminSheetOpen(true)}
           aria-label="Open navigation menu"
         >
-          <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            {canManageUsers && pendingApprovalCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-6px',
+                  background: 'var(--error)',
+                  color: '#ffffff',
+                  fontSize: '0.6rem',
+                  fontWeight: 800,
+                  borderRadius: '999px',
+                  padding: '1px 4px',
+                  minWidth: '13px',
+                  height: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
+                  border: '1.5px solid #ffffff',
+                }}
+              >
+                {pendingApprovalCount > 9 ? '9+' : pendingApprovalCount}
+              </span>
+            )}
+          </div>
           <span>Menu</span>
         </button>
       </nav>
@@ -601,7 +728,28 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                     >
                       <span className="mobile-sheet-link-icon">{item.icon}</span>
                       <span>{item.label}</span>
-                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}>
+                      {item.href === '/admin/users' && pendingApprovalCount > 0 && (
+                        <span
+                          style={{
+                            marginLeft: 'auto',
+                            marginRight: '6px',
+                            background: 'var(--error)',
+                            color: '#ffffff',
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            borderRadius: '999px',
+                            padding: '2px 7px',
+                            height: '16px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {pendingApprovalCount} pending
+                        </span>
+                      )}
+                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: item.href === '/admin/users' && pendingApprovalCount > 0 ? '0' : 'auto', opacity: 0.4 }}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
                     </Link>

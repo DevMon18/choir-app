@@ -55,5 +55,26 @@ export const signupWithEmail = async (formData: FormData) => {
     return { error: error.message };
   }
 
+  // Notify super_admin and directors about new pending registration
+  try {
+    const { data: admins } = await supabase
+      .from('profiles')
+      .select('id')
+      .in('role', ['super_admin', 'director']);
+
+    if (admins && admins.length > 0) {
+      const { sendPushToUser } = await import('@/lib/push');
+      for (const admin of admins) {
+        sendPushToUser(admin.id, {
+          title: '👤 New Member Sign-Up Waiting for Approval',
+          body: `${fullName} has signed up and is waiting for account approval.`,
+          url: '/admin/users',
+        }).catch(() => {});
+      }
+    }
+  } catch (pushErr) {
+    console.error('Error sending push notification on signup:', pushErr);
+  }
+
   return { success: 'Registration successful! Please check your email to confirm your account.' };
 };

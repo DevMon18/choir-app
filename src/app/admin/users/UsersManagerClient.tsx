@@ -15,6 +15,7 @@ import { PendingUsersTable } from './PendingUsersTable';
 import { ProvisioningForm } from './ProvisioningForm';
 import { useToast } from '@/components/Toast';
 import { ConfirmModal } from '@/components/ConfirmModal';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import gsap from 'gsap';
 
 interface Profile {
@@ -111,6 +112,18 @@ export const UsersManagerClient = ({
   useEffect(() => {
     setJoinRequests(initialJoinRequests);
   }, [initialJoinRequests]);
+
+  // Realtime subscription for pending user signups and join requests
+  useRealtimeSync({
+    channelName: `admin-users-sync-${currentUserProfile.id}`,
+    tables: [
+      { table: 'profiles' },
+      { table: 'join_requests' },
+    ],
+    onEvent: () => {
+      router.refresh();
+    },
+  });
 
   const handleUpdateRole = async (userId: string, newRole: string) => {
     setLoadingId(userId);

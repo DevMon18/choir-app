@@ -60,6 +60,27 @@ export const submitJoinRequest = async (formData: FormData) => {
       return { error: error.message };
     }
 
+    // Send push notification to super_admin and directors
+    try {
+      const { data: admins } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('role', ['super_admin', 'director']);
+
+      if (admins && admins.length > 0) {
+        const { sendPushToUser } = await import('@/lib/push');
+        for (const admin of admins) {
+          sendPushToUser(admin.id, {
+            title: '👤 New Join Request Waiting for Approval',
+            body: `${fullName} submitted a new join application (${voicePart}).`,
+            url: '/admin/users',
+          }).catch(() => {});
+        }
+      }
+    } catch (pushErr) {
+      console.error('Error sending push notification for join request:', pushErr);
+    }
+
     return { success: 'Your application has been received. Our directors will review it shortly!' };
   } catch (err: any) {
     return { error: err.message || 'An unexpected error occurred' };
