@@ -221,22 +221,22 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         )}
       </div>
 
-      {/* Blocker Alert Box if Blocked */}
+      {/* "Can't Complete" Alert Box */}
       {assignment.status === 'blocked' && assignment.blocker_reason && (
         <div
           style={{
             padding: '10px 14px',
             borderRadius: '12px',
-            background: 'rgba(239, 68, 68, 0.08)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
+            background: 'rgba(249, 115, 22, 0.08)',
+            border: '1px solid rgba(249, 115, 22, 0.25)',
             display: 'flex',
             alignItems: 'flex-start',
             gap: '8px',
           }}
         >
-          <AlertCircle size={16} style={{ color: 'var(--error)', marginTop: '2px', flexShrink: 0 }} />
+          <AlertTriangle size={16} style={{ color: '#ea580c', marginTop: '2px', flexShrink: 0 }} />
           <div style={{ fontSize: '0.82rem', color: 'var(--foreground)' }}>
-            <strong style={{ color: 'var(--error)' }}>Blocker: </strong>
+            <strong style={{ color: '#ea580c' }}>Can&apos;t Complete: </strong>
             {assignment.blocker_reason}
           </div>
         </div>
@@ -349,7 +349,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               className="btn btn-secondary"
               style={{ padding: '6px 12px', fontSize: '0.78rem' }}
             >
-              Unblock / Resume
+              Resume Work
             </button>
           )}
         </div>
@@ -361,10 +361,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               <button
                 onClick={() => onOpenBlocker(assignment)}
                 className="btn btn-secondary"
-                style={{ padding: '6px 10px', fontSize: '0.78rem', color: 'var(--error)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                title="Report Blocker"
+                style={{ padding: '6px 10px', fontSize: '0.78rem', color: '#ea580c', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                title="Can't Complete"
               >
-                <AlertCircle size={14} /> Blocker
+                <AlertTriangle size={14} /> Can&apos;t Complete
               </button>
 
               <button

@@ -42,7 +42,7 @@ type Role = string;
 const getAdminItems = (role: Role) => {
   const iconSize = 16;
   const all = [
-    { href: '/admin/tasks',     label: 'Manage Tasks',  icon: <ListTodo size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
+    { href: '/admin/tasks',     label: 'Manage Tasks',  icon: <ListTodo size={iconSize} />, roles: ['super_admin', 'director', 'secretary', 'treasurer'] },
     { href: '/admin/users',     label: 'Manage Users',  icon: <Users size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
     { href: '/admin/roster',    label: 'Choir Roster',  icon: <Music size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
     { href: '/admin/attendance',label: 'Attendance',    icon: <ClipboardList size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },

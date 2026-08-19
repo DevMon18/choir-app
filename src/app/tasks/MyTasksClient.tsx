@@ -9,9 +9,10 @@ import { BlockerModal } from './components/BlockerModal';
 import { ReassignmentModal } from './components/ReassignmentModal';
 import { CommentsDrawer } from './components/CommentsDrawer';
 import { getMyTaskAssignments } from './actions';
-import { CheckCircle2, PlayCircle, AlertCircle, Clock, Search, ListTodo, Sparkles, Settings } from 'lucide-react';
+import { CheckCircle2, PlayCircle, AlertTriangle, Clock, Search, ListTodo, Sparkles, Settings } from 'lucide-react';
 import gsap from 'gsap';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+import { isUserOfficer } from './types';
 import type { TaskAssignmentItem } from './types';
 
 interface MemberOption {
@@ -104,7 +105,7 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
     return { all: assignments.length, active, blocked, completed };
   }, [assignments]);
 
-  const isPrivileged = ['super_admin', 'director', 'secretary'].includes(currentUserProfile.role);
+  const isOfficer = isUserOfficer(currentUserProfile.role);
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
@@ -123,7 +124,7 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
                   width: '40px',
                   height: '40px',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+                  background: 'linear-gradient(135deg, var(--primary) 0%, #15803d 100%)',
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
@@ -137,11 +138,11 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
               </h1>
             </div>
             <p style={{ color: 'var(--muted)', fontSize: '0.88rem', margin: '4px 0 0 50px' }}>
-              View and track responsibilities assigned to you by the Choir Director.
+              View and track responsibilities assigned to you by Choir Officers.
             </p>
           </div>
 
-          {isPrivileged && (
+          {isOfficer && (
             <Link
               href="/admin/tasks"
               className="btn btn-primary"
@@ -185,14 +186,14 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
                   fontWeight: 600,
                   border: 'none',
                   cursor: 'pointer',
-                  background: activeTab === 'blocked' ? 'var(--error)' : 'transparent',
+                  background: activeTab === 'blocked' ? '#ea580c' : 'transparent',
                   color: activeTab === 'blocked' ? '#fff' : 'var(--muted)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
                 }}
               >
-                <AlertCircle size={14} /> Blocked ({counts.blocked})
+                <AlertTriangle size={14} /> Can&apos;t Complete ({counts.blocked})
               </button>
 
               <button
@@ -254,7 +255,7 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
                 width: '56px',
                 height: '56px',
                 borderRadius: '50%',
-                background: 'rgba(30,58,138,0.08)',
+                background: 'rgba(11,77,36,0.08)',
                 color: 'var(--primary)',
                 display: 'flex',
                 alignItems: 'center',
@@ -271,7 +272,7 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
               {activeTab === 'active'
                 ? 'You currently have no active responsibilities assigned. Check back later or review your completed tasks.'
                 : activeTab === 'blocked'
-                ? 'No blocked tasks reported.'
+                ? 'No "Can\'t Complete" items reported.'
                 : 'No responsibilities match your search or filter.'}
             </p>
             {activeTab !== 'all' && (
@@ -303,7 +304,7 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
         )}
       </main>
 
-      {/* Blocker Modal */}
+      {/* Can't Complete Modal */}
       {blockerTarget && (
         <BlockerModal
           isOpen={Boolean(blockerTarget)}
@@ -324,6 +325,7 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
           taskTitle={reassignTarget.task?.title || 'Task'}
           responsibility={reassignTarget.responsibility}
           members={membersList.filter((m) => m.id !== currentUserProfile.id)}
+          isOfficer={isOfficer}
           onSuccess={refreshAssignments}
         />
       )}

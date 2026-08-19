@@ -3,7 +3,7 @@ export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type AssignmentStatus =
   | 'pending'
   | 'in_progress'
-  | 'blocked'
+  | 'blocked' // Note: UI label is "Can't Complete"
   | 'completed'
   | 'overdue'
   | 'reassigned'
@@ -16,6 +16,36 @@ export type TaskRequestType =
   | 'blocker';
 
 export type TaskRequestStatus = 'pending' | 'approved' | 'rejected';
+
+export type TaskAudienceType = 'individual' | 'all' | 'system_group' | 'custom_group';
+
+export type SystemGroupKey = 'officers' | 'soprano' | 'alto' | 'tenor' | 'bass';
+
+export interface CustomGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  members?: CustomGroupMember[];
+  creator?: { id: string; full_name: string };
+  member_count?: number;
+}
+
+export interface CustomGroupMember {
+  id: string;
+  group_id: string;
+  member_id: string;
+  added_at: string;
+  member?: {
+    id: string;
+    full_name: string;
+    avatar_url?: string | null;
+    voice_part?: string | null;
+    role?: string;
+  };
+}
 
 export interface TaskItem {
   id: string;
@@ -112,3 +142,10 @@ export interface TaskCommentItem {
     role?: string;
   };
 }
+
+export const OFFICER_ROLES = ['super_admin', 'director', 'secretary', 'treasurer'] as const;
+
+export const isUserOfficer = (role?: string | null): boolean => {
+  if (!role) return false;
+  return OFFICER_ROLES.includes(role as any);
+};

@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getAllTasksAdmin, getPendingRequestsAdmin } from './actions';
+import { getAllTasksAdmin, getPendingRequestsAdmin, getCustomGroupsAdmin } from './actions';
 import { TaskManagerClient } from './TaskManagerClient';
+import { OFFICER_ROLES } from '@/app/tasks/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,24 +20,26 @@ export default async function AdminTasksPage() {
     .eq('id', user.id)
     .single();
 
-  if (!profile || !['super_admin', 'director', 'secretary'].includes(profile.role)) {
+  if (!profile || !OFFICER_ROLES.includes(profile.role as any)) {
     redirect('/tasks');
   }
 
-  // Fetch initial tasks, requests, and reference data concurrently
+  // Fetch initial tasks, requests, groups, and reference data concurrently
   const [
     initialTasks,
     initialRequests,
+    initialCustomGroups,
     { data: membersData },
     { data: songsData },
     { data: sequencesData },
   ] = await Promise.all([
     getAllTasksAdmin(),
     getPendingRequestsAdmin(),
+    getCustomGroupsAdmin(),
     supabase
       .from('profiles')
-      .select('id, full_name, voice_part')
-      .in('role', ['super_admin', 'director', 'secretary', 'treasurer', 'member'])
+      .select('id, full_name, voice_part, role, avatar_url')
+      .not('role', 'in', '("pending","rejected")')
       .order('full_name', { ascending: true }),
     supabase
       .from('songs')
@@ -53,6 +56,8 @@ export default async function AdminTasksPage() {
     id: m.id,
     full_name: m.full_name,
     voice_part: m.voice_part || null,
+    avatar_url: m.avatar_url || null,
+    role: m.role || 'member',
   }));
 
   const songsList = (songsData || []).map((s: any) => ({
@@ -74,6 +79,7 @@ export default async function AdminTasksPage() {
       }}
       initialTasks={initialTasks}
       initialRequests={initialRequests}
+      initialCustomGroups={initialCustomGroups}
       membersList={membersList}
       songsList={songsList}
       sequencesList={sequencesList}

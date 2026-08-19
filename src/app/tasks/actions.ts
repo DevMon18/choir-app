@@ -3,7 +3,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { sendPushToUser } from '@/lib/push';
-import type { TaskAssignmentItem, AssignmentStatus, TaskCommentItem } from './types';
+import type { TaskAssignmentItem, AssignmentStatus, TaskCommentItem, TaskAssignmentHistoryItem } from './types';
+import { OFFICER_ROLES } from './types';
 
 export async function getMyTaskAssignments(): Promise<TaskAssignmentItem[]> {
   try {
@@ -101,13 +102,13 @@ export async function updateAssignmentStatus(
     }
 
     if (existing.member_id !== user.id) {
-      // Check if user is director/admin
+      // Check if user is officer
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single();
-      if (!profile || !['super_admin', 'director', 'secretary'].includes(profile.role)) {
+      if (!profile || !OFFICER_ROLES.includes(profile.role as any)) {
         return { error: 'Unauthorized to update this assignment' };
       }
     }
@@ -123,7 +124,7 @@ export async function updateAssignmentStatus(
       updates.completed_at = new Date().toISOString();
       updates.blocker_reason = null;
     } else if (newStatus === 'blocked') {
-      updates.blocker_reason = blockerReason?.trim() || 'Blocked';
+      updates.blocker_reason = blockerReason?.trim() || "Can't Complete";
     } else if (newStatus === 'pending') {
       updates.completed_at = null;
       updates.blocker_reason = null;
@@ -137,28 +138,29 @@ export async function updateAssignmentStatus(
     if (updateErr) return { error: updateErr.message };
 
     // Record history
+    const actionLabel = newStatus === 'blocked' ? "Marked Can't Complete" : `Status changed to ${newStatus}`;
     await supabase.from('task_assignment_history').insert({
       task_assignment_id: assignmentId,
-      action: `Status changed to ${newStatus}`,
+      action: actionLabel,
       performed_by: user.id,
       old_status: existing.status,
       new_status: newStatus,
       note: blockerReason?.trim() || null,
     });
 
-    // If blocked, notify directors
+    // If marked "Can't Complete", notify officers
     if (newStatus === 'blocked') {
-      const { data: directors } = await supabase
+      const { data: officers } = await supabase
         .from('profiles')
         .select('id')
-        .in('role', ['super_admin', 'director']);
+        .in('role', ['super_admin', 'director', 'secretary', 'treasurer']);
 
-      if (directors && directors.length > 0) {
-        for (const d of directors) {
-          if (d.id !== user.id) {
-            await sendPushToUser(d.id, {
-              title: '🛑 Task Blocked',
-              body: `Responsibility "${existing.responsibility}" was reported as blocked: ${blockerReason || 'No reason provided'}`,
+      if (officers && officers.length > 0) {
+        for (const off of officers) {
+          if (off.id !== user.id) {
+            await sendPushToUser(off.id, {
+              title: "⚠️ Member Can't Complete Task",
+              body: `"${existing.responsibility}": ${blockerReason || 'No reason specified'}`,
               url: '/admin/tasks',
             });
           }
@@ -237,16 +239,16 @@ export async function requestReassignment(
       note: reason.trim(),
     });
 
-    // Notify Directors
-    const { data: directors } = await supabase
+    // Notify Officers
+    const { data: officers } = await supabase
       .from('profiles')
       .select('id')
-      .in('role', ['super_admin', 'director']);
+      .in('role', ['super_admin', 'director', 'secretary', 'treasurer']);
 
-    if (directors && directors.length > 0) {
-      for (const d of directors) {
-        if (d.id !== user.id) {
-          await sendPushToUser(d.id, {
+    if (officers && officers.length > 0) {
+      for (const off of officers) {
+        if (off.id !== user.id) {
+          await sendPushToUser(off.id, {
             title: '🔄 Reassignment Request',
             body: `Reassignment requested for "${assignment.responsibility}": ${reason.trim()}`,
             url: '/admin/tasks',
@@ -321,7 +323,7 @@ export async function getAssignmentComments(assignmentId: string): Promise<TaskC
   }
 }
 
-export async function getAssignmentHistory(assignmentId: string): Promise<any[]> {
+export async function getAssignmentHistory(assignmentId: string): Promise<TaskAssignmentHistoryItem[]> {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
@@ -337,7 +339,7 @@ export async function getAssignmentHistory(assignmentId: string): Promise<any[]>
       console.error('Error fetching assignment history:', error);
       return [];
     }
-    return data || [];
+    return (data || []) as unknown as TaskAssignmentHistoryItem[];
   } catch (err) {
     console.error('getAssignmentHistory failed:', err);
     return [];

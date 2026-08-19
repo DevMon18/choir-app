@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 import { updateAssignmentStatus } from '../actions';
 import { useToast } from '@/components/Toast';
 
@@ -46,7 +46,7 @@ export const BlockerModal: React.FC<BlockerModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reason.trim()) {
-      addToast({ type: 'warning', title: 'Reason Required', message: 'Please explain what is preventing you from proceeding.' });
+      addToast({ type: 'warning', title: 'Reason Required', message: 'Please explain why you cannot complete this task.' });
       return;
     }
 
@@ -59,8 +59,8 @@ export const BlockerModal: React.FC<BlockerModalProps> = ({
     } else {
       addToast({
         type: 'success',
-        title: 'Blocker Reported',
-        message: 'Your blocker has been logged and sent to the Director for assistance.',
+        title: 'Status Updated',
+        message: 'Your update has been logged and sent to the Choir Director.',
       });
       setReason('');
       onSuccess();
@@ -90,7 +90,7 @@ export const BlockerModal: React.FC<BlockerModalProps> = ({
           maxWidth: '500px',
           background: '#ffffff',
           borderRadius: '24px',
-          border: '1px solid rgba(239, 68, 68, 0.2)',
+          border: '1px solid rgba(249, 115, 22, 0.25)',
           boxShadow: '0 25px 70px rgba(0,0,0,0.4)',
           overflow: 'hidden',
           animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -101,11 +101,11 @@ export const BlockerModal: React.FC<BlockerModalProps> = ({
         <div
           style={{
             padding: '20px 24px',
-            borderBottom: '1px solid rgba(239, 68, 68, 0.15)',
+            borderBottom: '1px solid rgba(249, 115, 22, 0.15)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%)',
+            background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -114,19 +114,19 @@ export const BlockerModal: React.FC<BlockerModalProps> = ({
                 width: '40px',
                 height: '40px',
                 borderRadius: '12px',
-                background: 'rgba(239, 68, 68, 0.15)',
-                color: '#dc2626',
+                background: 'rgba(249, 115, 22, 0.18)',
+                color: '#ea580c',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)',
+                boxShadow: '0 4px 12px rgba(249, 115, 22, 0.15)',
               }}
             >
-              <AlertCircle size={22} />
+              <AlertTriangle size={22} />
             </div>
             <div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#111c14' }}>
-                Report a Blocker
+                Can&apos;t Complete Task
               </h3>
               <span style={{ fontSize: '0.8rem', color: '#5c675e', fontWeight: 500 }}>
                 {taskTitle}
@@ -143,7 +143,7 @@ export const BlockerModal: React.FC<BlockerModalProps> = ({
               padding: 0,
               borderRadius: '50%',
               minHeight: 'auto',
-              border: '1px solid rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(249, 115, 22, 0.2)',
               background: '#ffffff',
               color: '#5c675e',
               display: 'flex',
@@ -180,12 +180,12 @@ export const BlockerModal: React.FC<BlockerModalProps> = ({
 
           <div style={{ marginBottom: '22px' }}>
             <label style={{ display: 'block', fontSize: '0.86rem', fontWeight: 700, color: '#111c14', marginBottom: '6px' }}>
-              What is blocking you? <span style={{ color: 'var(--error)' }}>*</span>
+              Why can&apos;t you complete this? <span style={{ color: 'var(--error)' }}>*</span>
             </label>
             <textarea
               className="input-field"
               rows={4}
-              placeholder="e.g. Waiting for linen delivery, need the official logo vector file, or waiting for conductor confirmation..."
+              placeholder="Explain what is preventing you from completing this task (e.g. scheduling conflict, missing resources, ill, etc.)..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               required
@@ -197,12 +197,12 @@ export const BlockerModal: React.FC<BlockerModalProps> = ({
                 fontSize: '0.9rem',
                 lineHeight: 1.45,
                 background: '#ffffff',
-                border: '1.5px solid rgba(239, 68, 68, 0.3)',
+                border: '1.5px solid rgba(249, 115, 22, 0.35)',
                 color: '#111c14',
               }}
             />
             <span style={{ display: 'block', fontSize: '0.76rem', color: '#5c675e', marginTop: '6px', fontWeight: 500 }}>
-              The Director will be alerted immediately to help resolve this issue.
+              The Choir Director and Officers will be notified to assist or reassign if needed.
             </span>
           </div>
 
@@ -223,14 +223,14 @@ export const BlockerModal: React.FC<BlockerModalProps> = ({
                 padding: '9px 20px',
                 fontSize: '0.88rem',
                 borderRadius: '10px',
-                background: '#dc2626',
-                borderColor: '#dc2626',
+                background: '#ea580c',
+                borderColor: '#ea580c',
                 fontWeight: 700,
-                boxShadow: '0 4px 12px rgba(220, 38, 38, 0.25)',
+                boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)',
               }}
               disabled={loading}
             >
-              {loading ? 'Submitting...' : 'Flag as Blocked'}
+              {loading ? 'Submitting...' : "Submit Reason"}
             </button>
           </div>
         </form>

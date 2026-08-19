@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { RefreshCw, X, User } from 'lucide-react';
+import { RefreshCw, X, Shield, ArrowRight } from 'lucide-react';
 import { requestReassignment } from '../actions';
+import { officerDirectReassign } from '@/app/admin/tasks/actions';
 import { useToast } from '@/components/Toast';
 
 interface MemberOption {
@@ -19,6 +20,7 @@ interface ReassignmentModalProps {
   taskTitle: string;
   responsibility: string;
   members: MemberOption[];
+  isOfficer?: boolean;
   onSuccess: () => void;
 }
 
@@ -29,17 +31,23 @@ export const ReassignmentModal: React.FC<ReassignmentModalProps> = ({
   taskTitle,
   responsibility,
   members,
+  isOfficer = false,
   onSuccess,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [reason, setReason] = useState('');
   const [suggestedMemberId, setSuggestedMemberId] = useState('');
+  const [isDirectReassign, setIsDirectReassign] = useState(isOfficer);
   const [loading, setLoading] = useState(false);
   const { addToast } = useToast();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setIsDirectReassign(isOfficer);
+  }, [isOfficer]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -54,27 +62,53 @@ export const ReassignmentModal: React.FC<ReassignmentModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reason.trim()) {
-      addToast({ type: 'warning', title: 'Reason Required', message: 'Please state why you need to request reassignment.' });
-      return;
-    }
 
-    setLoading(true);
-    const res = await requestReassignment(assignmentId, reason.trim(), suggestedMemberId || null);
-    setLoading(false);
+    if (isDirectReassign && isOfficer) {
+      if (!suggestedMemberId) {
+        addToast({ type: 'warning', title: 'Member Required', message: 'Please select a new member to assign this responsibility to.' });
+        return;
+      }
 
-    if (res.error) {
-      addToast({ type: 'error', title: 'Request Failed', message: res.error });
+      setLoading(true);
+      const res = await officerDirectReassign(assignmentId, suggestedMemberId, reason.trim());
+      setLoading(false);
+
+      if (res.error) {
+        addToast({ type: 'error', title: 'Direct Reassignment Failed', message: res.error });
+      } else {
+        addToast({
+          type: 'success',
+          title: 'Directly Reassigned',
+          message: 'Responsibility transferred immediately to the new assignee.',
+        });
+        setReason('');
+        setSuggestedMemberId('');
+        onSuccess();
+        onClose();
+      }
     } else {
-      addToast({
-        type: 'success',
-        title: 'Request Submitted',
-        message: 'Your reassignment request was forwarded to the Director for approval.',
-      });
-      setReason('');
-      setSuggestedMemberId('');
-      onSuccess();
-      onClose();
+      if (!reason.trim()) {
+        addToast({ type: 'warning', title: 'Reason Required', message: 'Please state why you need to request reassignment.' });
+        return;
+      }
+
+      setLoading(true);
+      const res = await requestReassignment(assignmentId, reason.trim(), suggestedMemberId || null);
+      setLoading(false);
+
+      if (res.error) {
+        addToast({ type: 'error', title: 'Request Failed', message: res.error });
+      } else {
+        addToast({
+          type: 'success',
+          title: 'Request Submitted',
+          message: 'Your reassignment request was forwarded to the Director for approval.',
+        });
+        setReason('');
+        setSuggestedMemberId('');
+        onSuccess();
+        onClose();
+      }
     }
   };
 
@@ -136,7 +170,7 @@ export const ReassignmentModal: React.FC<ReassignmentModalProps> = ({
             </div>
             <div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#111c14' }}>
-                Request Reassignment
+                {isDirectReassign && isOfficer ? 'Direct Reassign (Officer)' : 'Request Reassignment'}
               </h3>
               <span style={{ fontSize: '0.8rem', color: '#5c675e', fontWeight: 500 }}>
                 {taskTitle}
@@ -169,9 +203,40 @@ export const ReassignmentModal: React.FC<ReassignmentModalProps> = ({
 
         {/* Content */}
         <form onSubmit={handleSubmit} style={{ padding: '24px', background: '#ffffff' }}>
+          {isOfficer && (
+            <div
+              style={{
+                marginBottom: '16px',
+                padding: '10px 14px',
+                borderRadius: '12px',
+                background: 'rgba(11, 77, 36, 0.06)',
+                border: '1px solid rgba(11, 77, 36, 0.16)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Shield size={16} style={{ color: 'var(--primary)' }} />
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary)' }}>
+                  Officer Direct Action
+                </span>
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={isDirectReassign}
+                  onChange={(e) => setIsDirectReassign(e.target.checked)}
+                  style={{ accentColor: 'var(--primary)' }}
+                />
+                Direct Reassign
+              </label>
+            </div>
+          )}
+
           <div style={{ marginBottom: '18px' }}>
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#5c675e', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Your Current Responsibility
+              Responsibility
             </label>
             <div
               style={{
@@ -189,38 +254,15 @@ export const ReassignmentModal: React.FC<ReassignmentModalProps> = ({
           </div>
 
           <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '0.86rem', fontWeight: 700, color: '#111c14', marginBottom: '6px' }}>
-              Reason for Reassignment <span style={{ color: 'var(--error)' }}>*</span>
-            </label>
-            <textarea
-              className="input-field"
-              rows={3}
-              placeholder="Explain why you are unable to fulfill this responsibility..."
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              required
-              autoFocus
-              style={{
-                width: '100%',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '0.9rem',
-                lineHeight: 1.45,
-                background: '#ffffff',
-                border: '1.5px solid rgba(11, 77, 36, 0.16)',
-                color: '#111c14',
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '22px' }}>
-            <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#5c675e', marginBottom: '6px' }}>
-              Suggested Member (Optional)
+            <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#111c14', marginBottom: '6px' }}>
+              {isDirectReassign && isOfficer ? 'Select New Assignee' : 'Suggested Member (Optional)'}{' '}
+              {isDirectReassign && isOfficer && <span style={{ color: 'var(--error)' }}>*</span>}
             </label>
             <select
               className="input-field"
               value={suggestedMemberId}
               onChange={(e) => setSuggestedMemberId(e.target.value)}
+              required={isDirectReassign && isOfficer}
               style={{
                 width: '100%',
                 borderRadius: '12px',
@@ -232,16 +274,37 @@ export const ReassignmentModal: React.FC<ReassignmentModalProps> = ({
                 cursor: 'pointer',
               }}
             >
-              <option value="">-- Recommend a choir member (or let Director assign) --</option>
+              <option value="">-- Select Member --</option>
               {members.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.full_name} {m.voice_part ? `(${m.voice_part})` : ''}
                 </option>
               ))}
             </select>
-            <span style={{ display: 'block', fontSize: '0.76rem', color: '#5c675e', marginTop: '6px', fontWeight: 500 }}>
-              The Director will review this recommendation and make the final assignment.
-            </span>
+          </div>
+
+          <div style={{ marginBottom: '22px' }}>
+            <label style={{ display: 'block', fontSize: '0.86rem', fontWeight: 700, color: '#111c14', marginBottom: '6px' }}>
+              {isDirectReassign && isOfficer ? 'Handover Note (Optional)' : 'Reason for Reassignment'} {!isDirectReassign && <span style={{ color: 'var(--error)' }}>*</span>}
+            </label>
+            <textarea
+              className="input-field"
+              rows={3}
+              placeholder={isDirectReassign && isOfficer ? 'Add context or instruction for the new assignee...' : 'Explain why you are unable to fulfill this responsibility...'}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              required={!isDirectReassign}
+              style={{
+                width: '100%',
+                borderRadius: '12px',
+                padding: '11px 14px',
+                fontSize: '0.9rem',
+                lineHeight: 1.45,
+                background: '#ffffff',
+                border: '1.5px solid rgba(11, 77, 36, 0.16)',
+                color: '#111c14',
+              }}
+            />
           </div>
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
@@ -266,7 +329,7 @@ export const ReassignmentModal: React.FC<ReassignmentModalProps> = ({
               }}
               disabled={loading}
             >
-              {loading ? 'Submitting...' : 'Send Request'}
+              {loading ? 'Processing...' : isDirectReassign && isOfficer ? 'Directly Reassign' : 'Send Request'}
             </button>
           </div>
         </form>

@@ -10,8 +10,20 @@ import { ActionCenterBanner } from './components/ActionCenterBanner';
 import { TaskCreateModal } from './components/TaskCreateModal';
 import { ReassignmentApprovalModal } from './components/ReassignmentApprovalModal';
 import { TaskTimelineModal } from './components/TaskTimelineModal';
+import { CustomGroupModal } from './components/CustomGroupModal';
+import { ForwardTaskModal } from './components/ForwardTaskModal';
+import { MergeTasksModal } from './components/MergeTasksModal';
 import { CommentsDrawer } from '@/app/tasks/components/CommentsDrawer';
-import { getAllTasksAdmin, getPendingRequestsAdmin, resolveBlocker, archiveTask, deleteTask } from './actions';
+import { findDuplicateTaskClusters } from './utils/similarity';
+import {
+  getAllTasksAdmin,
+  getPendingRequestsAdmin,
+  getCustomGroupsAdmin,
+  resolveCantComplete,
+  archiveTask,
+  deleteTask,
+  removeTaskAssignment,
+} from './actions';
 import { useToast } from '@/components/Toast';
 import {
   ListTodo,
@@ -31,15 +43,22 @@ import {
   Mic,
   Calendar,
   AlertTriangle,
+  Users,
+  UserPlus,
+  GitMerge,
+  Layers,
+  X,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
-import type { TaskItem, TaskRequestItem, TaskAssignmentItem } from '@/app/tasks/types';
+import type { TaskItem, TaskRequestItem, TaskAssignmentItem, CustomGroup } from '@/app/tasks/types';
 
 interface MemberOption {
   id: string;
   full_name: string;
   voice_part?: string | null;
+  avatar_url?: string | null;
+  role?: string;
 }
 
 interface SongOption {
@@ -56,6 +75,7 @@ interface TaskManagerClientProps {
   currentUserProfile: { id: string; full_name: string; role: string };
   initialTasks: TaskItem[];
   initialRequests: TaskRequestItem[];
+  initialCustomGroups: CustomGroup[];
   membersList: MemberOption[];
   songsList: SongOption[];
   sequencesList: SequenceOption[];
@@ -65,6 +85,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
   currentUserProfile,
   initialTasks,
   initialRequests,
+  initialCustomGroups,
   membersList,
   songsList,
   sequencesList,
@@ -75,16 +96,31 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
 
   const [tasks, setTasks] = useState<TaskItem[]>(initialTasks);
   const [requests, setRequests] = useState<TaskRequestItem[]>(initialRequests);
-  const [activeTab, setActiveTab] = useState<'active' | 'blocked' | 'all' | 'archived'>('active');
+  const [customGroups, setCustomGroups] = useState<CustomGroup[]>(initialCustomGroups);
+  const [activeTab, setActiveTab] = useState<'active' | 'blocked' | 'overdue' | 'all' | 'archived'>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [mergeTargetTask, setMergeTargetTask] = useState<TaskItem | null>(null);
+  const [mergeSourceTasks, setMergeSourceTasks] = useState<TaskItem[]>([]);
+  const [ignoredClusterIds, setIgnoredClusterIds] = useState<string[]>([]);
+  const [forwardTargetTask, setForwardTargetTask] = useState<TaskItem | null>(null);
   const [reviewingRequest, setReviewingRequest] = useState<TaskRequestItem | null>(null);
   const [deleteConfirmTaskId, setDeleteConfirmTaskId] = useState<string | null>(null);
+  const [deleteAssignmentTarget, setDeleteAssignmentTarget] = useState<{
+    id: string;
+    memberName: string;
+    taskTitle: string;
+    responsibility: string;
+  } | null>(null);
   const [timelineTask, setTimelineTask] = useState<TaskItem | null>(null);
   const [selectedCommentAssignment, setSelectedCommentAssignment] = useState<{ assignment: TaskAssignmentItem; taskTitle: string } | null>(null);
+
+  const isDirectorOrSuperAdmin = ['super_admin', 'director'].includes(currentUserProfile.role);
 
   useEffect(() => {
     setTasks(initialTasks);
@@ -94,22 +130,30 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
     setRequests(initialRequests);
   }, [initialRequests]);
 
+  useEffect(() => {
+    setCustomGroups(initialCustomGroups);
+  }, [initialCustomGroups]);
+
   const refreshData = async () => {
-    const [freshTasks, freshReqs] = await Promise.all([
+    const [freshTasks, freshReqs, freshGroups] = await Promise.all([
       getAllTasksAdmin(),
       getPendingRequestsAdmin(),
+      getCustomGroupsAdmin(),
     ]);
     setTasks(freshTasks);
     setRequests(freshReqs);
+    setCustomGroups(freshGroups);
   };
 
-  // Realtime subscription for director tasks & action center
+  // Realtime subscription for director tasks & action center & groups
   useRealtimeSync({
     channelName: `admin-tasks-sync-${currentUserProfile.id}`,
     tables: [
       { table: 'tasks' },
       { table: 'task_assignments' },
       { table: 'task_requests' },
+      { table: 'custom_groups' },
+      { table: 'custom_group_members' },
     ],
     onEvent: () => {
       refreshData();
@@ -130,7 +174,26 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
     setExpandedTasks((prev) => ({ ...prev, [taskId]: !prev[taskId] }));
   };
 
-  // Collect all blocked assignments across all active tasks
+  // Detect duplicate task clusters on active tasks (95% - 100% similarity on title & description)
+  const allDuplicateClusters = useMemo(() => {
+    return findDuplicateTaskClusters(tasks, 0.92);
+  }, [tasks]);
+
+  const duplicateClusters = useMemo(() => {
+    return allDuplicateClusters.filter((c) => !ignoredClusterIds.includes(c.id));
+  }, [allDuplicateClusters, ignoredClusterIds]);
+
+  // Set of task IDs that actually have high-similarity duplicates
+  const tasksWithDuplicates = useMemo(() => {
+    const ids = new Set<string>();
+    allDuplicateClusters.forEach((c) => {
+      ids.add(c.primaryTask.id);
+      c.duplicateTasks.forEach((d) => ids.add(d.id));
+    });
+    return ids;
+  }, [allDuplicateClusters]);
+
+  // Collect all "Can't Complete" assignments across active tasks
   const blockedAssignments = useMemo(() => {
     const list: TaskAssignmentItem[] = [];
     tasks.forEach((t) => {
@@ -143,26 +206,66 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
     return list;
   }, [tasks]);
 
-  const handleResolveBlocker = async (assignment: TaskAssignmentItem) => {
-    const res = await resolveBlocker(assignment.id);
-    if (res.error) {
-      addToast({ type: 'error', title: 'Action Failed', message: res.error });
-    } else {
-      addToast({ type: 'success', title: 'Blocker Cleared', message: 'The blocker has been marked resolved.' });
-      refreshData();
-    }
-  };
+  // Collect all Overdue assignments across active tasks
+  const overdueAssignments = useMemo(() => {
+    const list: TaskAssignmentItem[] = [];
+    tasks.forEach((t) => {
+      if (!t.is_archived && t.assignments) {
+        t.assignments.forEach((a) => {
+          if (a.status === 'overdue') list.push(a);
+        });
+      }
+    });
+    return list;
+  }, [tasks]);
+
+  // Filter tasks based on search & tab
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((t) => {
+      // Tab filter
+      if (activeTab === 'archived' && !t.is_archived) return false;
+      if (activeTab !== 'archived' && t.is_archived && activeTab !== 'all') return false;
+
+      if (activeTab === 'blocked') {
+        const hasBlocked = t.assignments?.some((a) => a.status === 'blocked');
+        if (!hasBlocked) return false;
+      }
+
+      if (activeTab === 'overdue') {
+        const hasOverdue = t.assignments?.some((a) => a.status === 'overdue');
+        if (!hasOverdue) return false;
+      }
+
+      if (activeTab === 'active') {
+        if (t.is_archived) return false;
+      }
+
+      // Search filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = t.title.toLowerCase().includes(q);
+        const matchDesc = t.description?.toLowerCase().includes(q);
+        const matchResponsibility = t.assignments?.some(
+          (a) =>
+            a.responsibility.toLowerCase().includes(q) ||
+            a.member?.full_name.toLowerCase().includes(q)
+        );
+        if (!matchTitle && !matchDesc && !matchResponsibility) return false;
+      }
+
+      return true;
+    });
+  }, [tasks, activeTab, searchQuery]);
 
   const handleToggleArchive = async (task: TaskItem) => {
-    const nextState = !task.is_archived;
-    const res = await archiveTask(task.id, nextState);
+    const res = await archiveTask(task.id, !task.is_archived);
     if (res.error) {
-      addToast({ type: 'error', title: 'Archive Failed', message: res.error });
+      addToast({ type: 'error', title: 'Error', message: res.error });
     } else {
       addToast({
         type: 'success',
-        title: nextState ? 'Task Archived' : 'Task Restored',
-        message: nextState ? 'Task moved to archives.' : 'Task restored to active list.',
+        title: task.is_archived ? 'Task Restored' : 'Task Archived',
+        message: `"${task.title}" was ${task.is_archived ? 'restored' : 'archived'}.`,
       });
       refreshData();
     }
@@ -172,89 +275,181 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
     if (!deleteConfirmTaskId) return;
     const res = await deleteTask(deleteConfirmTaskId);
     setDeleteConfirmTaskId(null);
+
     if (res.error) {
       addToast({ type: 'error', title: 'Delete Failed', message: res.error });
     } else {
-      addToast({ type: 'success', title: 'Task Deleted', message: 'Task and all related assignments were removed.' });
+      addToast({ type: 'success', title: 'Task Deleted', message: 'The task and its responsibilities were deleted.' });
       refreshData();
     }
   };
 
-  // Filtered tasks
-  const filteredTasks = useMemo(() => {
-    return tasks.filter((t) => {
-      // Tab filter
-      if (activeTab === 'active' && t.is_archived) return false;
-      if (activeTab === 'archived' && !t.is_archived) return false;
-      if (activeTab === 'blocked') {
-        const hasBlocked = t.assignments?.some((a) => a.status === 'blocked');
-        if (!hasBlocked) return false;
-      }
+  const handleRemoveAssignment = async () => {
+    if (!deleteAssignmentTarget) return;
+    const res = await removeTaskAssignment(deleteAssignmentTarget.id);
+    const target = deleteAssignmentTarget;
+    setDeleteAssignmentTarget(null);
 
-      // Search filter
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchTitle = t.title.toLowerCase().includes(q);
-        const matchDesc = t.description?.toLowerCase().includes(q);
-        const matchResp = t.assignments?.some((a) =>
-          a.responsibility.toLowerCase().includes(q) || a.member?.full_name.toLowerCase().includes(q)
-        );
-        if (!matchTitle && !matchDesc && !matchResp) return false;
-      }
+    if (res.error) {
+      addToast({ type: 'error', title: 'Removal Failed', message: res.error });
+    } else {
+      addToast({
+        type: 'success',
+        title: 'Member Removed',
+        message: `${target.memberName} was removed from "${target.taskTitle}".`,
+      });
+      refreshData();
+    }
+  };
 
-      return true;
-    });
-  }, [tasks, activeTab, searchQuery]);
+  const handleResolveCantComplete = async (assignment: TaskAssignmentItem) => {
+    const note = prompt(`Enter resolution note or assistance instructions for ${assignment.member?.full_name}:`, 'Issue resolved by Officer');
+    if (note === null) return; // user cancelled
+
+    const res = await resolveCantComplete(assignment.id, note);
+    if (res.error) {
+      addToast({ type: 'error', title: 'Resolution Failed', message: res.error });
+    } else {
+      addToast({
+        type: 'success',
+        title: 'Status Resolved',
+        message: `Task resumed for ${assignment.member?.full_name}.`,
+      });
+      refreshData();
+    }
+  };
+
+  const startMergeCluster = (cluster: { primaryTask: TaskItem; duplicateTasks: TaskItem[] }) => {
+    setMergeTargetTask(cluster.primaryTask);
+    setMergeSourceTasks(cluster.duplicateTasks);
+    setShowMergeModal(true);
+  };
+
+  const openGeneralMergeModal = () => {
+    if (duplicateClusters.length > 0) {
+      setMergeTargetTask(duplicateClusters[0].primaryTask);
+      setMergeSourceTasks(duplicateClusters[0].duplicateTasks);
+    } else {
+      setMergeTargetTask(null);
+      setMergeSourceTasks([]);
+    }
+    setShowMergeModal(true);
+  };
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      <div className="bg-orb bg-orb-1" style={{ width: '500px', height: '500px' }}></div>
-      <div className="bg-orb bg-orb-2" style={{ width: '400px', height: '400px' }}></div>
-
+    <div ref={containerRef} style={{ minHeight: '100vh', background: 'var(--background)', color: 'var(--foreground)' }}>
       <Navbar profile={currentUserProfile} />
 
-      <main className="admin-content-full" style={{ maxWidth: '1060px', margin: '0 auto', width: '100%', padding: '20px' }}>
-        {/* Header Title & Create Button */}
-        <div className="anim-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '14px' }}>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 16px 100px 16px' }}>
+        {/* Header Title Bar */}
+        <div
+          className="anim-header"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '24px',
+            flexWrap: 'wrap',
+            gap: '16px',
+          }}
+        >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div
                 style={{
-                  width: '40px',
-                  height: '40px',
+                  width: '42px',
+                  height: '42px',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
-                  color: '#fff',
+                  background: 'linear-gradient(135deg, var(--primary) 0%, #15803d 100%)',
+                  color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  boxShadow: '0 6px 18px rgba(11, 77, 36, 0.25)',
                 }}
               >
                 <ListTodo size={22} />
               </div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>
-                Choir Tasks & Delegation
-              </h1>
+              <div>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: 'var(--foreground)' }}>
+                  Task Manager & Delegation
+                </h1>
+                <p style={{ fontSize: '0.86rem', color: 'var(--muted)', margin: '2px 0 0' }}>
+                  Delegate choir tasks, manage voice section responsibilities & committees
+                </p>
+              </div>
             </div>
-            <p style={{ color: 'var(--muted)', fontSize: '0.88rem', margin: '4px 0 0 50px' }}>
-              Create overarching tasks, delegate specific responsibilities, and monitor choir execution.
-            </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Link
-              href="/tasks"
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {isDirectorOrSuperAdmin && (
+              <button
+                onClick={openGeneralMergeModal}
+                className="btn btn-secondary"
+                style={{
+                  padding: '10px 16px',
+                  fontSize: '0.88rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  borderColor: duplicateClusters.length > 0 ? '#2563eb' : undefined,
+                  color: duplicateClusters.length > 0 ? '#2563eb' : undefined,
+                  background: duplicateClusters.length > 0 ? 'rgba(37, 99, 235, 0.06)' : undefined,
+                }}
+                title="Consolidate duplicate tasks into one"
+              >
+                <GitMerge size={16} />
+                <span>Merge Tasks</span>
+                {duplicateClusters.length > 0 && (
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      padding: '1px 6px',
+                      borderRadius: '999px',
+                      background: '#2563eb',
+                      color: '#ffffff',
+                    }}
+                  >
+                    {duplicateClusters.length}
+                  </span>
+                )}
+              </button>
+            )}
+
+            <button
+              onClick={() => setShowGroupModal(true)}
               className="btn btn-secondary"
-              style={{ padding: '8px 14px', fontSize: '0.86rem' }}
+              style={{
+                padding: '10px 16px',
+                fontSize: '0.88rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              title="Manage Custom Groups and Committees"
             >
-              My Own Tasks →
-            </Link>
+              <Users size={16} />
+              <span>Custom Groups ({customGroups.length})</span>
+            </button>
+
             <button
               onClick={() => setShowCreateModal(true)}
-              className="btn btn-primary tasks-desktop-create"
-              style={{ padding: '8px 18px', fontSize: '0.86rem', alignItems: 'center', gap: '6px' }}
+              className="btn btn-primary"
+              style={{
+                padding: '10px 20px',
+                fontSize: '0.9rem',
+                borderRadius: '12px',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 14px rgba(11, 77, 36, 0.3)',
+              }}
             >
-              <Plus size={16} /> Create Task
+              <Plus size={18} />
+              <span>Create Task</span>
             </button>
           </div>
         </div>
@@ -263,15 +458,116 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
         <ActionCenterBanner
           requests={requests}
           blockedAssignments={blockedAssignments}
+          overdueCount={overdueAssignments.length}
           onReviewRequest={(req) => setReviewingRequest(req)}
-          onResolveBlocker={handleResolveBlocker}
+          onResolveBlocker={handleResolveCantComplete}
+          onSelectTab={(tab) => setActiveTab(tab)}
         />
 
-        {/* Filter Bar */}
-        <div className="anim-card" style={{ padding: '12px 16px', borderRadius: '18px', background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.12)', boxShadow: '0 4px 16px rgba(11, 77, 36, 0.05)', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            {/* Filter Tabs */}
-            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px', WebkitOverflowScrolling: 'touch', maxWidth: '100%' }}>
+        {/* Smart Duplicate Task Cluster Notice (Director & Super Admin only) */}
+        {isDirectorOrSuperAdmin && duplicateClusters.length > 0 && (
+          <div
+            className="anim-card"
+            style={{
+              marginBottom: '20px',
+              padding: '14px 18px',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+              border: '1.5px solid rgba(37, 99, 235, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              boxShadow: '0 4px 16px rgba(37, 99, 235, 0.08)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: '#2563eb',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Layers size={18} />
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.92rem', color: '#1e3a8a', display: 'block' }}>
+                  {duplicateClusters.length} Potential Duplicate Task Group(s) Detected
+                </strong>
+                <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#3b82f6' }}>
+                  e.g. {duplicateClusters.map((c) => `"${c.commonTitle}"`).slice(0, 2).join(', ')} have high similarity (95%+) and can be consolidated.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {duplicateClusters.slice(0, 2).map((cluster, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => startMergeCluster(cluster)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    background: '#ffffff',
+                    border: '1px solid rgba(37, 99, 235, 0.3)',
+                    color: '#1d4ed8',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <GitMerge size={13} /> Merge &ldquo;{cluster.commonTitle}&rdquo;
+                </button>
+              ))}
+
+              <button
+                onClick={() => setIgnoredClusterIds((prev) => [...prev, ...duplicateClusters.map((c) => c.id)])}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  background: '#ffffff',
+                  border: '1px solid rgba(100, 116, 139, 0.25)',
+                  color: '#64748b',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+                title="Dismiss duplicate notice"
+              >
+                Ignore
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Filter and Tab Bar */}
+        <div
+          className="glass-container anim-card"
+          style={{
+            padding: '12px 18px',
+            borderRadius: '16px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', width: '100%', justifyContent: 'space-between' }}>
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: '6px', background: 'rgba(0,0,0,0.04)', padding: '4px', borderRadius: '24px', flexWrap: 'wrap' }}>
               <button
                 onClick={() => setActiveTab('active')}
                 style={{
@@ -283,6 +579,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                   cursor: 'pointer',
                   background: activeTab === 'active' ? 'var(--primary)' : 'transparent',
                   color: activeTab === 'active' ? '#fff' : 'var(--muted)',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 Active Tasks ({tasks.filter((t) => !t.is_archived).length})
@@ -297,11 +594,29 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                   fontWeight: 600,
                   border: 'none',
                   cursor: 'pointer',
-                  background: activeTab === 'blocked' ? 'var(--error)' : 'transparent',
+                  background: activeTab === 'blocked' ? '#ea580c' : 'transparent',
                   color: activeTab === 'blocked' ? '#fff' : 'var(--muted)',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                Blocked ({blockedAssignments.length})
+                Can&apos;t Complete ({blockedAssignments.length})
+              </button>
+
+              <button
+                onClick={() => setActiveTab('overdue')}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: activeTab === 'overdue' ? '#dc2626' : 'transparent',
+                  color: activeTab === 'overdue' ? '#fff' : 'var(--muted)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Overdue ({overdueAssignments.length})
               </button>
 
               <button
@@ -342,7 +657,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
               <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
               <input
                 type="text"
-                placeholder="Search tasks, members, or responsibilities..."
+                placeholder="Search tasks, members, or roles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="input-field"
@@ -379,7 +694,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
               const total = assignments.length;
               const completed = assignments.filter((a) => a.status === 'completed').length;
               const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-              const isExpanded = expandedTasks[t.id] ?? true; // expanded by default
+              const isExpanded = expandedTasks[t.id] ?? true;
 
               return (
                 <div
@@ -479,7 +794,51 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                     </div>
 
                     {/* Right Action Menu */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => setForwardTargetTask(t)}
+                        className="btn btn-secondary"
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '0.78rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          borderColor: 'rgba(11, 77, 36, 0.25)',
+                          color: 'var(--primary)',
+                          background: 'rgba(11, 77, 36, 0.04)',
+                        }}
+                        title="Forward / Add Assignees to this task"
+                        aria-label="Forward / Add Assignees to this task"
+                      >
+                        <UserPlus size={14} /> Add Assignee
+                      </button>
+
+                      {isDirectorOrSuperAdmin && tasksWithDuplicates.has(t.id) && (
+                        <button
+                          onClick={() => {
+                            setMergeTargetTask(t);
+                            setMergeSourceTasks([]);
+                            setShowMergeModal(true);
+                          }}
+                          className="btn btn-secondary"
+                          style={{
+                            padding: '6px 10px',
+                            fontSize: '0.78rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            color: '#2563eb',
+                            borderColor: 'rgba(37, 99, 235, 0.2)',
+                            background: 'rgba(37, 99, 235, 0.04)',
+                          }}
+                          title="Merge duplicate task"
+                          aria-label="Merge duplicate task"
+                        >
+                          <GitMerge size={13} /> Merge
+                        </button>
+                      )}
+
                       <button
                         onClick={() => setTimelineTask(t)}
                         className="btn btn-secondary"
@@ -580,8 +939,8 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                             justifyContent: 'space-between',
                             padding: '10px 14px',
                             borderRadius: '12px',
-                            background: a.status === 'blocked' ? 'rgba(239,68,68,0.06)' : a.status === 'completed' ? 'rgba(16,185,129,0.05)' : 'rgba(0,0,0,0.02)',
-                            border: a.status === 'blocked' ? '1px solid rgba(239,68,68,0.2)' : '1px solid var(--glass-border)',
+                            background: a.status === 'blocked' ? 'rgba(249,115,22,0.08)' : a.status === 'overdue' ? 'rgba(239,68,68,0.08)' : a.status === 'completed' ? 'rgba(16,185,129,0.05)' : 'rgba(0,0,0,0.02)',
+                            border: a.status === 'blocked' ? '1px solid rgba(249,115,22,0.25)' : a.status === 'overdue' ? '1px solid rgba(239,68,68,0.25)' : '1px solid var(--glass-border)',
                             flexWrap: 'wrap',
                             gap: '8px',
                           }}
@@ -601,8 +960,8 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                                 {a.responsibility}
                               </span>
                               {a.blocker_reason && (
-                                <div style={{ fontSize: '0.78rem', color: 'var(--error)', fontWeight: 600, marginTop: '2px' }}>
-                                  Blocker: {a.blocker_reason}
+                                <div style={{ fontSize: '0.78rem', color: '#ea580c', fontWeight: 600, marginTop: '2px' }}>
+                                  Reason: {a.blocker_reason}
                                 </div>
                               )}
                             </div>
@@ -618,6 +977,8 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                                 background: a.status === 'completed'
                                   ? 'rgba(16,185,129,0.15)'
                                   : a.status === 'blocked'
+                                  ? 'rgba(249,115,22,0.18)'
+                                  : a.status === 'overdue'
                                   ? 'rgba(239,68,68,0.15)'
                                   : a.status === 'in_progress'
                                   ? 'rgba(59,130,246,0.15)'
@@ -625,6 +986,8 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                                 color: a.status === 'completed'
                                   ? '#059669'
                                   : a.status === 'blocked'
+                                  ? '#ea580c'
+                                  : a.status === 'overdue'
                                   ? '#dc2626'
                                   : a.status === 'in_progress'
                                   ? '#2563eb'
@@ -632,7 +995,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                                 textTransform: 'capitalize',
                               }}
                             >
-                              {a.status.replace('_', ' ')}
+                              {a.status === 'blocked' ? "Can't Complete" : a.status.replace('_', ' ')}
                             </span>
 
                             {a.due_date && (
@@ -657,6 +1020,32 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                               <MessageSquare size={13} />
                               <span>{(a.comments || []).length > 0 ? (a.comments || []).length : 'Chat'}</span>
                             </button>
+
+                            <button
+                              onClick={() =>
+                                setDeleteAssignmentTarget({
+                                  id: a.id,
+                                  memberName: a.member?.full_name || 'Member',
+                                  taskTitle: t.title,
+                                  responsibility: a.responsibility,
+                                })
+                              }
+                              className="btn btn-secondary"
+                              style={{
+                                padding: '4px 7px',
+                                fontSize: '0.74rem',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'var(--error)',
+                                borderColor: 'rgba(220, 38, 38, 0.22)',
+                                background: 'rgba(220, 38, 38, 0.04)',
+                              }}
+                              title={`Remove ${a.member?.full_name || 'member'} from this task`}
+                              aria-label={`Remove ${a.member?.full_name || 'member'} from this task`}
+                            >
+                              <X size={13} />
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -678,7 +1067,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
         <Plus size={18} style={{ marginRight: '6px' }} /> Create Task
       </button>
 
-      {/* Create Task Modal */}
+      {/* Create Task Modal (with live duplicate detection) */}
       {showCreateModal && (
         <TaskCreateModal
           isOpen={showCreateModal}
@@ -686,6 +1075,51 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
           members={membersList}
           songs={songsList}
           sequences={sequencesList}
+          customGroups={customGroups}
+          existingTasks={tasks}
+          onOpenGroupManager={() => {
+            setShowCreateModal(false);
+            setShowGroupModal(true);
+          }}
+          onSuccess={refreshData}
+        />
+      )}
+
+      {/* Custom Groups & Committees Modal */}
+      {showGroupModal && (
+        <CustomGroupModal
+          isOpen={showGroupModal}
+          onClose={() => setShowGroupModal(false)}
+          groups={customGroups}
+          members={membersList}
+          onRefresh={refreshData}
+        />
+      )}
+
+      {/* Merge Duplicate Tasks Modal */}
+      {showMergeModal && (
+        <MergeTasksModal
+          isOpen={showMergeModal}
+          onClose={() => {
+            setShowMergeModal(false);
+            setMergeTargetTask(null);
+            setMergeSourceTasks([]);
+          }}
+          tasks={tasks}
+          initialTargetTask={mergeTargetTask}
+          initialSourceTasks={mergeSourceTasks}
+          onSuccess={refreshData}
+        />
+      )}
+
+      {/* Forward Task Assignees Modal */}
+      {forwardTargetTask && (
+        <ForwardTaskModal
+          isOpen={Boolean(forwardTargetTask)}
+          onClose={() => setForwardTargetTask(null)}
+          task={forwardTargetTask}
+          members={membersList}
+          customGroups={customGroups}
           onSuccess={refreshData}
         />
       )}
@@ -710,6 +1144,18 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
           isDanger
           onConfirm={handleDeleteTask}
           onCancel={() => setDeleteConfirmTaskId(null)}
+        />
+      )}
+
+      {/* Confirm Remove Member Assignment Modal */}
+      {deleteAssignmentTarget && (
+        <ConfirmModal
+          title="Remove Member from Task?"
+          message={`Are you sure you want to remove ${deleteAssignmentTarget.memberName} from "${deleteAssignmentTarget.responsibility}" in "${deleteAssignmentTarget.taskTitle}"?`}
+          confirmLabel="Remove Member"
+          isDanger
+          onConfirm={handleRemoveAssignment}
+          onCancel={() => setDeleteAssignmentTarget(null)}
         />
       )}
 
