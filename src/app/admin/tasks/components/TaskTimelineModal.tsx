@@ -114,6 +114,7 @@ export const TaskTimelineModal: React.FC<TaskTimelineModalProps> = ({
           type: 'completed',
           title: `${a.member?.full_name || 'Member'} completed responsibility! 🎉`,
           responsibility: a.responsibility,
+          note: a.completion_comment ? `Completion note: "${a.completion_comment}"` : undefined,
           performer: a.member,
         });
       }

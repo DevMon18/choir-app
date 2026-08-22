@@ -57,6 +57,7 @@ export interface TaskItem {
   related_song_id: string | null;
   related_sequence_id: string | null;
   is_archived: boolean;
+  archived_at?: string | null;
   created_at: string;
   updated_at: string;
   creator?: { id: string; full_name: string; avatar_url?: string | null };
@@ -73,6 +74,8 @@ export interface TaskAssignmentItem {
   status: AssignmentStatus;
   due_date: string | null;
   blocker_reason: string | null;
+  completion_comment?: string | null;
+  archived_at?: string | null;
   assigned_by: string | null;
   assigned_at: string;
   started_at: string | null;

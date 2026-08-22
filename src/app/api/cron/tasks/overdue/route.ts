@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendPushToUser } from '@/lib/push';
+import { getStartOfDayManila } from '@/lib/dateUtils';
 
 export async function GET(request: Request) {
   try {
@@ -13,6 +14,8 @@ export async function GET(request: Request) {
 
     const adminSupabase = createAdminClient();
     const nowIso = new Date().toISOString();
+    // In Asia/Manila business timezone, tasks are overdue ONLY if their due date is strictly before today's start
+    const startOfTodayManilaIso = getStartOfDayManila(new Date()).toISOString();
 
     // Query assignments that are past due and not yet completed, cancelled, or overdue
     const { data: expiredAssignments, error: fetchErr } = await adminSupabase
@@ -20,7 +23,8 @@ export async function GET(request: Request) {
       .select('id, task_id, member_id, responsibility, due_date, status, task:task_id(title)')
       .in('status', ['pending', 'in_progress'])
       .not('due_date', 'is', null)
-      .lt('due_date', nowIso);
+      .is('archived_at', null)
+      .lt('due_date', startOfTodayManilaIso);
 
     if (fetchErr) {
       console.error('Error fetching overdue assignments:', fetchErr);

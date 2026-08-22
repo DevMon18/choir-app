@@ -20,10 +20,12 @@ import {
 } from 'lucide-react';
 import { updateAssignmentStatus } from '../actions';
 import { useToast } from '@/components/Toast';
+import { getTaskDueLabel } from '@/lib/dateUtils';
 import type { TaskAssignmentItem, AssignmentStatus } from '../types';
 
 interface TaskCardProps {
   assignment: TaskAssignmentItem;
+  onOpenComplete: (assignment: TaskAssignmentItem) => void;
   onOpenBlocker: (assignment: TaskAssignmentItem) => void;
   onOpenReassign: (assignment: TaskAssignmentItem) => void;
   onOpenComments: (assignment: TaskAssignmentItem) => void;
@@ -40,54 +42,43 @@ const PRIORITY_BADGES: Record<string, { label: string; bg: string; color: string
 const STATUS_BADGES: Record<string, { label: string; bg: string; color: string; icon: React.ReactNode }> = {
   pending: { label: 'Not Started', bg: 'rgba(100,116,139,0.12)', color: '#64748b', icon: <Circle size={14} /> },
   in_progress: { label: 'In Progress', bg: 'rgba(59,130,246,0.15)', color: '#2563eb', icon: <PlayCircle size={14} /> },
-  blocked: { label: 'Blocked', bg: 'rgba(239,68,68,0.15)', color: '#dc2626', icon: <AlertCircle size={14} /> },
+  blocked: { label: 'Can’t Complete', bg: 'rgba(239,68,68,0.15)', color: '#dc2626', icon: <AlertCircle size={14} /> },
   completed: { label: 'Completed', bg: 'rgba(16,185,129,0.15)', color: '#059669', icon: <CheckCircle2 size={14} /> },
+  overdue: { label: 'Overdue', bg: 'rgba(220,38,38,0.15)', color: '#dc2626', icon: <AlertTriangle size={14} /> },
   reassigned: { label: 'Reassigned', bg: 'rgba(197,160,89,0.15)', color: '#b45309', icon: <RefreshCw size={14} /> },
 };
 
 export const TaskCard: React.FC<TaskCardProps> = ({
   assignment,
+  onOpenComplete,
   onOpenBlocker,
   onOpenReassign,
   onOpenComments,
   onRefresh,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
   const { addToast } = useToast();
 
   const task = assignment.task;
   if (!task) return null;
 
   const priority = PRIORITY_BADGES[task.priority] || PRIORITY_BADGES.normal;
-  const status = STATUS_BADGES[assignment.status] || STATUS_BADGES.pending;
 
-  // Deadline formatting & calculations
+  // Deadline calculations via Manila business date utilities
   const effectiveDueDate = assignment.due_date || task.due_date;
-  let dueText = '';
-  let isOverdue = false;
-  let isDueSoon = false;
+  const dueInfo = getTaskDueLabel(effectiveDueDate, assignment.status);
+  const isOverdue = dueInfo.isOverdue && assignment.status !== 'completed';
 
-  if (effectiveDueDate) {
-    const dueTime = new Date(effectiveDueDate).getTime();
-    const now = Date.now();
-    const diffDays = Math.ceil((dueTime - now) / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0 && assignment.status !== 'completed') {
-      isOverdue = true;
-      dueText = `Overdue by ${Math.abs(diffDays)}d`;
-    } else if (diffDays === 0) {
-      isDueSoon = true;
-      dueText = 'Due Today';
-    } else if (diffDays === 1) {
-      isDueSoon = true;
-      dueText = 'Due Tomorrow';
-    } else {
-      dueText = `Due in ${diffDays}d (${new Date(effectiveDueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })})`;
-    }
-  }
+  const status = isOverdue && assignment.status !== 'completed'
+    ? STATUS_BADGES.overdue
+    : STATUS_BADGES[assignment.status] || STATUS_BADGES.pending;
 
   const handleStatusToggle = async (newStatus: AssignmentStatus) => {
+    if (newStatus === 'completed') {
+      onOpenComplete(assignment);
+      return;
+    }
+
     setLoading(true);
     const res = await updateAssignmentStatus(assignment.id, newStatus);
     setLoading(false);
@@ -98,7 +89,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       addToast({
         type: 'success',
         title: 'Status Updated',
-        message: newStatus === 'completed' ? 'Responsibility marked completed! 🎉' : `Status changed to ${newStatus}.`,
+        message: `Status changed to ${newStatus}.`,
       });
       onRefresh();
     }
@@ -189,19 +180,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Due Date Indicator */}
-        {dueText && (
+        {dueInfo.label && (
           <div
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '5px',
               fontSize: '0.78rem',
-              fontWeight: isOverdue || isDueSoon ? 700 : 500,
-              color: isOverdue ? 'var(--error)' : isDueSoon ? '#ea580c' : 'var(--muted)',
+              fontWeight: isOverdue || dueInfo.isDueSoon ? 700 : 500,
+              color: isOverdue ? 'var(--error, #dc2626)' : dueInfo.isDueSoon ? '#ea580c' : 'var(--muted)',
             }}
           >
             {isOverdue ? <AlertTriangle size={14} /> : <Clock size={14} />}
-            <span>{dueText}</span>
+            <span>{dueInfo.label}</span>
           </div>
         )}
       </div>
@@ -220,6 +211,27 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           </p>
         )}
       </div>
+
+      {/* Completion Note Card */}
+      {assignment.status === 'completed' && assignment.completion_comment && (
+        <div
+          style={{
+            padding: '10px 14px',
+            borderRadius: '12px',
+            background: 'rgba(11, 77, 36, 0.06)',
+            border: '1px solid rgba(11, 77, 36, 0.18)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '8px',
+          }}
+        >
+          <CheckCircle2 size={16} style={{ color: 'var(--success, #0b6623)', marginTop: '2px', flexShrink: 0 }} />
+          <div style={{ fontSize: '0.82rem', color: 'var(--foreground)' }}>
+            <strong style={{ color: 'var(--success, #0b6623)' }}>Completion Note: </strong>
+            {assignment.completion_comment}
+          </div>
+        </div>
+      )}
 
       {/* "Can't Complete" Alert Box */}
       {assignment.status === 'blocked' && assignment.blocker_reason && (
@@ -299,35 +311,35 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         }}
       >
         {/* Left Status Change Button */}
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {assignment.status === 'pending' && (
             <button
               onClick={() => handleStatusToggle('in_progress')}
               disabled={loading}
-              className="btn btn-primary"
+              className="btn btn-secondary"
               style={{ padding: '7px 14px', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
               <PlayCircle size={15} /> Start Work
             </button>
           )}
 
-          {assignment.status === 'in_progress' && (
+          {assignment.status !== 'completed' && (
             <button
-              onClick={() => handleStatusToggle('completed')}
+              onClick={() => onOpenComplete(assignment)}
               disabled={loading}
               className="btn btn-primary"
               style={{
                 padding: '7px 14px',
                 fontSize: '0.82rem',
-                background: 'var(--success, #0b6623)',
-                borderColor: 'var(--success, #0b6623)',
+                background: 'linear-gradient(135deg, var(--primary, #0b4d24) 0%, #15803d 100%)',
                 color: '#ffffff',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
+                boxShadow: '0 2px 8px rgba(11, 77, 36, 0.2)',
               }}
             >
-              <CheckCircle2 size={15} /> Mark Complete
+              <CheckCircle2 size={15} /> Complete Task
             </button>
           )}
 
@@ -338,7 +350,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               className="btn btn-secondary"
               style={{ padding: '6px 12px', fontSize: '0.78rem' }}
             >
-              Reopen
+              Reopen Task
             </button>
           )}
 

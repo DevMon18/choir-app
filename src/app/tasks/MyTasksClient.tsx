@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { TaskCard } from './components/TaskCard';
+import { CompleteTaskModal } from './components/CompleteTaskModal';
 import { BlockerModal } from './components/BlockerModal';
 import { ReassignmentModal } from './components/ReassignmentModal';
 import { CommentsDrawer } from './components/CommentsDrawer';
@@ -40,6 +41,7 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modals state
+  const [completeTarget, setCompleteTarget] = useState<TaskAssignmentItem | null>(null);
   const [blockerTarget, setBlockerTarget] = useState<TaskAssignmentItem | null>(null);
   const [reassignTarget, setReassignTarget] = useState<TaskAssignmentItem | null>(null);
   const [commentsTarget, setCommentsTarget] = useState<TaskAssignmentItem | null>(null);
@@ -99,7 +101,7 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
 
   // Counts
   const counts = useMemo(() => {
-    const active = assignments.filter((a) => a.status === 'pending' || a.status === 'in_progress').length;
+    const active = assignments.filter((a) => a.status !== 'completed' && a.status !== 'reassigned').length;
     const blocked = assignments.filter((a) => a.status === 'blocked').length;
     const completed = assignments.filter((a) => a.status === 'completed').length;
     return { all: assignments.length, active, blocked, completed };
@@ -294,6 +296,7 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
               <TaskCard
                 key={assignment.id}
                 assignment={assignment}
+                onOpenComplete={(a) => setCompleteTarget(a)}
                 onOpenBlocker={(a) => setBlockerTarget(a)}
                 onOpenReassign={(a) => setReassignTarget(a)}
                 onOpenComments={(a) => setCommentsTarget(a)}
@@ -303,6 +306,18 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
           </div>
         )}
       </main>
+
+      {/* Complete Task Confirmation Modal */}
+      {completeTarget && (
+        <CompleteTaskModal
+          isOpen={Boolean(completeTarget)}
+          onClose={() => setCompleteTarget(null)}
+          assignmentId={completeTarget.id}
+          taskTitle={completeTarget.task?.title || 'Task'}
+          responsibility={completeTarget.responsibility}
+          onSuccess={refreshAssignments}
+        />
+      )}
 
       {/* Can't Complete Modal */}
       {blockerTarget && (

@@ -960,6 +960,11 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                                   Reason: {a.blocker_reason}
                                 </div>
                               )}
+                              {a.status === 'completed' && a.completion_comment && (
+                                <div style={{ fontSize: '0.78rem', color: 'var(--success, #0b6623)', fontWeight: 600, marginTop: '2px' }}>
+                                  Note: &ldquo;{a.completion_comment}&rdquo;
+                                </div>
+                              )}
                             </div>
                           </div>
 

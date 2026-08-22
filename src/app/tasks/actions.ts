@@ -6,16 +6,30 @@ import { sendPushToUser } from '@/lib/push';
 import type { TaskAssignmentItem, AssignmentStatus, TaskCommentItem, TaskAssignmentHistoryItem } from './types';
 import { OFFICER_ROLES } from './types';
 
-export async function getMyTaskAssignments(): Promise<TaskAssignmentItem[]> {
+export async function getMyTaskAssignments(options?: { includeArchived?: boolean }): Promise<TaskAssignmentItem[]> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('task_assignments')
       .select(`
-        *,
+        id,
+        task_id,
+        member_id,
+        responsibility,
+        status,
+        due_date,
+        blocker_reason,
+        completion_comment,
+        archived_at,
+        assigned_by,
+        assigned_at,
+        started_at,
+        completed_at,
+        created_at,
+        updated_at,
         task:task_id (
           id,
           title,
@@ -26,6 +40,7 @@ export async function getMyTaskAssignments(): Promise<TaskAssignmentItem[]> {
           related_song_id,
           related_sequence_id,
           is_archived,
+          archived_at,
           created_at,
           updated_at,
           creator:created_by (id, full_name, avatar_url),
@@ -62,7 +77,13 @@ export async function getMyTaskAssignments(): Promise<TaskAssignmentItem[]> {
           performer:performed_by (id, full_name)
         )
       `)
-      .eq('member_id', user.id)
+      .eq('member_id', user.id);
+
+    if (!options?.includeArchived) {
+      query = query.is('archived_at', null);
+    }
+
+    const { data, error } = await query
       .order('due_date', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: false });
 
@@ -83,7 +104,8 @@ export async function getMyTaskAssignments(): Promise<TaskAssignmentItem[]> {
 export async function updateAssignmentStatus(
   assignmentId: string,
   newStatus: AssignmentStatus,
-  blockerReason?: string
+  blockerReason?: string,
+  completionComment?: string
 ) {
   try {
     const supabase = await createClient();
@@ -113,20 +135,25 @@ export async function updateAssignmentStatus(
       }
     }
 
+    const nowIso = new Date().toISOString();
     const updates: Record<string, any> = {
       status: newStatus,
-      updated_at: new Date().toISOString(),
+      updated_at: nowIso,
     };
 
     if (newStatus === 'in_progress' && !existing.started_at) {
-      updates.started_at = new Date().toISOString();
+      updates.started_at = nowIso;
     } else if (newStatus === 'completed') {
-      updates.completed_at = new Date().toISOString();
+      updates.completed_at = nowIso;
+      updates.archived_at = nowIso;
+      updates.completion_comment = completionComment?.trim() || null;
       updates.blocker_reason = null;
     } else if (newStatus === 'blocked') {
       updates.blocker_reason = blockerReason?.trim() || "Can't Complete";
     } else if (newStatus === 'pending') {
       updates.completed_at = null;
+      updates.archived_at = null;
+      updates.completion_comment = null;
       updates.blocker_reason = null;
     }
 
@@ -138,14 +165,23 @@ export async function updateAssignmentStatus(
     if (updateErr) return { error: updateErr.message };
 
     // Record history
-    const actionLabel = newStatus === 'blocked' ? "Marked Can't Complete" : `Status changed to ${newStatus}`;
+    const actionLabel = newStatus === 'completed'
+      ? (completionComment?.trim() ? 'Completed Task with Note' : 'Completed Task')
+      : newStatus === 'blocked'
+      ? "Marked Can't Complete"
+      : `Status changed to ${newStatus}`;
+
+    const historyNote = newStatus === 'completed'
+      ? (completionComment?.trim() || null)
+      : (blockerReason?.trim() || null);
+
     await supabase.from('task_assignment_history').insert({
       task_assignment_id: assignmentId,
       action: actionLabel,
       performed_by: user.id,
       old_status: existing.status,
       new_status: newStatus,
-      note: blockerReason?.trim() || null,
+      note: historyNote,
     });
 
     // If marked "Can't Complete", notify officers

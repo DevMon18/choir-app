@@ -142,8 +142,9 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
       try {
         const { data: assignments } = await supabase
           .from('task_assignments')
-          .select('id, status, task:task_id(is_archived)')
+          .select('id, status, archived_at, task:task_id(is_archived)')
           .eq('member_id', userId)
+          .is('archived_at', null)
           .neq('status', 'completed');
 
         if (isMounted && assignments) {
