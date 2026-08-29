@@ -199,3 +199,51 @@ export async function updateSequenceItemRole(itemId: string, roleInMass: string)
   revalidatePath('/admin/sequences');
   return { success: true };
 }
+
+export async function substituteSequenceSong(
+  sequenceId: string,
+  newSongId: string,
+  currentSequenceItemId?: string | null,
+  roleInMass?: string | null
+) {
+  const supabase = await createClient();
+
+  if (currentSequenceItemId) {
+    const { error } = await supabase
+      .from('sequence_items')
+      .update({ song_id: newSongId })
+      .eq('id', currentSequenceItemId);
+
+    if (!error) {
+      revalidatePath('/live');
+      revalidatePath('/admin/sequences');
+      return { success: true };
+    }
+  }
+
+  if (roleInMass) {
+    const { data: matchingItem } = await supabase
+      .from('sequence_items')
+      .select('id')
+      .eq('sequence_id', sequenceId)
+      .eq('role_in_mass', roleInMass)
+      .limit(1)
+      .maybeSingle();
+
+    if (matchingItem) {
+      const { error } = await supabase
+        .from('sequence_items')
+        .update({ song_id: newSongId })
+        .eq('id', matchingItem.id);
+
+      if (!error) {
+        revalidatePath('/live');
+        revalidatePath('/admin/sequences');
+        return { success: true };
+      }
+    }
+  }
+
+  return addSongToSequence(sequenceId, newSongId, roleInMass || undefined);
+}
+

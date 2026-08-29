@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client';
 import { ChordProRenderer, usePersistedFontSize, usePersistedFontWeight } from '@/components/ChordProRenderer';
 import Link from 'next/link';
-import { updateLiveSession } from '../admin/sequences/actions';
+import { updateLiveSession, substituteSequenceSong } from '../admin/sequences/actions';
 import { Navbar } from '@/components/Navbar';
 import { useToast } from '@/components/Toast';
 import {
@@ -143,7 +143,7 @@ export const LiveSessionClient = ({
   initialSession,
   initialSong,
   songs,
-  activeSequenceItems = [],
+  activeSequenceItems: initialSequenceItems = [],
 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -151,6 +151,7 @@ export const LiveSessionClient = ({
   const { addToast } = useToast();
 
   const [session, setSession] = useState<LiveSession | null>(initialSession);
+  const [activeSequenceItems, setActiveSequenceItems] = useState<any[]>(initialSequenceItems);
   const [globalActiveSong, setGlobalActiveSong] = useState<Song | null>(initialSong);
   const [previewSongId, setPreviewSongId] = useState<string | null>(null);
   const [connStatus, setConnStatus] = useState<ConnStatus>('connecting');
@@ -370,17 +371,49 @@ export const LiveSessionClient = ({
 
   const pendingNavTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Authoritative Director navigation (broadcasts to all connected choir members)
+  // Authoritative Director navigation (broadcasts to all connected choir members & synchronizes sequence)
   const handleDirectorNavigate = (songId: string | null) => {
     if (!session || !songId) return;
     const newSong = songs.find((s) => s.id === songId) || null;
 
-    // 1. Optimistic Local Update
+    // 1. Optimistic Local Update for active song
     setGlobalActiveSong(newSong);
     setPreviewSongId(null);
     setIsSearchModalOpen(false);
 
-    // 2. Debounce backend update to prevent HTTP 429 Rate Limit error on rapid clicks
+    // 2. Synchronize Sequence: If session is bound to a sequence and the song is substituted or not in sequence
+    if (session.sequence_id && newSong && !activeSequenceItems.some((i) => i.song_id === newSong.id)) {
+      const targetItem = activeItem || (activeSongMassRole ? activeSequenceItems.find(i => i.role_in_mass === activeSongMassRole || MASS_ROLE_LABELS[i.role_in_mass] === activeSongMassRole) : null);
+      const targetRoleId = targetItem?.role_in_mass || null;
+
+      if (targetItem) {
+        setActiveSequenceItems((prev) =>
+          prev.map((item) => (item.id === targetItem.id ? { ...item, song_id: newSong.id, songs: newSong } : item))
+        );
+      } else {
+        setActiveSequenceItems((prev) => [
+          ...prev,
+          {
+            id: `temp-${Date.now()}`,
+            sequence_id: session.sequence_id,
+            song_id: newSong.id,
+            order_index: prev.length,
+            role_in_mass: null,
+            songs: newSong,
+          },
+        ]);
+      }
+
+      // Persist sequence update in background
+      substituteSequenceSong(
+        session.sequence_id,
+        newSong.id,
+        targetItem?.id || null,
+        targetRoleId
+      ).catch((err) => console.error('Error synchronizing sequence item:', err));
+    }
+
+    // 3. Debounce backend update to prevent HTTP 429 Rate Limit error on rapid clicks
     if (pendingNavTimerRef.current) {
       clearTimeout(pendingNavTimerRef.current);
     }
@@ -465,6 +498,34 @@ export const LiveSessionClient = ({
           if (row.active_song_id) {
             const song = songs.find((s) => s.id === row.active_song_id) ?? null;
             setGlobalActiveSong(song);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sequence_items' },
+        (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as any;
+            const song = songs.find((s) => s.id === updated.song_id) ?? null;
+            setActiveSequenceItems((prev) =>
+              prev.map((item) =>
+                item.id === updated.id
+                  ? { ...item, song_id: updated.song_id, songs: song || item.songs }
+                  : item
+              )
+            );
+          } else if (payload.eventType === 'INSERT') {
+            const inserted = payload.new as any;
+            const song = songs.find((s) => s.id === inserted.song_id) ?? null;
+            setActiveSequenceItems((prev) => {
+              if (prev.some((item) => item.id === inserted.id)) return prev;
+              const nextList = [...prev, { ...inserted, songs: song }];
+              return nextList.sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+            });
+          } else if (payload.eventType === 'DELETE') {
+            const deleted = payload.old as any;
+            setActiveSequenceItems((prev) => prev.filter((item) => item.id !== deleted.id));
           }
         }
       )
