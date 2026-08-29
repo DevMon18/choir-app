@@ -4,11 +4,11 @@
 
 :root {
   --font-sans: var(--font-outfit), 'Outfit', system-ui, -apple-system, sans-serif;
-  --bg-gradient: radial-gradient(circle at 50% 0%, #fefdfa 0%, #f6f3e8 60%, #e8e2cf 100%);
-  --glass-bg: rgba(255, 254, 252, 0.72);
-  --glass-border: rgba(11, 77, 36, 0.08);
-  --glass-highlight: rgba(255, 255, 255, 0.96);
-  --glass-bg-hover: rgba(255, 254, 252, 0.92);
+  --bg-gradient: #f8f6f0;
+  --glass-bg: #ffffff;
+  --glass-border: rgba(11, 77, 36, 0.09);
+  --glass-highlight: #ffffff;
+  --glass-bg-hover: #ffffff;
   
   --primary: #0b4d24; /* Liturgical Forest Green from Logo */
   --primary-hover: #083719;
@@ -19,14 +19,14 @@
   
   --foreground: #111c14; /* Deep Forest Charcoal */
   --muted: #5c675e; /* Muted Sage-Charcoal */
-  --border: rgba(11, 77, 36, 0.08);
+  --border: rgba(11, 77, 36, 0.09);
   --success: #0b6623;
   --error: #9f1c1c;
   --warning: #b45309;
   
   --card-bg: #ffffff;
-  --card-shadow: 0 12px 48px -12px rgba(11, 77, 36, 0.12), 0 1px 3px 0 rgba(0, 0, 0, 0.01);
-  --hover-shadow: 0 24px 64px -10px rgba(11, 77, 36, 0.18), 0 8px 16px -8px rgba(0, 0, 0, 0.02);
+  --card-shadow: 0 10px 36px -8px rgba(11, 77, 36, 0.1), 0 2px 6px 0 rgba(0, 0, 0, 0.03);
+  --hover-shadow: 0 20px 52px -10px rgba(11, 77, 36, 0.16), 0 6px 14px -6px rgba(0, 0, 0, 0.04);
   --glow-shadow: 0 4px 16px rgba(11, 77, 36, 0.18);
 }
 
@@ -55,13 +55,7 @@ body {
 
 /* Background Ambient Orbs */
 .bg-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  z-index: -1;
-  opacity: 0.12;
-  pointer-events: none;
-  transition: all 1s ease;
+  display: none;
 }
 
 .bg-orb-1 {
@@ -80,18 +74,16 @@ body {
   background: radial-gradient(var(--accent), transparent);
 }
 
-/* Glassmorphism Card Container */
+/* Solid Card Container */
 .glass-container {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #ffffff !important;
+  opacity: 1 !important;
   border: 1px solid var(--glass-border);
   border-radius: 20px;
   box-shadow: var(--card-shadow);
   padding: 40px;
   transition: border-color 0.4s ease, box-shadow 0.4s ease;
   will-change: transform;
-  transform-style: preserve-3d;
 }
 
 .glass-container:hover {
@@ -432,24 +424,23 @@ input::-webkit-contacts-auto-fill-button {
   height: 0 !important;
 }
 
-/* Navigation bar */
+/* Navigation bar — Sticky & Solid */
 .nav-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 24px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #ffffff !important;
+  opacity: 1 !important;
   border: 1px solid var(--glass-border);
   border-radius: 16px;
-  box-shadow: var(--card-shadow);
-  margin: 16px auto;
+  box-shadow: 0 10px 30px -5px rgba(11, 77, 36, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+  margin: 12px auto;
   max-width: 1280px;
   width: calc(100% - 32px);
-  position: sticky;
-  top: 16px;
-  z-index: 100;
+  position: sticky !important;
+  top: 12px !important;
+  z-index: 1000 !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
 }
@@ -928,13 +919,18 @@ input::-webkit-contacts-auto-fill-button {
    MOBILE  ≤ 768px
 ────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Nav bar — slimmer on mobile and centered correctly */
+  /* Nav bar — slimmer on mobile, sticky, solid */
   .nav-bar {
     padding: 10px 16px;
-    margin: 10px 12px;
-    top: 10px;
+    margin: 8px 12px;
+    top: 8px !important;
+    position: sticky !important;
+    z-index: 1000 !important;
+    background: #ffffff !important;
+    opacity: 1 !important;
     border-radius: 12px;
     width: calc(100% - 24px) !important;
+    box-shadow: 0 8px 24px rgba(11, 77, 36, 0.12);
   }
   /* Hide desktop nav links on mobile */
   .nav-links {
@@ -1123,23 +1119,22 @@ input::-webkit-contacts-auto-fill-button {
     padding: 3px 8px;
   }
 
-  /* Mobile bottom tab bar */
+  /* Mobile bottom tab bar — Fixed & Solid */
   .mobile-bottom-bar {
     display: flex;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 200;
-    background: rgba(255, 254, 252, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    z-index: 1000;
+    background: #ffffff !important;
+    opacity: 1 !important;
     border-top: 1px solid var(--glass-border);
     padding: 8px 4px;
     padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
     justify-content: space-around;
     align-items: stretch;
-    box-shadow: 0 -4px 24px rgba(11, 77, 36, 0.07);
+    box-shadow: 0 -4px 24px rgba(11, 77, 36, 0.12);
   }
 
   .mobile-tab {
@@ -1800,8 +1795,9 @@ input::-webkit-contacts-auto-fill-button {
 ────────────────────────────────────────────── */
 .chat-main-container {
   flex: 1;
-  padding: 24px 16px 100px;
-  max-width: 860px;
+  min-height: 0;
+  padding: 8px 16px 16px;
+  max-width: 920px;
   margin: 0 auto;
   width: 100%;
   display: flex;
@@ -1811,13 +1807,15 @@ input::-webkit-contacts-auto-fill-button {
 .chat-glass-card {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 170px);
-  min-height: 480px;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   padding: 0 !important;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid var(--glass-border);
   box-shadow: var(--card-shadow);
+  position: relative;
 }
 
 .messages-inbox-container {

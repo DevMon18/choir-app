@@ -36,10 +36,10 @@ module.exports = {
         warning: '#b45309',
         card: '#ffffff',
         glass: {
-          bg: 'rgba(255, 254, 252, 0.72)',
-          'bg-hover': 'rgba(255, 254, 252, 0.92)',
-          border: 'rgba(11, 77, 36, 0.08)',
-          highlight: 'rgba(255, 255, 255, 0.96)',
+          bg: '#ffffff',
+          'bg-hover': '#ffffff',
+          border: 'rgba(11, 77, 36, 0.09)',
+          highlight: '#ffffff',
         },
       },
       fontFamily: {

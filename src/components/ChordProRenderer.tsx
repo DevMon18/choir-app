@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 // ---------------------------------------------------------------------------
 // Music theory helpers
@@ -119,12 +119,22 @@ export const ChordProRenderer = ({
 }: ChordProRendererProps) => {
   const lines = lyrics.split('\n');
 
+  // Check if any line in this song actually contains chords
+  const songHasChords = useMemo(() => {
+    return /\[[A-G][#b]?[^\]]*\]/.test(lyrics);
+  }, [lyrics]);
+
+  const shouldUseMonospace = showChords && songHasChords;
+
   return (
     <div
       style={{
-        fontFamily: MONOSPACE_FONT_FAMILY,
+        fontFamily: shouldUseMonospace
+          ? MONOSPACE_FONT_FAMILY
+          : 'var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         fontSize: `${fontSize}px`,
-        lineHeight: 1.6,
+        lineHeight: shouldUseMonospace ? 1.55 : 1.7,
+        letterSpacing: shouldUseMonospace ? 'normal' : '0.01em',
         whiteSpace: 'pre-wrap',
         overflowX: 'auto',
       }}
@@ -134,7 +144,7 @@ export const ChordProRenderer = ({
 
         // Blank line — spacer
         if (trimmed === '') {
-          return <div key={lineIdx} style={{ height: `${fontSize * 1.2}px` }} />;
+          return <div key={lineIdx} style={{ height: `${fontSize * 1.1}px` }} />;
         }
 
         // ChordPro directive lines like {comment: Verse 1} — render as section label
@@ -144,14 +154,14 @@ export const ChordProRenderer = ({
             <div
               key={lineIdx}
               style={{
-                fontSize: `${fontSize * 0.82}px`,
-                fontWeight: 700,
+                fontSize: `${fontSize * 0.78}px`,
+                fontWeight: 750,
                 color: 'var(--accent)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                marginTop: `${fontSize * 0.8}px`,
-                marginBottom: `${fontSize * 0.3}px`,
-                fontFamily: 'var(--font-sans)',
+                marginTop: `${fontSize * 0.9}px`,
+                marginBottom: `${fontSize * 0.35}px`,
+                fontFamily: 'var(--font-sans), system-ui, sans-serif',
               }}
             >
               {label}
@@ -163,7 +173,7 @@ export const ChordProRenderer = ({
         const { chordLine, lyricLine, hasChords } = processChordProLine(line, semitones);
 
         return (
-          <div key={lineIdx} style={{ marginBottom: hasChords && showChords ? '8px' : '3px' }}>
+          <div key={lineIdx} style={{ marginBottom: hasChords && showChords ? '8px' : '4px' }}>
             {/* Chord row */}
             {hasChords && showChords && (
               <div
@@ -173,7 +183,7 @@ export const ChordProRenderer = ({
                   fontWeight: Math.min(900, fontWeight + 100),
                   color: 'var(--primary)',
                   whiteSpace: 'pre',
-                  lineHeight: 1.2,
+                  lineHeight: 1.25,
                   overflowX: 'auto',
                 }}
               >
@@ -184,12 +194,14 @@ export const ChordProRenderer = ({
             {/* Lyric row */}
             <div
               style={{
-                fontFamily: MONOSPACE_FONT_FAMILY,
+                fontFamily: shouldUseMonospace
+                  ? MONOSPACE_FONT_FAMILY
+                  : 'inherit',
                 fontSize: `${fontSize}px`,
                 fontWeight: fontWeight,
                 color: 'var(--foreground)',
                 whiteSpace: 'pre-wrap',
-                lineHeight: 1.35,
+                lineHeight: shouldUseMonospace ? 1.35 : 1.6,
                 wordBreak: 'break-word',
               }}
             >

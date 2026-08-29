@@ -33,6 +33,7 @@ import {
   MoreVertical,
   X,
   Copy,
+  ChevronDown,
 } from 'lucide-react';
 
 const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
@@ -65,7 +66,9 @@ export const ChatClient: React.FC<Props> = ({
   const { addToast } = useToast();
   const supabase = createClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isInitialMount = useRef(true);
 
   const [messages, setMessages] = useState<MessageItem[]>(initialMessages);
   const [inputText, setInputText] = useState('');
@@ -73,6 +76,9 @@ export const ChatClient: React.FC<Props> = ({
   const [isConnected, setIsConnected] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingConv, setDeletingConv] = useState(false);
+
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [unreadWhileScrolled, setUnreadWhileScrolled] = useState(0);
 
   const [activeReply, setActiveReply] = useState<ReplySnippet | null>(null);
   const [openReactionMenuId, setOpenReactionMenuId] = useState<string | null>(null);
@@ -86,7 +92,27 @@ export const ChatClient: React.FC<Props> = ({
   const isSwipingHorizontally = useRef<boolean>(false);
 
   const scrollToBottom = (smooth = true) => {
-    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+    if (messagesAreaRef.current) {
+      messagesAreaRef.current.scrollTo({
+        top: messagesAreaRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+    }
+    setShowScrollToBottom(false);
+    setUnreadWhileScrolled(0);
+  };
+
+  const handleScroll = () => {
+    const el = messagesAreaRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const isNearBottom = distanceFromBottom < 100;
+    setShowScrollToBottom(!isNearBottom);
+    if (isNearBottom) {
+      setUnreadWhileScrolled(0);
+    }
   };
 
   const scrollToMessage = (msgId: string) => {
@@ -123,7 +149,19 @@ export const ChatClient: React.FC<Props> = ({
   }, [conversationId, markAsReadClient]);
 
   useEffect(() => {
-    scrollToBottom(true);
+    if (isInitialMount.current) {
+      scrollToBottom(false);
+      isInitialMount.current = false;
+    } else {
+      const el = messagesAreaRef.current;
+      if (!el) return;
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      if (distanceFromBottom < 160) {
+        scrollToBottom(true);
+      } else {
+        setUnreadWhileScrolled((prev) => prev + 1);
+      }
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -469,12 +507,15 @@ export const ChatClient: React.FC<Props> = ({
   };
 
   return (
-    <div className="chat-page-wrapper flex flex-col min-h-screen relative">
-      <Navbar profile={currentUserProfile} />
+    <div className="chat-page-wrapper h-[100dvh] max-h-[100dvh] w-full flex flex-col overflow-hidden relative bg-[#f8f6f0]">
+      <div className="shrink-0 z-30">
+        <Navbar profile={currentUserProfile} />
+      </div>
 
-      <main className="chat-main-container flex-1 max-w-[860px] mx-auto w-full p-3 sm:p-5 flex flex-col pb-[120px]">
-        <div className="glass-container chat-glass-card flex-1 flex flex-col overflow-hidden p-0 rounded-2xl bg-white/75 border border-glass-border shadow-lg">
-          <div className="chat-header-bar p-3.5 sm:py-3.5 sm:px-5 border-b border-glass-border flex items-center justify-between gap-3 bg-white/50">
+      <main className="chat-main-container flex-1 min-h-0 max-w-[920px] mx-auto w-full p-2 sm:p-4 flex flex-col">
+        <div className="glass-container chat-glass-card flex-1 min-h-0 flex flex-col overflow-hidden !p-0 rounded-2xl bg-white border border-glass-border shadow-xl relative">
+          {/* Pinned Chat Header Bar */}
+          <div className="chat-header-bar shrink-0 p-3 sm:py-3.5 sm:px-5 border-b border-glass-border flex items-center justify-between gap-3 bg-white z-10">
             <Link
               href="/messages"
               className="btn btn-secondary !py-1.5 !px-3 text-xs sm:text-[0.85rem] inline-flex items-center gap-1.5 rounded-lg shrink-0"
@@ -535,7 +576,12 @@ export const ChatClient: React.FC<Props> = ({
             </button>
           </div>
 
-          <div className="chat-messages-area flex-1 overflow-y-auto p-4 sm:p-5 flex flex-col gap-2 min-h-[350px]">
+          {/* Dedicated Scrollable Messages Viewport (ONLY THIS SCROLLS) */}
+          <div
+            ref={messagesAreaRef}
+            onScroll={handleScroll}
+            className="chat-messages-area flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 flex flex-col gap-2 bg-[#fdfcf9]"
+          >
             {messages.length === 0 ? (
               <div className="m-auto text-center text-muted py-10 px-5">
                 <div className="text-4xl mb-2">💬</div>
@@ -856,8 +902,27 @@ export const ChatClient: React.FC<Props> = ({
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Floating Scroll-to-Bottom Quick Button */}
+          {showScrollToBottom && (
+            <button
+              type="button"
+              onClick={() => scrollToBottom(true)}
+              className="absolute bottom-20 right-5 z-30 bg-primary text-white py-2 px-3.5 rounded-full shadow-xl hover:bg-primary-hover active:scale-95 transition-all flex items-center gap-1.5 text-xs font-bold border border-white/20 animate-in fade-in zoom-in duration-150 cursor-pointer"
+              title="Scroll to latest messages"
+            >
+              <ChevronDown size={16} />
+              <span>Latest</span>
+              {unreadWhileScrolled > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">
+                  {unreadWhileScrolled}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Active Reply Banner */}
           {activeReply && (
-            <div className="active-reply-banner p-2.5 px-4 bg-primary/6 border-t border-primary/15 flex items-center justify-between gap-3">
+            <div className="active-reply-banner shrink-0 p-2.5 px-4 bg-primary/6 border-t border-primary/15 flex items-center justify-between gap-3">
               <div className="active-reply-content flex-1 overflow-hidden">
                 <div className="active-reply-header flex items-center gap-1.5 text-xs text-primary font-semibold mb-0.5">
                   <Reply size={13} />
@@ -876,7 +941,8 @@ export const ChatClient: React.FC<Props> = ({
             </div>
           )}
 
-          <form onSubmit={handleSend} className="chat-input-bar p-3 sm:py-3 sm:px-4 border-t border-glass-border flex items-center gap-2 bg-white/70">
+          {/* Pinned Input Bar */}
+          <form onSubmit={handleSend} className="chat-input-bar shrink-0 p-2.5 sm:py-3 sm:px-4 border-t border-glass-border flex items-center gap-2 bg-white">
             <input
               ref={inputRef}
               type="text"
