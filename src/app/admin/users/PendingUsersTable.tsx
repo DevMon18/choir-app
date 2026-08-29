@@ -23,7 +23,7 @@ export const PendingUsersTable = ({
 }: PendingUsersTableProps) => {
   if (pendingUsers.length === 0) {
     return (
-      <div style={{ color: 'var(--muted)', textAlign: 'center', padding: '40px 0' }}>
+      <div className="text-muted text-center py-10">
         No pending signups found. All caught up!
       </div>
     );
@@ -55,25 +55,23 @@ export const PendingUsersTable = ({
               </td>
               <td data-label="Request Date">{new Date(user.created_at).toLocaleDateString()}</td>
               <td data-label="Actions">
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="flex gap-2.5">
                   {!user.email_confirmed ? (
-                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)', alignSelf: 'center' }}>
+                    <span className="text-xs sm:text-sm text-muted self-center">
                       Awaiting email confirmation
                     </span>
                   ) : (
                     <>
                       <button
                         onClick={() => onUpdateRole(user.profile_id, 'member')}
-                        className="btn btn-primary"
-                        style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                        className="btn btn-primary !py-1.5 !px-3 text-xs"
                         disabled={loadingId === user.profile_id}
                       >
                         {loadingId === user.profile_id ? 'Updating...' : 'Approve'}
                       </button>
                       <button
                         onClick={() => onUpdateRole(user.profile_id, 'rejected')}
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 12px', fontSize: '0.8rem', borderColor: 'var(--error)', color: 'var(--error)' }}
+                        className="btn btn-secondary !py-1.5 !px-3 text-xs !border-error !text-error"
                         disabled={loadingId === user.profile_id}
                       >
                         Reject

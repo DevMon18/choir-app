@@ -305,102 +305,39 @@ export const RepertoireClient = ({
       <Link
         key={song.id}
         href={`/repertoire/${song.id}`}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
-          borderRadius: '12px',
-          background: 'rgba(255, 255, 255, 0.88)',
-          border: '1px solid var(--glass-border)',
-          textDecoration: 'none',
-          color: 'inherit',
-          minHeight: '52px',
-          transition: 'all 0.15s ease',
-          gap: '12px',
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = '#ffffff';
-          (e.currentTarget as HTMLElement).style.boxShadow = 'var(--hover-shadow)';
-          (e.currentTarget as HTMLElement).style.borderColor = 'rgba(30,58,138,0.2)';
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.88)';
-          (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-          (e.currentTarget as HTMLElement).style.borderColor = 'var(--glass-border)';
-        }}
+        className="flex items-center justify-between py-3 px-4 rounded-xl bg-white/90 border border-glass-border text-inherit no-underline min-h-[52px] gap-3 transition-all hover:bg-white hover:shadow-card hover:border-primary/20"
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: 'rgba(30,58,138,0.08)',
-              color: 'var(--primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              marginTop: '2px',
-            }}
-          >
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-primary/8 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
             <Music size={17} />
           </div>
           
           {/* Main Title & Meta Sub-row */}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-            <h4
-              style={{
-                fontSize: '0.96rem',
-                fontWeight: 700,
-                color: 'var(--primary)',
-                margin: 0,
-                lineHeight: 1.35,
-                wordBreak: 'break-word',
-              }}
-            >
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
+            <h4 className="text-[0.96rem] font-bold text-primary m-0 leading-snug break-words">
               {song.title}
             </h4>
 
             {/* Sub-row: Composer & Category Badges */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
+            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
               {song.composer && (
-                <span
-                  style={{
-                    fontSize: '0.78rem',
-                    color: 'var(--muted)',
-                    fontWeight: 500,
-                    marginRight: '4px',
-                  }}
-                >
+                <span className="text-xs text-muted font-medium mr-1">
                   {song.composer}
                 </span>
               )}
 
               {tags.length > 0 && (
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <div className="flex gap-1 flex-wrap items-center">
                   {tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag.id}
-                      style={{
-                        fontSize: '0.66rem',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.03em',
-                        color: 'var(--primary)',
-                        background: 'rgba(30,58,138,0.08)',
-                        padding: '1px 7px',
-                        borderRadius: '10px',
-                        border: '1px solid rgba(30,58,138,0.12)',
-                        whiteSpace: 'nowrap',
-                      }}
+                      className="text-[0.66rem] font-bold uppercase tracking-wider text-primary bg-primary/8 py-0.5 px-2 rounded-full border border-primary/12 whitespace-nowrap"
                     >
                       {tag.name}
                     </span>
                   ))}
                   {tags.length > 3 && (
-                    <span style={{ fontSize: '0.66rem', color: 'var(--muted)', fontWeight: 600 }}>
+                    <span className="text-[0.66rem] text-muted font-semibold">
                       +{tags.length - 3}
                     </span>
                   )}
@@ -410,19 +347,7 @@ export const RepertoireClient = ({
               {song.lyrics && (
                 <span
                   title="ChordPro lyrics available"
-                  style={{
-                    fontSize: '0.66rem',
-                    fontWeight: 700,
-                    color: 'var(--accent)',
-                    background: 'rgba(217,119,6,0.08)',
-                    padding: '1px 7px',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(217,119,6,0.15)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '2px',
-                    whiteSpace: 'nowrap',
-                  }}
+                  className="text-[0.66rem] font-bold text-accent bg-accent/8 py-0.5 px-2 rounded-full border border-accent/15 inline-flex items-center gap-0.5 whitespace-nowrap"
                 >
                   Chords
                 </span>
@@ -431,7 +356,7 @@ export const RepertoireClient = ({
           </div>
         </div>
 
-        <ChevronRight size={18} style={{ color: 'var(--muted)', flexShrink: 0, alignSelf: 'center' }} />
+        <ChevronRight size={18} className="text-muted flex-shrink-0 self-center" />
       </Link>
     );
   };
@@ -454,67 +379,43 @@ export const RepertoireClient = ({
     : MASS_PART_SECTIONS.filter((p) => p.id === activeTab);
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+    <div ref={containerRef} className="flex flex-col min-h-screen relative">
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
 
       <Navbar profile={currentUserProfile} />
 
-      <main style={{ flex: 1, padding: '24px 16px 40px', maxWidth: '1040px', margin: '0 auto', width: '100%' }}>
+      <main className="flex-1 py-6 px-4 pb-10 max-w-[1040px] mx-auto w-full">
         {/* Header & Songbook Title */}
-        <div className="anim-header" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div className="anim-header mb-5 flex items-center justify-between flex-wrap gap-3">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <BookOpen size={22} style={{ color: 'var(--primary)' }} />
-              <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+            <div className="flex items-center gap-2 mb-1">
+              <BookOpen size={22} className="text-primary" />
+              <h1 className="text-2xl sm:text-[1.8rem] font-bold text-primary m-0">
                 Choir Songbook Repertoire
               </h1>
             </div>
-            <p style={{ color: 'var(--muted)', fontSize: '0.88rem', margin: 0 }}>
+            <p className="text-muted text-sm m-0">
               Flip directly to any Mass Part page or browse the A-Z Index without endless scrolling.
             </p>
           </div>
 
           {/* View Mode Toggle: Mass Parts vs A-Z Hymnal Index */}
-          <div style={{ display: 'flex', gap: '6px', background: 'rgba(0,0,0,0.06)', padding: '4px', borderRadius: '12px' }}>
+          <div className="flex gap-1.5 bg-black/6 p-1 rounded-xl">
             <button
               onClick={() => { setViewMode('MASS_PARTS'); setActiveTab('ALL'); }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 14px',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                border: 'none',
-                cursor: 'pointer',
-                background: viewMode === 'MASS_PARTS' ? '#ffffff' : 'transparent',
-                color: viewMode === 'MASS_PARTS' ? 'var(--primary)' : 'var(--muted)',
-                boxShadow: viewMode === 'MASS_PARTS' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-                transition: 'all 0.15s ease',
-              }}
+              className={`flex items-center gap-1.5 py-2 px-3.5 rounded-lg text-xs font-bold border-0 cursor-pointer transition-all ${
+                viewMode === 'MASS_PARTS' ? 'bg-white text-primary shadow-sm' : 'bg-transparent text-muted'
+              }`}
             >
               <Layers size={15} />
               Mass Parts View
             </button>
             <button
               onClick={() => setViewMode('AZ_INDEX')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 14px',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                border: 'none',
-                cursor: 'pointer',
-                background: viewMode === 'AZ_INDEX' ? '#ffffff' : 'transparent',
-                color: viewMode === 'AZ_INDEX' ? 'var(--primary)' : 'var(--muted)',
-                boxShadow: viewMode === 'AZ_INDEX' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-                transition: 'all 0.15s ease',
-              }}
+              className={`flex items-center gap-1.5 py-2 px-3.5 rounded-lg text-xs font-bold border-0 cursor-pointer transition-all ${
+                viewMode === 'AZ_INDEX' ? 'bg-white text-primary shadow-sm' : 'bg-transparent text-muted'
+              }`}
             >
               <SortAsc size={15} />
               A-Z Hymnal Index
@@ -523,59 +424,39 @@ export const RepertoireClient = ({
         </div>
 
         {/* Search Bar & Category Dropdown */}
-        <div className="anim-header" style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+        <div className="anim-header mb-5 flex flex-wrap gap-3 items-center">
           {/* Search Input */}
-          <div style={{ position: 'relative', flex: '1 1 280px', minWidth: '260px' }}>
+          <div className="relative flex-[1_1_280px] min-w-[260px]">
             <Search
               size={18}
-              style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', pointerEvents: 'none' }}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
             />
             <input
               ref={searchInputRef}
               type="text"
-              className="input-field"
+              className="input-field pl-10 pr-10 w-full min-h-[44px] text-sm"
               placeholder="Search title, composer, or lyrics… (/)"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              style={{ paddingLeft: '40px', paddingRight: searchValue ? '40px' : '16px', width: '100%', minHeight: '44px', fontSize: '0.9rem' }}
             />
             {searchValue && (
               <button
                 type="button"
                 onClick={() => setSearchValue('')}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--muted)',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-0 text-muted cursor-pointer p-1 flex items-center justify-center"
                 title="Clear search"
               >
                 <X size={16} />
               </button>
             )}
-          </div>          {/* Category Dropdown (Mass Parts Only) */}
-          <div style={{ position: 'relative', flex: '0 0 auto', minWidth: '220px' }}>
+          </div>
+
+          {/* Category Dropdown (Mass Parts Only) */}
+          <div className="relative flex-none min-w-[220px]">
             <select
-              className="input-field"
+              className="input-field w-full min-h-[44px] text-sm font-semibold text-foreground cursor-pointer"
               value={selectedCategoryFilter}
               onChange={(e) => handleSelectDropdownCategory(e.target.value)}
-              style={{
-                width: '100%',
-                minHeight: '44px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                color: 'var(--foreground)',
-                cursor: 'pointer',
-              }}
             >
               <option value="ALL">All Mass Parts ({songs.length} songs)</option>
               {MASS_PART_SECTIONS.map((part) => (
@@ -590,17 +471,7 @@ export const RepertoireClient = ({
           {(searchValue || selectedCategoryFilter !== 'ALL' || selectedCategoryTags.length > 0) && (
             <button
               onClick={handleClearAllFilters}
-              style={{
-                padding: '8px 14px',
-                borderRadius: '10px',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                color: 'var(--muted)',
-                background: 'rgba(0,0,0,0.05)',
-                border: 'none',
-                minHeight: '44px',
-                cursor: 'pointer',
-              }}
+              className="py-2 px-3.5 rounded-xl text-xs font-semibold text-muted bg-black/5 border-0 min-h-[44px] cursor-pointer hover:bg-black/10"
             >
               Clear Filter
             </button>
@@ -608,36 +479,16 @@ export const RepertoireClient = ({
 
           {/* Quick Collapse / Expand All Buttons */}
           {viewMode === 'MASS_PARTS' && selectedCategoryFilter === 'ALL' && !isSearching && (
-            <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto' }}>
+            <div className="flex gap-1.5 ml-auto">
               <button
                 onClick={collapseAllSections}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '10px',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  color: 'var(--muted)',
-                  background: 'rgba(0,0,0,0.05)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
+                className="py-2 px-3 rounded-xl text-xs font-semibold text-muted bg-black/5 border-0 cursor-pointer whitespace-nowrap hover:bg-black/10"
               >
                 Collapse All
               </button>
               <button
                 onClick={expandAllSections}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '10px',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  color: 'var(--muted)',
-                  background: 'rgba(0,0,0,0.05)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
+                className="py-2 px-3 rounded-xl text-xs font-semibold text-muted bg-black/5 border-0 cursor-pointer whitespace-nowrap hover:bg-black/10"
               >
                 Expand All
               </button>
@@ -647,60 +498,45 @@ export const RepertoireClient = ({
 
         {/* Results Counter Banner when searching */}
         {isSearching && (
-          <div style={{ marginBottom: '16px', fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 600 }}>
+          <div className="mb-4 text-sm text-muted font-semibold">
             Found {filteredSongs.length} {filteredSongs.length === 1 ? 'song' : 'songs'} matching "{searchValue.trim()}"
           </div>
         )}
 
         {/* Repertoire Content: Empty State */}
         {filteredSongs.length === 0 ? (
-          <div className="glass-container anim-section" style={{ textAlign: 'center', padding: '50px 20px' }}>
-            <Music size={42} style={{ margin: '0 auto 12px', color: 'var(--muted)' }} />
-            <p style={{ color: 'var(--muted)', fontSize: '1rem', margin: 0 }}>
+          <div className="glass-container anim-section text-center py-12 px-5">
+            <Music size={42} className="mx-auto mb-3 text-muted" />
+            <p className="text-muted text-base m-0">
               {searchValue || selectedCategoryFilter !== 'ALL'
                 ? 'No songs match your search query or selected category filter.'
                 : 'No songs in the repertoire yet.'}
             </p>
             {isAdmin && !searchValue && (
-              <Link href="/admin/songs" className="btn btn-primary" style={{ marginTop: '16px', display: 'inline-block' }}>
+              <Link href="/admin/songs" className="btn btn-primary mt-4 inline-block">
                 Add the first song
               </Link>
             )}
           </div>
         ) : viewMode === 'AZ_INDEX' ? (
           /* 🔤 ALPHABETICAL A-Z HYMNAL INDEX VIEW */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="flex flex-col gap-5">
             {Object.keys(alphabetMap).sort().map((letter) => {
               const letterSongs = alphabetMap[letter];
               return (
                 <div
                   key={letter}
-                  className="glass-container anim-section"
-                  style={{
-                    borderRadius: '14px',
-                    overflow: 'hidden',
-                    border: '1px solid var(--glass-border)',
-                    boxShadow: 'var(--card-shadow)',
-                  }}
+                  className="glass-container anim-section rounded-xl overflow-hidden border border-glass-border shadow-card"
                 >
-                  <div
-                    style={{
-                      padding: '10px 18px',
-                      background: 'rgba(30,58,138,0.06)',
-                      borderBottom: '1px solid var(--glass-border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}>
+                  <div className="py-2.5 px-4.5 bg-primary/6 border-b border-glass-border flex items-center justify-between">
+                    <span className="text-lg font-extrabold text-primary">
                       {letter}
                     </span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)' }}>
+                    <span className="text-xs font-semibold text-muted">
                       {letterSongs.length} {letterSongs.length === 1 ? 'song' : 'songs'}
                     </span>
                   </div>
-                  <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.25)' }}>
+                  <div className="p-3 pb-4 flex flex-col gap-2 bg-white/25">
                     {letterSongs.map((song) => renderSongRow(song))}
                   </div>
                 </div>
@@ -709,7 +545,7 @@ export const RepertoireClient = ({
           </div>
         ) : (
           /* 📖 LITURGICAL MASS PARTS VIEW (Page-by-Page / Accordion) */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="flex flex-col gap-4">
             {displaySections.map((part) => {
               const partSongs = filteredSongs.filter((s) => matchesMassPart(s, part.name, part.matchKeywords));
 
@@ -743,115 +579,78 @@ export const RepertoireClient = ({
                 <div
                   key={part.id}
                   id={`part-${part.id}`}
-                  className="glass-container anim-section"
-                  style={{
-                    borderRadius: '14px',
-                    overflow: 'visible',
-                    position: 'relative',
-                    zIndex: openFilterCardId === part.id ? 100 : 1,
-                    border: '1px solid var(--glass-border)',
-                    boxShadow: 'var(--card-shadow)',
-                  }}
+                  className={`glass-container anim-section rounded-xl border border-glass-border shadow-card relative overflow-visible ${
+                    openFilterCardId === part.id ? 'z-50' : 'z-0'
+                  }`}
                 >
                   {/* Section Header */}
                   <div
                     onClick={() => toggleSection(part.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '14px 18px',
-                      cursor: 'pointer',
-                      background: 'rgba(255, 255, 255, 0.75)',
-                      userSelect: 'none',
-                      borderRadius: isCollapsed ? '14px' : '14px 14px 0 0',
-                    }}
+                    className={`flex items-center justify-between py-3.5 px-4.5 cursor-pointer bg-white/75 select-none transition-colors ${
+                      isCollapsed ? 'rounded-xl' : 'rounded-t-xl'
+                    }`}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <BookOpen size={18} style={{ color: 'var(--primary)' }} />
-                      <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+                    <div className="flex items-center gap-2.5">
+                      <BookOpen size={18} className="text-primary" />
+                      <h2 className="text-base font-bold text-primary m-0">
                         {part.name}
                       </h2>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="flex items-center gap-2.5">
                       <span
-                        style={{
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                          background: tagFilteredPartSongs.length > 0 ? 'rgba(30,58,138,0.1)' : 'rgba(0,0,0,0.05)',
-                          color: tagFilteredPartSongs.length > 0 ? 'var(--primary)' : 'var(--muted)',
-                          padding: '2px 10px',
-                          borderRadius: '12px',
-                        }}
+                        className={`text-xs font-semibold py-0.5 px-2.5 rounded-full ${
+                          tagFilteredPartSongs.length > 0 ? 'bg-primary/10 text-primary' : 'bg-black/5 text-muted'
+                        }`}
                       >
                         {tagFilteredPartSongs.length} {tagFilteredPartSongs.length === 1 ? 'song' : 'songs'}
                       </span>
-                      {isCollapsed ? <ChevronDown size={18} style={{ color: 'var(--muted)' }} /> : <ChevronUp size={18} style={{ color: 'var(--muted)' }} />}
+                      {isCollapsed ? <ChevronDown size={18} className="text-muted" /> : <ChevronUp size={18} className="text-muted" />}
                     </div>
                   </div>
 
                   {/* Section Songs List & Category Tags with Filter Funnel Button */}
                   {!isCollapsed && (
-                    <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.25)', borderRadius: '0 0 14px 14px' }}>
+                    <div className="p-3 pb-4 flex flex-col gap-2 bg-white/25 rounded-b-xl">
                       {/* Category Tags Line with Funnel Filter Button (Rendered on ALL Mass Part Cards) */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '6px', paddingBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      <div className="flex items-center justify-between gap-2 mb-1.5 pb-2 border-b border-black/6">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[0.72rem] font-bold text-muted uppercase tracking-wider">
                             CATEGORY TAGS:
                           </span>
                           {sectionCategoryTags.length > 0 ? (
                             sectionCategoryTags.map((tag) => (
                               <span
                                 key={tag}
-                                style={{
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
-                                  padding: '2px 8px',
-                                  borderRadius: '10px',
-                                  background: 'rgba(30,58,138,0.06)',
-                                  color: 'var(--primary)',
-                                  letterSpacing: '0.02em',
-                                  cursor: 'default',
-                                  userSelect: 'none',
-                                }}
+                                className="text-[0.72rem] font-bold py-0.5 px-2 rounded-full bg-primary/6 text-primary tracking-wide cursor-default select-none"
                               >
                                 {tag}
                               </span>
                             ))
                           ) : (
-                            <span style={{ fontSize: '0.72rem', fontStyle: 'italic', color: 'var(--muted)' }}>None</span>
+                            <span className="text-[0.72rem] italic text-muted">None</span>
                           )}
                         </div>
 
                         {/* Funnel Filter Button on ALL Mass Part Cards */}
-                        <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <div className="relative flex-shrink-0">
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               setOpenFilterCardId((prev) => (prev === part.id ? null : part.id));
                             }}
-                            style={{
-                              padding: '3px 10px',
-                              borderRadius: '10px',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              border: selectedCategoryTags.length > 0 ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.12)',
-                              background: selectedCategoryTags.length > 0 ? 'rgba(30,58,138,0.1)' : '#ffffff',
-                              color: selectedCategoryTags.length > 0 ? 'var(--primary)' : 'var(--foreground)',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                            }}
+                            className={`py-1 px-2.5 rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1.5 shadow-sm transition-all ${
+                              selectedCategoryTags.length > 0
+                                ? 'border border-primary bg-primary/10 text-primary'
+                                : 'border border-black/12 bg-white text-foreground hover:bg-slate-50'
+                            }`}
                             title="Filter card by multiple category tags"
                           >
-                            <Filter size={13} style={{ color: selectedCategoryTags.length > 0 ? 'var(--primary)' : 'var(--muted)' }} />
+                            <Filter size={13} className={selectedCategoryTags.length > 0 ? 'text-primary' : 'text-muted'} />
                             <span>Filter</span>
                             {selectedCategoryTags.length > 0 && (
-                              <span style={{ fontSize: '0.68rem', fontWeight: 700, background: 'var(--primary)', color: '#ffffff', padding: '0 5px', borderRadius: '8px' }}>
+                              <span className="text-[0.68rem] font-bold bg-primary text-white px-1.5 rounded-full">
                                 {selectedCategoryTags.length}
                               </span>
                             )}
@@ -861,68 +660,44 @@ export const RepertoireClient = ({
                           {openFilterCardId === part.id && (
                             <div
                               onClick={(e) => e.stopPropagation()}
-                              style={{
-                                position: 'absolute',
-                                top: 'calc(100% + 6px)',
-                                right: 0,
-                                zIndex: 9999,
-                                width: '230px',
-                                background: '#ffffff',
-                                borderRadius: '12px',
-                                border: '1px solid rgba(0,0,0,0.12)',
-                                boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
-                                padding: '10px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '6px',
-                              }}
+                              className="absolute top-[calc(100%+6px)] right-0 z-50 w-56 bg-white rounded-xl border border-black/12 shadow-2xl p-2.5 flex flex-col gap-1.5"
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '4px' }}>
-                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--foreground)' }}>Filter Categories</span>
+                              <div className="flex items-center justify-between border-b border-black/6 pb-1">
+                                <span className="text-xs font-bold text-foreground">Filter Categories</span>
                                 {selectedCategoryTags.length > 0 && (
                                   <button
                                     type="button"
                                     onClick={clearCategoryTags}
-                                    style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                                    className="text-[0.7rem] font-semibold text-muted bg-transparent border-0 cursor-pointer hover:text-foreground"
                                   >
                                     Reset
                                   </button>
                                 )}
                               </div>
 
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '180px', overflowY: 'auto' }}>
+                              <div className="flex flex-col gap-1 max-h-44 overflow-y-auto">
                                 {tagCategoryNames.length > 0 ? (
                                   tagCategoryNames.map((catName) => {
                                     const isChecked = selectedCategoryTags.includes(catName);
                                     return (
                                       <label
                                         key={catName}
-                                        style={{
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          gap: '8px',
-                                          fontSize: '0.78rem',
-                                          fontWeight: 500,
-                                          color: 'var(--foreground)',
-                                          cursor: 'pointer',
-                                          padding: '3px 6px',
-                                          borderRadius: '6px',
-                                          userSelect: 'none',
-                                          background: isChecked ? 'rgba(30,58,138,0.06)' : 'transparent',
-                                        }}
+                                        className={`flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer py-1 px-1.5 rounded-md select-none transition-colors ${
+                                          isChecked ? 'bg-primary/6' : 'hover:bg-slate-50'
+                                        }`}
                                       >
                                         <input
                                           type="checkbox"
                                           checked={isChecked}
                                           onChange={() => toggleCategoryTag(catName)}
-                                          style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
+                                          className="accent-primary cursor-pointer"
                                         />
                                         <span>{catName}</span>
                                       </label>
                                     );
                                   })
                                 ) : (
-                                  <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontStyle: 'italic', padding: '4px 6px' }}>
+                                  <span className="text-xs text-muted italic p-1">
                                     No non-Mass Part category tags created yet.
                                   </span>
                                 )}
@@ -938,37 +713,21 @@ export const RepertoireClient = ({
 
                           {/* Card Pagination Bar */}
                           {totalPartPages > 1 && (
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                marginTop: '8px',
-                                paddingTop: '10px',
-                                borderTop: '1px solid rgba(0,0,0,0.06)',
-                                gap: '8px',
-                                flexWrap: 'wrap',
-                              }}
-                            >
-                              <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 600 }}>
+                            <div className="flex items-center justify-between mt-2 pt-2.5 border-t border-black/6 gap-2 flex-wrap">
+                              <span className="text-xs text-muted font-semibold">
                                 Showing {(currentPartPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPartPage * ITEMS_PER_PAGE, totalPartSongs)} of {totalPartSongs}
                               </span>
 
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <div className="flex items-center gap-1">
                                 <button
                                   type="button"
                                   disabled={currentPartPage <= 1}
                                   onClick={() => setCardPage(part.id, currentPartPage - 1)}
-                                  style={{
-                                    padding: '3px 10px',
-                                    borderRadius: '8px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 600,
-                                    border: '1px solid rgba(0,0,0,0.12)',
-                                    background: currentPartPage <= 1 ? 'rgba(0,0,0,0.03)' : '#ffffff',
-                                    color: currentPartPage <= 1 ? 'var(--muted)' : 'var(--foreground)',
-                                    cursor: currentPartPage <= 1 ? 'not-allowed' : 'pointer',
-                                  }}
+                                  className={`py-1 px-2.5 rounded-lg text-xs font-semibold border ${
+                                    currentPartPage <= 1
+                                      ? 'border-black/10 bg-black/3 text-muted cursor-not-allowed'
+                                      : 'border-black/12 bg-white text-foreground cursor-pointer hover:bg-slate-50'
+                                  }`}
                                 >
                                   Prev
                                 </button>
@@ -978,16 +737,11 @@ export const RepertoireClient = ({
                                     key={pageNum}
                                     type="button"
                                     onClick={() => setCardPage(part.id, pageNum)}
-                                    style={{
-                                      padding: '3px 8px',
-                                      borderRadius: '8px',
-                                      fontSize: '0.75rem',
-                                      fontWeight: pageNum === currentPartPage ? 700 : 500,
-                                      border: pageNum === currentPartPage ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.12)',
-                                      background: pageNum === currentPartPage ? 'var(--primary)' : '#ffffff',
-                                      color: pageNum === currentPartPage ? '#ffffff' : 'var(--foreground)',
-                                      cursor: 'pointer',
-                                    }}
+                                    className={`py-1 px-2 rounded-lg text-xs cursor-pointer ${
+                                      pageNum === currentPartPage
+                                        ? 'font-bold border border-primary bg-primary text-white'
+                                        : 'font-medium border border-black/12 bg-white text-foreground hover:bg-slate-50'
+                                    }`}
                                   >
                                     {pageNum}
                                   </button>
@@ -997,16 +751,11 @@ export const RepertoireClient = ({
                                   type="button"
                                   disabled={currentPartPage >= totalPartPages}
                                   onClick={() => setCardPage(part.id, currentPartPage + 1)}
-                                  style={{
-                                    padding: '3px 10px',
-                                    borderRadius: '8px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 600,
-                                    border: '1px solid rgba(0,0,0,0.12)',
-                                    background: currentPartPage >= totalPartPages ? 'rgba(0,0,0,0.03)' : '#ffffff',
-                                    color: currentPartPage >= totalPartPages ? 'var(--muted)' : 'var(--foreground)',
-                                    cursor: currentPartPage >= totalPartPages ? 'not-allowed' : 'pointer',
-                                  }}
+                                  className={`py-1 px-2.5 rounded-lg text-xs font-semibold border ${
+                                    currentPartPage >= totalPartPages
+                                      ? 'border-black/10 bg-black/3 text-muted cursor-not-allowed'
+                                      : 'border-black/12 bg-white text-foreground cursor-pointer hover:bg-slate-50'
+                                  }`}
                                 >
                                   Next
                                 </button>
@@ -1015,7 +764,7 @@ export const RepertoireClient = ({
                           )}
                         </>
                       ) : (
-                        <p style={{ fontSize: '0.82rem', color: 'var(--muted)', margin: 0, fontStyle: 'italic', padding: '4px 0' }}>
+                        <p className="text-xs text-muted m-0 italic py-1">
                           No songs match the selected tag filter.
                         </p>
                       )}
@@ -1048,112 +797,75 @@ export const RepertoireClient = ({
 
               return (
                 <div
-                  className="glass-container anim-section"
-                  style={{
-                    borderRadius: '14px',
-                    overflow: 'visible',
-                    position: 'relative',
-                    zIndex: openFilterCardId === 'other-songs' ? 100 : 1,
-                    border: '1px solid var(--glass-border)',
-                    boxShadow: 'var(--card-shadow)',
-                  }}
+                  className={`glass-container anim-section rounded-xl border border-glass-border shadow-card relative overflow-visible ${
+                    openFilterCardId === 'other-songs' ? 'z-50' : 'z-0'
+                  }`}
                 >
                   <div
                     onClick={() => toggleSection('other-songs')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '14px 18px',
-                      cursor: 'pointer',
-                      background: 'rgba(255, 255, 255, 0.75)',
-                      userSelect: 'none',
-                      borderRadius: isCollapsed ? '14px' : '14px 14px 0 0',
-                    }}
+                    className={`flex items-center justify-between py-3.5 px-4.5 cursor-pointer bg-white/75 select-none transition-colors ${
+                      isCollapsed ? 'rounded-xl' : 'rounded-t-xl'
+                    }`}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Music size={18} style={{ color: 'var(--foreground)' }} />
-                      <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                    <div className="flex items-center gap-2.5">
+                      <Music size={18} className="text-foreground" />
+                      <h2 className="text-base font-bold text-foreground m-0">
                         Other Repertoire Songs
                       </h2>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="flex items-center gap-2.5">
                       <span
-                        style={{
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                          background: tagFilteredOtherSongs.length > 0 ? 'rgba(30,58,138,0.1)' : 'rgba(0,0,0,0.05)',
-                          color: tagFilteredOtherSongs.length > 0 ? 'var(--primary)' : 'var(--muted)',
-                          padding: '2px 10px',
-                          borderRadius: '12px',
-                        }}
+                        className={`text-xs font-semibold py-0.5 px-2.5 rounded-full ${
+                          tagFilteredOtherSongs.length > 0 ? 'bg-primary/10 text-primary' : 'bg-black/5 text-muted'
+                        }`}
                       >
                         {tagFilteredOtherSongs.length} {tagFilteredOtherSongs.length === 1 ? 'song' : 'songs'}
                       </span>
-                      {isCollapsed ? <ChevronDown size={18} style={{ color: 'var(--muted)' }} /> : <ChevronUp size={18} style={{ color: 'var(--muted)' }} />}
+                      {isCollapsed ? <ChevronDown size={18} className="text-muted" /> : <ChevronUp size={18} className="text-muted" />}
                     </div>
                   </div>
 
                   {!isCollapsed && (
-                    <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.25)', borderRadius: '0 0 14px 14px' }}>
+                    <div className="p-3 pb-4 flex flex-col gap-2 bg-white/25 rounded-b-xl">
                       {/* Category Tags Line with Funnel Filter Button */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '6px', paddingBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      <div className="flex items-center justify-between gap-2 mb-1.5 pb-2 border-b border-black/6">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[0.72rem] font-bold text-muted uppercase tracking-wider">
                             CATEGORY TAGS:
                           </span>
                           {otherCategoryTags.length > 0 ? (
                             otherCategoryTags.map((tag) => (
                               <span
                                 key={tag}
-                                style={{
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
-                                  padding: '2px 8px',
-                                  borderRadius: '10px',
-                                  background: 'rgba(30,58,138,0.06)',
-                                  color: 'var(--primary)',
-                                  letterSpacing: '0.02em',
-                                  cursor: 'default',
-                                  userSelect: 'none',
-                                }}
+                                className="text-[0.72rem] font-bold py-0.5 px-2 rounded-full bg-primary/6 text-primary tracking-wide cursor-default select-none"
                               >
                                 {tag}
                               </span>
                             ))
                           ) : (
-                            <span style={{ fontSize: '0.72rem', fontStyle: 'italic', color: 'var(--muted)' }}>None</span>
+                            <span className="text-[0.72rem] italic text-muted">None</span>
                           )}
                         </div>
 
                         {/* Funnel Filter Button inside Card */}
-                        <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <div className="relative flex-shrink-0">
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               setOpenFilterCardId((prev) => (prev === 'other-songs' ? null : 'other-songs'));
                             }}
-                            style={{
-                              padding: '3px 10px',
-                              borderRadius: '10px',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              border: selectedCategoryTags.length > 0 ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.12)',
-                              background: selectedCategoryTags.length > 0 ? 'rgba(30,58,138,0.1)' : '#ffffff',
-                              color: selectedCategoryTags.length > 0 ? 'var(--primary)' : 'var(--foreground)',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                            }}
+                            className={`py-1 px-2.5 rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1.5 shadow-sm transition-all ${
+                              selectedCategoryTags.length > 0
+                                ? 'border border-primary bg-primary/10 text-primary'
+                                : 'border border-black/12 bg-white text-foreground hover:bg-slate-50'
+                            }`}
                             title="Filter card by multiple category tags"
                           >
-                            <Filter size={13} style={{ color: selectedCategoryTags.length > 0 ? 'var(--primary)' : 'var(--muted)' }} />
+                            <Filter size={13} className={selectedCategoryTags.length > 0 ? 'text-primary' : 'text-muted'} />
                             <span>Filter</span>
                             {selectedCategoryTags.length > 0 && (
-                              <span style={{ fontSize: '0.68rem', fontWeight: 700, background: 'var(--primary)', color: '#ffffff', padding: '0 5px', borderRadius: '8px' }}>
+                              <span className="text-[0.68rem] font-bold bg-primary text-white px-1.5 rounded-full">
                                 {selectedCategoryTags.length}
                               </span>
                             )}
@@ -1163,68 +875,44 @@ export const RepertoireClient = ({
                           {openFilterCardId === 'other-songs' && (
                             <div
                               onClick={(e) => e.stopPropagation()}
-                              style={{
-                                position: 'absolute',
-                                top: 'calc(100% + 6px)',
-                                right: 0,
-                                zIndex: 9999,
-                                width: '230px',
-                                background: '#ffffff',
-                                borderRadius: '12px',
-                                border: '1px solid rgba(0,0,0,0.12)',
-                                boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
-                                padding: '10px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '6px',
-                              }}
+                              className="absolute top-[calc(100%+6px)] right-0 z-50 w-56 bg-white rounded-xl border border-black/12 shadow-2xl p-2.5 flex flex-col gap-1.5"
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '4px' }}>
-                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--foreground)' }}>Filter Categories</span>
+                              <div className="flex items-center justify-between border-b border-black/6 pb-1">
+                                <span className="text-xs font-bold text-foreground">Filter Categories</span>
                                 {selectedCategoryTags.length > 0 && (
                                   <button
                                     type="button"
                                     onClick={clearCategoryTags}
-                                    style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                                    className="text-[0.7rem] font-semibold text-muted bg-transparent border-0 cursor-pointer hover:text-foreground"
                                   >
                                     Reset
                                   </button>
                                 )}
                               </div>
 
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '180px', overflowY: 'auto' }}>
+                              <div className="flex flex-col gap-1 max-h-44 overflow-y-auto">
                                 {tagCategoryNames.length > 0 ? (
                                   tagCategoryNames.map((catName) => {
                                     const isChecked = selectedCategoryTags.includes(catName);
                                     return (
                                       <label
                                         key={catName}
-                                        style={{
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          gap: '8px',
-                                          fontSize: '0.78rem',
-                                          fontWeight: 500,
-                                          color: 'var(--foreground)',
-                                          cursor: 'pointer',
-                                          padding: '3px 6px',
-                                          borderRadius: '6px',
-                                          userSelect: 'none',
-                                          background: isChecked ? 'rgba(30,58,138,0.06)' : 'transparent',
-                                        }}
+                                        className={`flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer py-1 px-1.5 rounded-md select-none transition-colors ${
+                                          isChecked ? 'bg-primary/6' : 'hover:bg-slate-50'
+                                        }`}
                                       >
                                         <input
                                           type="checkbox"
                                           checked={isChecked}
                                           onChange={() => toggleCategoryTag(catName)}
-                                          style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
+                                          className="accent-primary cursor-pointer"
                                         />
                                         <span>{catName}</span>
                                       </label>
                                     );
                                   })
                                 ) : (
-                                  <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontStyle: 'italic', padding: '4px 6px' }}>
+                                  <span className="text-xs text-muted italic p-1">
                                     No non-Mass Part category tags created yet.
                                   </span>
                                 )}
@@ -1240,37 +928,21 @@ export const RepertoireClient = ({
 
                           {/* Card Pagination Bar */}
                           {totalOtherPages > 1 && (
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                marginTop: '8px',
-                                paddingTop: '10px',
-                                borderTop: '1px solid rgba(0,0,0,0.06)',
-                                gap: '8px',
-                                flexWrap: 'wrap',
-                              }}
-                            >
-                              <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 600 }}>
+                            <div className="flex items-center justify-between mt-2 pt-2.5 border-t border-black/6 gap-2 flex-wrap">
+                              <span className="text-xs text-muted font-semibold">
                                 Showing {(currentOtherPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentOtherPage * ITEMS_PER_PAGE, totalOtherSongs)} of {totalOtherSongs}
                               </span>
 
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <div className="flex items-center gap-1">
                                 <button
                                   type="button"
                                   disabled={currentOtherPage <= 1}
                                   onClick={() => setCardPage('other-songs', currentOtherPage - 1)}
-                                  style={{
-                                    padding: '3px 10px',
-                                    borderRadius: '8px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 600,
-                                    border: '1px solid rgba(0,0,0,0.12)',
-                                    background: currentOtherPage <= 1 ? 'rgba(0,0,0,0.03)' : '#ffffff',
-                                    color: currentOtherPage <= 1 ? 'var(--muted)' : 'var(--foreground)',
-                                    cursor: currentOtherPage <= 1 ? 'not-allowed' : 'pointer',
-                                  }}
+                                  className={`py-1 px-2.5 rounded-lg text-xs font-semibold border ${
+                                    currentOtherPage <= 1
+                                      ? 'border-black/10 bg-black/3 text-muted cursor-not-allowed'
+                                      : 'border-black/12 bg-white text-foreground cursor-pointer hover:bg-slate-50'
+                                  }`}
                                 >
                                   Prev
                                 </button>
@@ -1280,16 +952,11 @@ export const RepertoireClient = ({
                                     key={pageNum}
                                     type="button"
                                     onClick={() => setCardPage('other-songs', pageNum)}
-                                    style={{
-                                      padding: '3px 8px',
-                                      borderRadius: '8px',
-                                      fontSize: '0.75rem',
-                                      fontWeight: pageNum === currentOtherPage ? 700 : 500,
-                                      border: pageNum === currentOtherPage ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.12)',
-                                      background: pageNum === currentOtherPage ? 'var(--primary)' : '#ffffff',
-                                      color: pageNum === currentOtherPage ? '#ffffff' : 'var(--foreground)',
-                                      cursor: 'pointer',
-                                    }}
+                                    className={`py-1 px-2 rounded-lg text-xs cursor-pointer ${
+                                      pageNum === currentOtherPage
+                                        ? 'font-bold border border-primary bg-primary text-white'
+                                        : 'font-medium border border-black/12 bg-white text-foreground hover:bg-slate-50'
+                                    }`}
                                   >
                                     {pageNum}
                                   </button>
@@ -1299,16 +966,11 @@ export const RepertoireClient = ({
                                   type="button"
                                   disabled={currentOtherPage >= totalOtherPages}
                                   onClick={() => setCardPage('other-songs', currentOtherPage + 1)}
-                                  style={{
-                                    padding: '3px 10px',
-                                    borderRadius: '8px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 600,
-                                    border: '1px solid rgba(0,0,0,0.12)',
-                                    background: currentOtherPage >= totalOtherPages ? 'rgba(0,0,0,0.03)' : '#ffffff',
-                                    color: currentOtherPage >= totalOtherPages ? 'var(--muted)' : 'var(--foreground)',
-                                    cursor: currentOtherPage >= totalOtherPages ? 'not-allowed' : 'pointer',
-                                  }}
+                                  className={`py-1 px-2.5 rounded-lg text-xs font-semibold border ${
+                                    currentOtherPage >= totalOtherPages
+                                      ? 'border-black/10 bg-black/3 text-muted cursor-not-allowed'
+                                      : 'border-black/12 bg-white text-foreground cursor-pointer hover:bg-slate-50'
+                                  }`}
                                 >
                                   Next
                                 </button>
@@ -1317,7 +979,7 @@ export const RepertoireClient = ({
                           )}
                         </>
                       ) : (
-                        <p style={{ fontSize: '0.82rem', color: 'var(--muted)', margin: 0, fontStyle: 'italic', padding: '4px 0' }}>
+                        <p className="text-xs text-muted m-0 italic py-1">
                           No songs match the selected tag filter.
                         </p>
                       )}

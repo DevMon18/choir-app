@@ -2,22 +2,14 @@ import React from 'react';
 
 export default function ChatLoading() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '16px' }}>
+    <div className="flex flex-col h-screen p-4">
       {/* Top Header skeleton */}
-      <div
-        style={{
-          height: '60px',
-          borderRadius: '12px',
-          background: 'rgba(255, 255, 255, 0.5)',
-          marginBottom: '16px',
-          animation: 'pulse 1.5s infinite ease-in-out',
-        }}
-      />
+      <div className="h-[60px] rounded-xl bg-white/50 mb-4 animate-pulse" />
       {/* Chat messages list skeleton */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'flex-end' }}>
-        <div style={{ width: '60%', height: '48px', borderRadius: '16px', background: 'rgba(0,0,0,0.05)', alignSelf: 'flex-start', animation: 'pulse 1.5s infinite ease-in-out' }} />
-        <div style={{ width: '50%', height: '48px', borderRadius: '16px', background: 'rgba(11, 77, 36, 0.1)', alignSelf: 'flex-end', animation: 'pulse 1.5s infinite ease-in-out' }} />
-        <div style={{ width: '70%', height: '48px', borderRadius: '16px', background: 'rgba(0,0,0,0.05)', alignSelf: 'flex-start', animation: 'pulse 1.5s infinite ease-in-out' }} />
+      <div className="flex-1 flex flex-col gap-3 justify-end">
+        <div className="w-[60%] h-12 rounded-2xl bg-black/5 self-start animate-pulse" />
+        <div className="w-[50%] h-12 rounded-2xl bg-primary/10 self-end animate-pulse" />
+        <div className="w-[70%] h-12 rounded-2xl bg-black/5 self-start animate-pulse" />
       </div>
     </div>
   );

@@ -146,68 +146,24 @@ export const MergeTasksModal: React.FC<MergeTasksModalProps> = ({
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.72)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.2s ease',
-      }}
+      className="fixed inset-0 bg-black/75 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        style={{
-          width: '100%',
-          maxWidth: '680px',
-          maxHeight: '90vh',
-          background: '#ffffff',
-          borderRadius: '24px',
-          border: '1px solid rgba(11, 77, 36, 0.16)',
-          boxShadow: '0 30px 80px rgba(0, 0, 0, 0.45)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        }}
+        className="w-full max-w-[680px] max-h-[90vh] bg-white rounded-3xl border border-primary/16 shadow-2xl flex flex-col overflow-hidden animate-slideUpModal"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div
-          style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid rgba(11, 77, 36, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                background: '#2563eb',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
-              }}
-            >
+        <div className="py-5 px-6 border-b border-primary/10 flex items-center justify-between bg-gradient-to-br from-blue-50 to-blue-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/25">
               <GitMerge size={20} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#1e3a8a' }}>
+              <h2 className="text-lg font-extrabold m-0 text-blue-900">
                 Merge & Consolidate Tasks
               </h2>
-              <p style={{ fontSize: '0.8rem', color: '#3b82f6', margin: '2px 0 0' }}>
+              <p className="text-xs text-blue-600 mt-0.5 mb-0">
                 Combine duplicate tasks into one master task without losing member progress
               </p>
             </div>
@@ -215,21 +171,7 @@ export const MergeTasksModal: React.FC<MergeTasksModalProps> = ({
 
           <button
             onClick={onClose}
-            className="btn btn-secondary"
-            style={{
-              width: '34px',
-              height: '34px',
-              padding: 0,
-              borderRadius: '50%',
-              minHeight: 'auto',
-              border: '1px solid rgba(37, 99, 235, 0.2)',
-              background: '#ffffff',
-              color: '#1e3a8a',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
+            className="btn btn-secondary !w-[34px] !h-[34px] !p-0 !rounded-full !min-h-0 !border-blue-600/20 bg-white text-blue-900 flex items-center justify-center cursor-pointer"
             aria-label="Close modal"
           >
             <X size={16} />
@@ -237,14 +179,14 @@ export const MergeTasksModal: React.FC<MergeTasksModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={handleMerge} style={{ flex: 1, overflowY: 'auto', padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <form onSubmit={handleMerge} className="flex-1 overflow-y-auto p-5 sm:py-5.5 sm:px-6 flex flex-col gap-4.5">
           {/* Step 1: Select Primary Target Task */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 800, color: '#111c14', marginBottom: '6px' }}>
-              1. Keep as Primary Master Task <span style={{ color: 'var(--error)' }}>*</span>
+            <label className="block text-xs sm:text-sm font-extrabold text-foreground mb-1.5">
+              1. Keep as Primary Master Task <span className="text-error">*</span>
             </label>
             <select
-              className="input-field"
+              className="input-field w-full !py-2.5 !px-3.5 !rounded-xl bg-white text-foreground text-sm"
               value={targetTaskId}
               onChange={(e) => {
                 const newTargetId = e.target.value;
@@ -254,7 +196,6 @@ export const MergeTasksModal: React.FC<MergeTasksModalProps> = ({
                 // Remove new target from sourceTaskIds if present
                 setSourceTaskIds((prev) => prev.filter((id) => id !== newTargetId));
               }}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', background: '#ffffff', color: '#111c14', fontSize: '0.9rem' }}
             >
               {activeTasks.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -266,52 +207,36 @@ export const MergeTasksModal: React.FC<MergeTasksModalProps> = ({
 
           {/* Step 2: Final Task Title */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#5c675e', marginBottom: '6px' }}>
+            <label className="block text-xs sm:text-sm font-bold text-muted mb-1.5">
               Consolidated Task Title
             </label>
             <input
               type="text"
-              className="input-field"
+              className="input-field w-full !py-2.5 !px-3.5 !rounded-xl bg-white text-foreground"
               value={customTitle}
               onChange={(e) => setCustomTitle(e.target.value)}
               placeholder="e.g. Recollection Materials"
-              style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', background: '#ffffff', color: '#111c14' }}
             />
           </div>
 
           {/* Step 3: Select Duplicate Tasks to Merge */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-              <label style={{ fontSize: '0.86rem', fontWeight: 800, color: '#111c14' }}>
+            <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
+              <label className="text-xs sm:text-sm font-extrabold text-foreground">
                 2. Select Tasks to Merge into Primary ({sourceTaskIds.length} Selected)
               </label>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={selectAllSources}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#2563eb',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                  }}
+                  className="bg-transparent border-0 text-blue-600 text-xs font-bold cursor-pointer underline"
                 >
                   Select All
                 </button>
                 <button
                   type="button"
                   onClick={clearAllSources}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#64748b',
-                    fontSize: '0.78rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
+                  className="bg-transparent border-0 text-slate-500 text-xs font-semibold cursor-pointer"
                 >
                   Clear
                 </button>
@@ -319,21 +244,9 @@ export const MergeTasksModal: React.FC<MergeTasksModalProps> = ({
             </div>
 
             {/* Source Tasks List */}
-            <div
-              style={{
-                maxHeight: '220px',
-                overflowY: 'auto',
-                border: '1.5px solid rgba(11, 77, 36, 0.14)',
-                borderRadius: '14px',
-                padding: '8px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '6px',
-                background: '#faf8f3',
-              }}
-            >
+            <div className="max-h-[220px] overflow-y-auto border border-primary/15 rounded-2xl p-2 flex flex-col gap-1.5 bg-[#faf8f3]">
               {availableSources.length === 0 ? (
-                <div style={{ padding: '24px 16px', textAlign: 'center', color: '#5c675e', fontSize: '0.86rem' }}>
+                <div className="py-6 px-4 text-center text-muted text-xs sm:text-sm">
                   No other active tasks with similar titles found for &ldquo;{targetTask?.title}&rdquo;.
                 </div>
               ) : (
@@ -345,48 +258,32 @@ export const MergeTasksModal: React.FC<MergeTasksModalProps> = ({
                     <div
                       key={t.id}
                       onClick={() => toggleSource(t.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        background: isSelected ? 'rgba(37, 99, 235, 0.08)' : '#ffffff',
-                        border: isSelected ? '1.5px solid #2563eb' : '1px solid rgba(0,0,0,0.06)',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
+                      className={`flex items-center justify-between py-2.5 px-3.5 rounded-xl cursor-pointer transition-all duration-150 ${
+                        isSelected ? 'bg-blue-600/8 border-1.5 border-blue-600' : 'bg-white border border-black/6'
+                      }`}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className="flex items-center gap-2.5">
                         <div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '6px',
-                            border: isSelected ? '2px solid #2563eb' : '2px solid #cbd5e1',
-                            background: isSelected ? '#2563eb' : '#ffffff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#ffffff',
-                          }}
+                          className={`w-5 h-5 rounded-md flex items-center justify-center text-white ${
+                            isSelected ? 'border-2 border-blue-600 bg-blue-600' : 'border-2 border-slate-300 bg-white'
+                          }`}
                         >
                           {isSelected && <Check size={14} />}
                         </div>
                         <div>
-                          <strong style={{ fontSize: '0.88rem', color: '#111c14', display: 'block' }}>
+                          <strong className="text-xs sm:text-sm text-foreground block">
                             {t.title}
                           </strong>
                           {t.description && (
-                            <span style={{ fontSize: '0.78rem', color: '#5c675e' }}>
+                            <span className="text-xs text-muted">
                               {t.description.slice(0, 70)}{t.description.length > 70 ? '...' : ''}
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#5c675e' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.05)', padding: '2px 8px', borderRadius: '6px' }}>
+                      <div className="flex items-center gap-2 text-xs text-muted">
+                        <span className="inline-flex items-center gap-1 bg-black/5 py-0.5 px-2 rounded-md">
                           <Users size={12} /> {assignees} {assignees === 1 ? 'member' : 'members'}
                         </span>
                       </div>
@@ -399,66 +296,33 @@ export const MergeTasksModal: React.FC<MergeTasksModalProps> = ({
 
           {/* Consolidation Summary Card */}
           {sourceTaskIds.length > 0 && targetTask && (
-            <div
-              style={{
-                padding: '14px 16px',
-                borderRadius: '14px',
-                background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-                border: '1.5px solid rgba(22, 163, 74, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '10px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    background: '#16a34a',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
+            <div className="py-3.5 px-4 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 border border-green-600/30 flex items-center justify-between flex-wrap gap-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-green-600 text-white flex items-center justify-center">
                   <Layers size={16} />
                 </div>
                 <div>
-                  <strong style={{ fontSize: '0.86rem', color: '#14532d', display: 'block' }}>
+                  <strong className="text-xs sm:text-sm text-green-900 block">
                     Consolidation Summary
                   </strong>
-                  <span style={{ fontSize: '0.78rem', color: '#15803d' }}>
+                  <span className="text-xs text-green-700">
                     Merging {sourceTaskIds.length} task(s) into &ldquo;{targetTask.title}&rdquo;.
                   </span>
                 </div>
               </div>
 
-              <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#14532d' }}>
+              <div className="text-xs sm:text-sm font-extrabold text-green-900">
                 Total Combined Assignees: {totalCombinedAssignees}
               </div>
             </div>
           )}
 
           {/* Action Buttons */}
-          <div
-            style={{
-              paddingTop: '14px',
-              borderTop: '1px solid rgba(11, 77, 36, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: '12px',
-            }}
-          >
+          <div className="pt-3.5 border-t border-primary/10 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-secondary"
-              style={{ padding: '10px 18px', fontSize: '0.88rem', borderRadius: '12px' }}
+              className="btn btn-secondary !py-2.5 !px-4.5 text-xs sm:text-sm !rounded-xl"
               disabled={loading}
             >
               Cancel
@@ -466,20 +330,9 @@ export const MergeTasksModal: React.FC<MergeTasksModalProps> = ({
             <button
               type="submit"
               disabled={loading || sourceTaskIds.length === 0}
-              style={{
-                padding: '10px 22px',
-                fontSize: '0.9rem',
-                borderRadius: '12px',
-                fontWeight: 700,
-                background: sourceTaskIds.length === 0 ? '#94a3b8' : '#2563eb',
-                color: '#ffffff',
-                border: 'none',
-                cursor: sourceTaskIds.length === 0 ? 'not-allowed' : 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: sourceTaskIds.length === 0 ? 'none' : '0 4px 14px rgba(37, 99, 235, 0.3)',
-              }}
+              className={`py-2.5 px-5.5 text-xs sm:text-sm rounded-xl font-bold border-none text-white inline-flex items-center gap-2 ${
+                sourceTaskIds.length === 0 ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 cursor-pointer shadow-md shadow-blue-600/30'
+              }`}
             >
               <GitMerge size={16} />
               <span>{loading ? 'Merging Tasks...' : `Merge Selected (${sourceTaskIds.length})`}</span>

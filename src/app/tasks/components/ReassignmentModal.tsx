@@ -114,65 +114,24 @@ export const ReassignmentModal: React.FC<ReassignmentModalProps> = ({
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.72)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.2s ease',
-      }}
+      className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 animate-fade-in"
       onClick={onClose}
     >
       <div
-        style={{
-          width: '100%',
-          maxWidth: '520px',
-          background: '#ffffff',
-          borderRadius: '24px',
-          border: '1px solid rgba(197, 160, 89, 0.25)',
-          boxShadow: '0 25px 70px rgba(0,0,0,0.4)',
-          overflow: 'hidden',
-          animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        }}
+        className="w-full max-w-[520px] bg-white rounded-3xl border border-amber-500/25 shadow-2xl overflow-hidden animate-modal-scale"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div
-          style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid rgba(197, 160, 89, 0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #fdfbf7 0%, #f7f1e5 100%)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                background: 'rgba(197, 160, 89, 0.2)',
-                color: 'var(--accent)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(197, 160, 89, 0.15)',
-              }}
-            >
+        <div className="py-5 px-6 border-b border-amber-500/15 flex items-center justify-between bg-gradient-to-br from-amber-50/50 to-amber-100/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-accent/20 text-accent flex items-center justify-center shadow-sm">
               <RefreshCw size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#111c14' }}>
+              <h3 className="text-lg font-extrabold m-0 text-foreground">
                 {isDirectReassign && isOfficer ? 'Direct Reassign (Officer)' : 'Request Reassignment'}
               </h3>
-              <span style={{ fontSize: '0.8rem', color: '#5c675e', fontWeight: 500 }}>
+              <span className="text-xs text-muted font-medium">
                 {taskTitle}
               </span>
             </div>
@@ -180,21 +139,7 @@ export const ReassignmentModal: React.FC<ReassignmentModalProps> = ({
 
           <button
             onClick={onClose}
-            className="btn btn-secondary"
-            style={{
-              width: '34px',
-              height: '34px',
-              padding: 0,
-              borderRadius: '50%',
-              minHeight: 'auto',
-              border: '1px solid rgba(197, 160, 89, 0.2)',
-              background: '#ffffff',
-              color: '#5c675e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
+            className="btn btn-secondary !w-8.5 !h-8.5 !p-0 !rounded-full !min-h-0 border border-amber-500/20 bg-white text-muted flex items-center justify-center cursor-pointer"
             aria-label="Close"
           >
             <X size={18} />
@@ -202,77 +147,46 @@ export const ReassignmentModal: React.FC<ReassignmentModalProps> = ({
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} style={{ padding: '24px', background: '#ffffff' }}>
+        <form onSubmit={handleSubmit} className="p-6 bg-white">
           {isOfficer && (
-            <div
-              style={{
-                marginBottom: '16px',
-                padding: '10px 14px',
-                borderRadius: '12px',
-                background: 'rgba(11, 77, 36, 0.06)',
-                border: '1px solid rgba(11, 77, 36, 0.16)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Shield size={16} style={{ color: 'var(--primary)' }} />
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary)' }}>
+            <div className="mb-4 py-2.5 px-3.5 rounded-xl bg-primary/6 border border-primary/16 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield size={16} className="text-primary" />
+                <span className="text-xs font-bold text-primary">
                   Officer Direct Action
                 </span>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+              <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
                 <input
                   type="checkbox"
                   checked={isDirectReassign}
                   onChange={(e) => setIsDirectReassign(e.target.checked)}
-                  style={{ accentColor: 'var(--primary)' }}
+                  className="accent-primary cursor-pointer"
                 />
                 Direct Reassign
               </label>
             </div>
           )}
 
-          <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#5c675e', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <div className="mb-4.5">
+            <label className="block text-xs font-bold text-muted mb-1.5 uppercase tracking-wider">
               Responsibility
             </label>
-            <div
-              style={{
-                padding: '12px 14px',
-                borderRadius: '12px',
-                background: '#faf8f3',
-                border: '1px solid rgba(11, 77, 36, 0.12)',
-                fontSize: '0.92rem',
-                fontWeight: 700,
-                color: '#111c14',
-              }}
-            >
+            <div className="py-3 px-3.5 rounded-xl bg-amber-50/40 border border-primary/12 text-sm font-bold text-foreground">
               {responsibility}
             </div>
           </div>
 
-          <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#111c14', marginBottom: '6px' }}>
+          <div className="mb-4.5">
+            <label className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
               {isDirectReassign && isOfficer ? 'Select New Assignee' : 'Suggested Member (Optional)'}{' '}
-              {isDirectReassign && isOfficer && <span style={{ color: 'var(--error)' }}>*</span>}
+              {isDirectReassign && isOfficer && <span className="text-error">*</span>}
             </label>
             <select
-              className="input-field"
+              className="input-field w-full rounded-xl py-2.5 px-3.5 text-sm bg-white border-[1.5px] border-primary/16 text-foreground cursor-pointer"
               value={suggestedMemberId}
               onChange={(e) => setSuggestedMemberId(e.target.value)}
               required={isDirectReassign && isOfficer}
-              style={{
-                width: '100%',
-                borderRadius: '12px',
-                padding: '10px 14px',
-                fontSize: '0.9rem',
-                background: '#ffffff',
-                border: '1.5px solid rgba(11, 77, 36, 0.16)',
-                color: '#111c14',
-                cursor: 'pointer',
-              }}
             >
               <option value="">-- Select Member --</option>
               {members.map((m) => (
@@ -283,50 +197,32 @@ export const ReassignmentModal: React.FC<ReassignmentModalProps> = ({
             </select>
           </div>
 
-          <div style={{ marginBottom: '22px' }}>
-            <label style={{ display: 'block', fontSize: '0.86rem', fontWeight: 700, color: '#111c14', marginBottom: '6px' }}>
-              {isDirectReassign && isOfficer ? 'Handover Note (Optional)' : 'Reason for Reassignment'} {!isDirectReassign && <span style={{ color: 'var(--error)' }}>*</span>}
+          <div className="mb-5.5">
+            <label className="block text-sm font-bold text-foreground mb-1.5">
+              {isDirectReassign && isOfficer ? 'Handover Note (Optional)' : 'Reason for Reassignment'} {!isDirectReassign && <span className="text-error">*</span>}
             </label>
             <textarea
-              className="input-field"
+              className="input-field w-full rounded-xl py-2.75 px-3.5 text-sm leading-relaxed bg-white border-[1.5px] border-primary/16 text-foreground"
               rows={3}
               placeholder={isDirectReassign && isOfficer ? 'Add context or instruction for the new assignee...' : 'Explain why you are unable to fulfill this responsibility...'}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               required={!isDirectReassign}
-              style={{
-                width: '100%',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '0.9rem',
-                lineHeight: 1.45,
-                background: '#ffffff',
-                border: '1.5px solid rgba(11, 77, 36, 0.16)',
-                color: '#111c14',
-              }}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          <div className="flex gap-3 justify-end pt-3 border-t border-black/6">
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-secondary"
-              style={{ padding: '9px 18px', fontSize: '0.88rem', borderRadius: '10px' }}
+              className="btn btn-secondary !py-2.25 !px-4.5 text-sm !rounded-xl"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn btn-primary"
-              style={{
-                padding: '9px 20px',
-                fontSize: '0.88rem',
-                borderRadius: '10px',
-                fontWeight: 700,
-                boxShadow: '0 4px 14px rgba(11, 77, 36, 0.3)',
-              }}
+              className="btn btn-primary !py-2.25 !px-5 text-sm !rounded-xl font-bold shadow-md"
               disabled={loading}
             >
               {loading ? 'Processing...' : isDirectReassign && isOfficer ? 'Directly Reassign' : 'Send Request'}

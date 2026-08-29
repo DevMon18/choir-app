@@ -200,26 +200,26 @@ const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientPr
   };
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      <div className="bg-orb bg-orb-1" style={{ width: '600px', height: '600px' }}></div>
-      <div className="bg-orb bg-orb-2" style={{ width: '500px', height: '500px' }}></div>
+    <div ref={containerRef} className="flex flex-col min-h-screen relative">
+      <div className="bg-orb bg-orb-1 w-[600px] h-[600px]" />
+      <div className="bg-orb bg-orb-2 w-[500px] h-[500px]" />
 
       <Navbar profile={profile as any} />
 
-      <main style={{ flex: 1, padding: '24px 16px 120px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <main className="flex-1 py-6 px-4 pb-[120px] max-w-[800px] mx-auto w-full">
+        <div className="flex flex-col gap-5">
           
-          <div className="glass-container anim-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', padding: '20px' }}>
+          <div className="glass-container anim-header flex justify-between items-center flex-wrap gap-4 p-5">
             <div>
-              <h1 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '4px', color: 'var(--primary)' }}>
+              <h1 className="text-xl font-bold mb-1 text-primary">
                 My Profile
               </h1>
-              <p style={{ color: 'var(--muted)', fontSize: '13px', margin: 0 }}>
+              <p className="text-muted text-xs sm:text-[13px] m-0">
                 Update your personal details, profile picture, and directory privacy settings.
               </p>
             </div>
             <form action={logout}>
-              <button type="submit" className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '14px' }}>
+              <button type="submit" className="btn btn-secondary !py-1.5 !px-3.5 text-xs sm:text-sm">
                 🚪 Log Out
               </button>
             </form>
@@ -243,10 +243,10 @@ const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientPr
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="glass-container anim-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px' }}>
+          <form onSubmit={handleSubmit} className="glass-container anim-card flex flex-col gap-5 p-5">
             
-            {/* Avatar Section — 88px circle matching IG/FB profile header standards */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '20px', flexWrap: 'wrap' }}>
+            {/* Avatar Section */}
+            <div className="flex items-center gap-4 border-b border-glass-border pb-5 flex-wrap">
               <Avatar
                 src={avatarUrl}
                 name={fullName}
@@ -255,37 +255,36 @@ const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientPr
                 shadow
                 priority
               />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-2">
                 <label className="input-label">Profile Picture</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className="flex items-center gap-3">
                   <input
                     type="file"
                     accept="image/*"
                     id="avatar-upload"
-                    style={{ display: 'none' }}
+                    className="hidden"
                     onChange={handleAvatarUpload}
                     disabled={uploading}
                   />
-                  <label htmlFor="avatar-upload" className="btn btn-secondary" style={{ cursor: 'pointer', padding: '8px 16px', fontSize: '0.85rem' }}>
+                  <label htmlFor="avatar-upload" className="btn btn-secondary cursor-pointer !py-2 !px-4 text-xs sm:text-[0.85rem]">
                     {uploading ? 'Uploading...' : 'Choose Photo'}
                   </label>
                   {avatarUrl && (
                     <button
                       type="button"
                       onClick={() => setAvatarUrl(null)}
-                      className="btn btn-secondary"
-                      style={{ padding: '8px 16px', fontSize: '0.85rem', color: 'var(--error)', borderColor: 'var(--error)' }}
+                      className="btn btn-secondary !py-2 !px-4 text-xs sm:text-[0.85rem] !text-error !border-error"
                     >
                       Remove
                     </button>
                   )}
                 </div>
-                <p style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>PNG, JPG or WEBP up to 3MB.</p>
+                <p className="text-muted text-xs m-0">PNG, JPG or WEBP up to 3MB.</p>
               </div>
             </div>
 
             {/* Fields Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5">
               
               <div className="input-group">
                 <label className="input-label" htmlFor="fullName">Full Name</label>
@@ -305,8 +304,7 @@ const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientPr
                   id="emailAddress"
                   type="email"
                   disabled
-                  className="input-field"
-                  style={{ opacity: 0.65, cursor: 'not-allowed' }}
+                  className="input-field opacity-65 cursor-not-allowed"
                   value={profile.email}
                 />
               </div>
@@ -335,67 +333,67 @@ const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientPr
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5 border-t border-glass-border pt-5">
               
               <div className="input-group">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div className="flex justify-between items-center mb-2">
                   <label className="input-label" htmlFor="birthdatePrivate">Birthdate Privacy</label>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                  <label className="inline-flex items-center cursor-pointer gap-2">
                     <input
                       id="birthdatePrivate"
                       type="checkbox"
                       checked={isBirthdatePrivate}
                       onChange={(e) => setIsBirthdatePrivate(e.target.checked)}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      className="w-4.5 h-4.5 cursor-pointer"
                     />
-                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Keep Private</span>
+                    <span className="text-xs sm:text-sm text-muted">Keep Private</span>
                   </label>
                 </div>
-                <p style={{ color: 'var(--muted)', fontSize: '0.8rem', lineHeight: 1.4 }}>
+                <p className="text-muted text-xs leading-relaxed m-0">
                   If private, your birthday will not appear on the Choir Calendar or in automatic birthday notifications.
                 </p>
               </div>
 
               <div className="input-group">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div className="flex justify-between items-center mb-2">
                   <label className="input-label" htmlFor="phonePrivate">Phone Privacy</label>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                  <label className="inline-flex items-center cursor-pointer gap-2">
                     <input
                       id="phonePrivate"
                       type="checkbox"
                       checked={isPhonePrivate}
                       onChange={(e) => setIsPhonePrivate(e.target.checked)}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      className="w-4.5 h-4.5 cursor-pointer"
                     />
-                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Keep Private</span>
+                    <span className="text-xs sm:text-sm text-muted">Keep Private</span>
                   </label>
                 </div>
-                <p style={{ color: 'var(--muted)', fontSize: '0.8rem', lineHeight: 1.4 }}>
+                <p className="text-muted text-xs leading-relaxed m-0">
                   If private, your contact number will not be listed in the Community Directory.
                 </p>
               </div>
 
               <div className="input-group">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div className="flex justify-between items-center mb-2">
                   <label className="input-label" htmlFor="addressPrivate">Address Privacy</label>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                  <label className="inline-flex items-center cursor-pointer gap-2">
                     <input
                       id="addressPrivate"
                       type="checkbox"
                       checked={isAddressPrivate}
                       onChange={(e) => setIsAddressPrivate(e.target.checked)}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      className="w-4.5 h-4.5 cursor-pointer"
                     />
-                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Keep Private</span>
+                    <span className="text-xs sm:text-sm text-muted">Keep Private</span>
                   </label>
                 </div>
-                <p style={{ color: 'var(--muted)', fontSize: '0.8rem', lineHeight: 1.4 }}>
+                <p className="text-muted text-xs leading-relaxed m-0">
                   If private, your home address details will not be listed in the Community Directory.
                 </p>
               </div>
             </div>
 
-            <div className="input-group" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
+            <div className="input-group border-t border-glass-border pt-5">
               <label className="input-label" htmlFor="address">Home Address</label>
               <textarea
                 id="address"
@@ -417,17 +415,16 @@ const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientPr
                 onChange={(e) => setEmergencyContact(e.target.value)}
                 rows={2}
               />
-              <p style={{ color: 'var(--muted)', fontSize: '0.8rem', marginTop: '4px' }}>
+              <p className="text-muted text-xs mt-1 m-0">
                 * Note: Emergency contacts are always kept completely private and are never visible in the Community Directory.
               </p>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
+            <div className="flex justify-end border-t border-glass-border pt-5">
               <button
                 type="submit"
                 disabled={loading || uploading}
-                className="btn btn-primary"
-                style={{ minWidth: '150px' }}
+                className="btn btn-primary min-w-[150px]"
               >
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
@@ -436,31 +433,30 @@ const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientPr
           </form>
 
           {/* Change Password Section */}
-          <form onSubmit={handleChangePassword} className="glass-container anim-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <form onSubmit={handleChangePassword} className="glass-container anim-card flex flex-col gap-5 p-5">
             <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '6px' }}>🔒 Change Password</h2>
-              <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Update your login password. Must be at least 8 characters.</p>
+              <h2 className="text-lg sm:text-xl font-bold text-primary mb-1.5">🔒 Change Password</h2>
+              <p className="text-muted text-xs sm:text-sm m-0">Update your login password. Must be at least 8 characters.</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-5">
               <div className="input-group">
                 <label className="input-label" htmlFor="newPassword">New Password</label>
-                <div style={{ position: 'relative' }}>
+                <div className="relative">
                   <input
                     id="newPassword"
                     type={showPasswords ? 'text' : 'password'}
-                    className="input-field"
+                    className="input-field !pr-11"
                     placeholder="Min 8 characters"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                     minLength={8}
-                    style={{ paddingRight: '44px' }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPasswords(!showPasswords)}
-                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '4px', display: 'flex' }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-muted p-1 flex"
                     aria-label={showPasswords ? 'Hide password' : 'Show password'}
                   >
                     {showPasswords ? (
@@ -477,34 +473,33 @@ const ProfileClient = ({ profile, initialPhotos = [], isAdmin }: ProfileClientPr
                 <input
                   id="confirmPassword"
                   type={showPasswords ? 'text' : 'password'}
-                  className="input-field"
+                  className={`input-field ${
+                    confirmPwd && newPassword && confirmPwd !== newPassword ? '!border-error' : ''
+                  }`}
                   placeholder="Repeat new password"
                   value={confirmPwd}
                   onChange={(e) => setConfirmPwd(e.target.value)}
                   required
-                  style={{
-                    borderColor: confirmPwd && newPassword && confirmPwd !== newPassword ? 'var(--error)' : undefined,
-                  }}
                 />
                 {confirmPwd && newPassword && confirmPwd !== newPassword && (
-                  <p style={{ fontSize: '0.78rem', color: 'var(--error)', marginTop: '4px' }}>Passwords do not match</p>
+                  <p className="text-[0.78rem] text-error mt-1 m-0">Passwords do not match</p>
                 )}
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
+            <div className="flex justify-end border-t border-glass-border pt-5">
               <button
                 type="submit"
                 disabled={pwdLoading || !newPassword || !confirmPwd}
-                className="btn btn-primary"
-                style={{ minWidth: '180px' }}
+                className="btn btn-primary min-w-[180px]"
               >
                 {pwdLoading ? 'Updating...' : '🔒 Update Password'}
               </button>
             </div>
           </form>
+
           {/* Photo Gallery Management Section */}
-          <div className="glass-container anim-card" style={{ padding: '20px' }}>
+          <div className="glass-container anim-card p-5">
             <PhotoGallery
               photos={photos}
               isOwner={true}

@@ -289,394 +289,322 @@ export const SequenceManagerClient = ({ profile, sequences: initSeqs, songs, ava
   };
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div ref={containerRef} className="flex flex-col min-h-screen">
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
 
       <Navbar profile={profile} />
 
-      <main className="admin-content-full" style={{ padding: '28px 20px 48px', maxWidth: '1040px', margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
-          {/* Alerts */}
-          {error && <div className="alert alert-error content-anim-item">{error}</div>}
-          {success && <div className="alert alert-success content-anim-item">{success}</div>}
+      <main className="admin-content-full !py-7 !px-5 !pb-12 max-w-[1040px] mx-auto w-full relative z-[1]">
+        {/* Alerts */}
+        {error && <div className="alert alert-error content-anim-item">{error}</div>}
+        {success && <div className="alert alert-success content-anim-item">{success}</div>}
 
-          {/* Active Live Session Status Pill Bar */}
-          {activeSession && (
-            <div
-              className="glass-container"
-              style={{
-                marginBottom: '20px',
-                padding: '12px 18px',
-                background: 'rgba(239, 68, 68, 0.05)',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                borderRadius: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '12px',
-                flexWrap: 'wrap',
-                boxShadow: '0 4px 16px rgba(239, 68, 68, 0.08)',
-                opacity: 1,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '1.1rem' }}>🔴</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <strong style={{ color: '#991b1b', fontSize: '0.92rem' }}>Live Session Active</strong>
-                  <span style={{ fontSize: '0.82rem', color: '#7f1d1d' }}>
-                    • <Link href="/live" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'underline' }}>Control Screen (/live)</Link>
-                  </span>
-                </div>
+        {/* Active Live Session Status Pill Bar */}
+        {activeSession && (
+          <div className="glass-container mb-5 py-3 px-4.5 bg-red-500/5 border border-red-500/25 rounded-2xl flex items-center justify-between gap-3 flex-wrap shadow-lg shadow-red-500/10 opacity-100">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="text-lg">🔴</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <strong className="text-red-800 text-sm font-bold">Live Session Active</strong>
+                <span className="text-xs text-red-900">
+                  • <Link href="/live" className="text-primary font-bold underline">Control Screen (/live)</Link>
+                </span>
               </div>
-              {canManage && (
-                <button
-                  onClick={handleEndSession}
-                  className="btn"
-                  style={{
-                    background: 'var(--error)',
-                    color: '#fff',
-                    border: 'none',
-                    minHeight: '38px',
-                    padding: '6px 16px',
-                    fontSize: '0.82rem',
-                    borderRadius: '10px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(239, 68, 68, 0.25)',
-                  }}
-                  disabled={isPending}
-                >
-                  End Session
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Header */}
-          <div className="content-anim-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '28px' }}>
-            <div>
-              <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--primary)' }}>Mass Sequences</h1>
-              <p style={{ color: 'var(--muted)', marginTop: '4px' }}>Build and manage setlists for Mass and rehearsals.</p>
             </div>
             {canManage && (
-              <button onClick={() => setShowCreateForm(p => !p)} className="btn btn-primary" style={{ minHeight: '48px' }} disabled={isPending}>
-                + New Sequence
+              <button
+                onClick={handleEndSession}
+                className="btn !bg-error text-white border-none min-h-[38px] !py-1.5 !px-4 text-xs !rounded-xl font-bold cursor-pointer shadow-md shadow-red-500/25"
+                disabled={isPending}
+              >
+                End Session
               </button>
             )}
           </div>
+        )}
 
-          {/* Create Form */}
-          {showCreateForm && (
-            <div className="glass-container content-anim-item" style={{ marginBottom: '24px' }}>
-              <h2 style={{ fontWeight: 700, marginBottom: '20px', color: 'var(--primary)' }}>New Sequence</h2>
-              <form onSubmit={handleCreate}>
+        {/* Header */}
+        <div className="content-anim-item flex justify-between items-start flex-wrap gap-3 mb-7">
+          <div>
+            <h1 className="text-2xl sm:text-[1.8rem] font-bold text-primary">Mass Sequences</h1>
+            <p className="text-muted text-sm sm:text-base mt-1">Build and manage setlists for Mass and rehearsals.</p>
+          </div>
+          {canManage && (
+            <button onClick={() => setShowCreateForm(p => !p)} className="btn btn-primary min-h-[48px]" disabled={isPending}>
+              + New Sequence
+            </button>
+          )}
+        </div>
+
+        {/* Create Form */}
+        {showCreateForm && (
+          <div className="glass-container content-anim-item mb-6">
+            <h2 className="font-bold mb-5 text-primary text-xl">New Sequence</h2>
+            <form onSubmit={handleCreate}>
+              <div className="input-group">
+                <label className="input-label">Title *</label>
+                <input name="title" className="input-field" required placeholder="e.g. Sunday 9AM Mass" />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Description</label>
+                <input name="description" className="input-field" placeholder="Optional notes" />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Scheduled Date & Time</label>
+                <input name="scheduled_at" type="datetime-local" className="input-field" />
+              </div>
+              <div className="flex gap-3 mt-2">
+                <button type="submit" className="btn btn-primary min-h-[48px]" disabled={isPending}>Create</button>
+                <button type="button" className="btn btn-secondary min-h-[48px]" onClick={() => setShowCreateForm(false)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Sequences list */}
+        {sequences.length === 0 ? (
+          <div className="glass-container content-anim-item text-center py-15 px-5">
+            <div className="text-5xl mb-3">🎵</div>
+            <p className="text-muted">No sequences yet. Create one to get started!</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-5">
+            {sequences.map((seq) => {
+              const sorted = [...seq.sequence_items].sort((a, b) => a.order_index - b.order_index);
+              const isSelected = selectedSeqId === seq.id;
+              return (
+                <div key={seq.id} className="glass-container content-anim-item p-6">
+                  {/* Sequence header */}
+                  <div className={`flex justify-between items-start flex-wrap gap-3 ${isSelected ? 'mb-5' : 'mb-0'}`}>
+                    <div className="flex-1">
+                      <h3 className="text-base sm:text-[1.15rem] font-bold text-primary cursor-pointer" onClick={() => setSelectedSeqId(isSelected ? null : seq.id)}>
+                        {seq.title}
+                      </h3>
+                      {seq.description && <p className="text-muted text-sm mt-1">{seq.description}</p>}
+                      {seq.scheduled_at && (
+                        <p className="text-accent text-xs mt-1.5 font-semibold">
+                          🗓 {new Date(seq.scheduled_at).toLocaleString()}
+                        </p>
+                      )}
+                      <p className="text-muted text-xs mt-1">
+                        {seq.sequence_items.length} song{seq.sequence_items.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <div className="seq-card-actions flex gap-1.5 flex-wrap items-center">
+                      {isDirector && (
+                        <button
+                          onClick={() => {
+                            if (activeSession && activeSession.sequence_id === seq.id) {
+                              router.push('/live');
+                            } else {
+                              handleStartSession(seq);
+                            }
+                          }}
+                          className={`btn btn-primary min-h-[42px] !py-1.5 !px-4 text-xs sm:text-sm ${
+                            activeSession && activeSession.sequence_id === seq.id
+                              ? '!bg-success'
+                              : activeSession
+                              ? '!bg-warning'
+                              : ''
+                          }`}
+                          disabled={isPending}
+                        >
+                          {activeSession && activeSession.sequence_id === seq.id
+                            ? '▶ View Live'
+                            : activeSession
+                            ? '⚠ Override Active'
+                            : '▶ Go Live'}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setSelectedSeqId(isSelected ? null : seq.id)}
+                        className="btn btn-secondary min-h-[42px] !py-1.5 !px-3.5 text-xs font-semibold"
+                      >
+                        {isSelected ? '▲ Hide' : `▼ ${seq.sequence_items.length} ${seq.sequence_items.length === 1 ? 'Song' : 'Songs'}`}
+                      </button>
+                      {canManage && (
+                        <>
+                          <button onClick={() => setEditingSeq(seq)} className="btn btn-secondary min-h-[42px] !py-1.5 !px-3 text-xs">Edit</button>
+                          <button onClick={() => handleDeleteClick(seq)} className="btn btn-secondary min-h-[42px] !py-1.5 !px-3 text-xs text-error" disabled={isPending}>Delete</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Song list */}
+                  {isSelected && (
+                    <div>
+                      {sorted.length === 0 ? (
+                        <p className="text-muted text-sm sm:text-base mb-4">No songs in this sequence yet.</p>
+                      ) : (
+                        <div className="flex flex-col gap-2 mb-4">
+                          {sorted.map((item, idx) => (
+                            <div
+                              key={item.id}
+                              className="seq-song-row flex items-center gap-2.5 bg-white border border-black/6 rounded-xl p-2.5 sm:py-2.5 sm:px-3.5 flex-wrap shadow-sm"
+                            >
+                              <span className="text-muted text-xs font-bold min-w-[20px]">{idx + 1}</span>
+                              <div className="flex-[1_1_160px] min-w-[140px] flex flex-col gap-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <div
+                                    onClick={() => setPreviewSong(item.songs)}
+                                    className="font-bold text-primary text-sm cursor-pointer"
+                                    title="Click to view lyrics & chords"
+                                  >
+                                    {item.songs.title}
+                                  </div>
+                                  {(() => {
+                                    const rawRole = item.role_in_mass
+                                      ? (MASS_ROLE_LABELS[item.role_in_mass] || item.role_in_mass)
+                                      : (item.songs.categories && item.songs.categories.length > 0
+                                        ? item.songs.categories[0].name
+                                        : item.songs.category || null);
+                                    if (!rawRole) return null;
+                                    const cleanRole = (MASS_ROLE_LABELS[rawRole.toLowerCase()] || rawRole).replace(/\s*\([^)]*\)/g, '');
+                                    return (
+                                      <span className="badge text-[0.64rem] py-0.5 px-2 bg-primary/8 text-primary font-bold uppercase rounded-xl whitespace-nowrap">
+                                        {cleanRole}
+                                      </span>
+                                    );
+                                  })()}
+                                </div>
+                                {item.songs.composer && <div className="text-xs text-muted">{item.songs.composer}</div>}
+                              </div>
+
+                              <div className="flex items-center gap-1.5 ml-auto">
+                                {activeSession?.sequence_id === seq.id && isDirector && (
+                                  <button
+                                    onClick={() => handleSetActiveSong(item.songs.id)}
+                                    className={`btn min-h-[34px] !py-1 !px-2.5 text-xs rounded-lg text-white border-none ${
+                                      activeSession.active_song_id === item.songs.id ? '!bg-success' : '!bg-primary'
+                                    }`}
+                                    disabled={isPending}
+                                  >
+                                    {activeSession.active_song_id === item.songs.id ? '▶ Active' : 'Set Active'}
+                                  </button>
+                                )}
+                                {canManage && (
+                                  <div className="flex gap-1.5 items-center">
+                                    <div className="inline-flex bg-black/4 border border-black/8 rounded-lg overflow-hidden">
+                                      <button onClick={() => handleMoveItem(seq, item.id, 'up')} disabled={idx === 0 || isPending} className="bg-transparent border-none border-r border-black/8 w-9 h-9 cursor-pointer text-xs sm:text-sm flex items-center justify-center" aria-label="Move up" title="Move up">↑</button>
+                                      <button onClick={() => handleMoveItem(seq, item.id, 'down')} disabled={idx === sorted.length - 1 || isPending} className="bg-transparent border-none w-9 h-9 cursor-pointer text-xs sm:text-sm flex items-center justify-center" aria-label="Move down" title="Move down">↓</button>
+                                    </div>
+                                    <button onClick={() => handleRemoveSong(item.id)} disabled={isPending} className="bg-red-500/8 border border-red-500/20 rounded-lg w-9 h-9 cursor-pointer text-xs sm:text-sm text-error flex items-center justify-center" aria-label="Remove song" title="Remove song">✕</button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {canManage && (
+                        <div>
+                          <button
+                            onClick={() => setAddSongSeqId(addSongSeqId === seq.id ? null : seq.id)}
+                            className={`btn w-full min-h-[48px] text-sm sm:text-[0.88rem] font-bold border-[1.5px] border-dashed border-primary/25 rounded-xl mt-2 ${
+                              addSongSeqId === seq.id ? 'bg-black/4 text-primary' : 'bg-primary/3 text-primary'
+                            }`}
+                          >
+                            {addSongSeqId === seq.id ? '✕ Close Repertoire Songbook' : '+ Add Song to Setlist'}
+                          </button>
+
+                          {addSongSeqId === seq.id && (
+                            <SongPickerInline
+                              songs={songs}
+                              availableCategories={availableCategories}
+                              existingSongIds={seq.sequence_items.map(item => item.songs.id)}
+                              sequenceTitle={seq.title}
+                              onAddSong={handleAddSong}
+                              onClose={() => setAddSongSeqId(null)}
+                              isPending={isPending}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {editingSeq && (
+          <div className="fixed inset-0 z-[999999] flex items-center justify-center pt-19 px-4 pb-21 bg-black/50 backdrop-blur-md" onClick={() => setEditingSeq(null)}>
+            <div className="bg-white border border-primary/12 rounded-3xl shadow-2xl shadow-primary/25 max-w-[480px] w-full p-6 sm:py-6 sm:px-7 max-h-[calc(100vh-160px)] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <h2 className="font-bold mb-5 text-primary text-xl">Edit Sequence</h2>
+              <form onSubmit={handleUpdate}>
                 <div className="input-group">
                   <label className="input-label">Title *</label>
-                  <input name="title" className="input-field" required placeholder="e.g. Sunday 9AM Mass" />
+                  <input name="title" className="input-field" required defaultValue={editingSeq.title} />
                 </div>
                 <div className="input-group">
                   <label className="input-label">Description</label>
-                  <input name="description" className="input-field" placeholder="Optional notes" />
+                  <input name="description" className="input-field" defaultValue={editingSeq.description ?? ''} />
                 </div>
                 <div className="input-group">
                   <label className="input-label">Scheduled Date & Time</label>
-                  <input name="scheduled_at" type="datetime-local" className="input-field" />
+                  <input name="scheduled_at" type="datetime-local" className="input-field" defaultValue={editingSeq.scheduled_at?.slice(0, 16) ?? ''} />
                 </div>
-                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                  <button type="submit" className="btn btn-primary" disabled={isPending} style={{ minHeight: '48px' }}>Create</button>
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowCreateForm(false)} style={{ minHeight: '48px' }}>Cancel</button>
+                <div className="flex gap-3 mt-4">
+                  <button type="submit" className="btn btn-primary min-h-[48px] flex-1" disabled={isPending}>Save</button>
+                  <button type="button" className="btn btn-secondary min-h-[48px] flex-1" onClick={() => setEditingSeq(null)}>Cancel</button>
                 </div>
               </form>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Sequences list */}
-          {sequences.length === 0 ? (
-            <div className="glass-container content-anim-item" style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎵</div>
-              <p style={{ color: 'var(--muted)' }}>No sequences yet. Create one to get started!</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {sequences.map((seq) => {
-                const sorted = [...seq.sequence_items].sort((a, b) => a.order_index - b.order_index);
-                const isSelected = selectedSeqId === seq.id;
-                return (
-                  <div key={seq.id} className="glass-container content-anim-item" style={{ padding: '24px' }}>
-                    {/* Sequence header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: isSelected ? '20px' : '0' }}>
-                      <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--primary)', cursor: 'pointer' }} onClick={() => setSelectedSeqId(isSelected ? null : seq.id)}>
-                          {seq.title}
-                        </h3>
-                        {seq.description && <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginTop: '4px' }}>{seq.description}</p>}
-                        {seq.scheduled_at && (
-                          <p style={{ color: 'var(--accent)', fontSize: '0.82rem', marginTop: '6px', fontWeight: 600 }}>
-                            🗓 {new Date(seq.scheduled_at).toLocaleString()}
-                          </p>
-                        )}
-                        <p style={{ color: 'var(--muted)', fontSize: '0.8rem', marginTop: '4px' }}>
-                          {seq.sequence_items.length} song{seq.sequence_items.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                      <div className="seq-card-actions" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                        {isDirector && (
-                          <button
-                            onClick={() => {
-                              if (activeSession && activeSession.sequence_id === seq.id) {
-                                router.push('/live');
-                              } else {
-                                handleStartSession(seq);
-                              }
-                            }}
-                            className="btn btn-primary"
-                            style={{
-                              minHeight: '42px',
-                              padding: '6px 16px',
-                              fontSize: '0.85rem',
-                              background: activeSession && activeSession.sequence_id === seq.id
-                                ? 'var(--success)'
-                                : activeSession
-                                ? 'var(--warning)'
-                                : undefined
-                            }}
-                            disabled={isPending}
-                          >
-                            {activeSession && activeSession.sequence_id === seq.id
-                              ? '▶ View Live'
-                              : activeSession
-                              ? '⚠ Override Active'
-                              : '▶ Go Live'}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => setSelectedSeqId(isSelected ? null : seq.id)}
-                          className="btn btn-secondary"
-                          style={{ minHeight: '42px', padding: '6px 14px', fontSize: '0.82rem', fontWeight: 600 }}
-                        >
-                          {isSelected ? '▲ Hide' : `▼ ${seq.sequence_items.length} ${seq.sequence_items.length === 1 ? 'Song' : 'Songs'}`}
-                        </button>
-                        {canManage && (
-                          <>
-                            <button onClick={() => setEditingSeq(seq)} className="btn btn-secondary" style={{ minHeight: '42px', padding: '6px 12px', fontSize: '0.82rem' }}>Edit</button>
-                            <button onClick={() => handleDeleteClick(seq)} className="btn btn-secondary" style={{ minHeight: '42px', padding: '6px 12px', fontSize: '0.82rem', color: 'var(--error)' }} disabled={isPending}>Delete</button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Song list */}
-                    {isSelected && (
-                      <div>
-                        {sorted.length === 0 ? (
-                          <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: '16px' }}>No songs in this sequence yet.</p>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-                            {sorted.map((item, idx) => (
-                              <div
-                                key={item.id}
-                                className="seq-song-row"
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '10px',
-                                  background: '#ffffff',
-                                  border: '1px solid rgba(0,0,0,0.06)',
-                                  borderRadius: '12px',
-                                  padding: '10px 14px',
-                                  flexWrap: 'wrap',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-                                }}
-                              >
-                                <span style={{ color: 'var(--muted)', fontSize: '0.82rem', fontWeight: 700, minWidth: '20px' }}>{idx + 1}</span>
-                                <div style={{ flex: '1 1 160px', minWidth: '140px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                    <div
-                                      onClick={() => setPreviewSong(item.songs)}
-                                      style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.92rem', cursor: 'pointer' }}
-                                      title="Click to view lyrics & chords"
-                                    >
-                                      {item.songs.title}
-                                    </div>
-                                    {(() => {
-                                      const rawRole = item.role_in_mass
-                                        ? (MASS_ROLE_LABELS[item.role_in_mass] || item.role_in_mass)
-                                        : (item.songs.categories && item.songs.categories.length > 0
-                                          ? item.songs.categories[0].name
-                                          : item.songs.category || null);
-                                      if (!rawRole) return null;
-                                      const cleanRole = (MASS_ROLE_LABELS[rawRole.toLowerCase()] || rawRole).replace(/\s*\([^)]*\)/g, '');
-                                      return (
-                                        <span
-                                          className="badge"
-                                          style={{
-                                            fontSize: '0.64rem',
-                                            padding: '2px 8px',
-                                            background: 'rgba(11,77,36,0.08)',
-                                            color: 'var(--primary)',
-                                            fontWeight: 700,
-                                            textTransform: 'uppercase',
-                                            borderRadius: '10px',
-                                            whiteSpace: 'nowrap',
-                                          }}
-                                        >
-                                          {cleanRole}
-                                        </span>
-                                      );
-                                    })()}
-                                  </div>
-                                  {item.songs.composer && <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{item.songs.composer}</div>}
-                                </div>
-
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-                                  {activeSession?.sequence_id === seq.id && isDirector && (
-                                    <button
-                                      onClick={() => handleSetActiveSong(item.songs.id)}
-                                      className="btn"
-                                      style={{
-                                        minHeight: '34px',
-                                        padding: '4px 10px',
-                                        fontSize: '0.75rem',
-                                        borderRadius: '8px',
-                                        background: activeSession.active_song_id === item.songs.id ? 'var(--success)' : 'var(--primary)',
-                                        color: '#fff',
-                                        border: 'none',
-                                      }}
-                                      disabled={isPending}
-                                    >
-                                      {activeSession.active_song_id === item.songs.id ? '▶ Active' : 'Set Active'}
-                                    </button>
-                                  )}
-                                  {canManage && (
-                                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                      <div style={{ display: 'inline-flex', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '8px', overflow: 'hidden' }}>
-                                        <button onClick={() => handleMoveItem(seq, item.id, 'up')} disabled={idx === 0 || isPending} style={{ background: 'none', border: 'none', borderRight: '1px solid rgba(0,0,0,0.08)', width: '36px', height: '36px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Move up" title="Move up">↑</button>
-                                        <button onClick={() => handleMoveItem(seq, item.id, 'down')} disabled={idx === sorted.length - 1 || isPending} style={{ background: 'none', border: 'none', width: '36px', height: '36px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Move down" title="Move down">↓</button>
-                                      </div>
-                                      <button onClick={() => handleRemoveSong(item.id)} disabled={isPending} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', width: '36px', height: '36px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--error)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Remove song" title="Remove song">✕</button>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {canManage && (
-                          <div>
-                            <button
-                              onClick={() => setAddSongSeqId(addSongSeqId === seq.id ? null : seq.id)}
-                              className="btn"
-                              style={{
-                                width: '100%',
-                                minHeight: '48px',
-                                fontSize: '0.88rem',
-                                fontWeight: 700,
-                                border: '1.5px dashed rgba(30,58,138,0.25)',
-                                background: addSongSeqId === seq.id ? 'rgba(0,0,0,0.04)' : 'rgba(30,58,138,0.03)',
-                                color: 'var(--primary)',
-                                borderRadius: '12px',
-                                marginTop: '8px',
-                              }}
-                            >
-                              {addSongSeqId === seq.id ? '✕ Close Repertoire Songbook' : '+ Add Song to Setlist'}
-                            </button>
-
-                            {addSongSeqId === seq.id && (
-                              <SongPickerInline
-                                songs={songs}
-                                availableCategories={availableCategories}
-                                existingSongIds={seq.sequence_items.map(item => item.songs.id)}
-                                sequenceTitle={seq.title}
-                                onAddSong={handleAddSong}
-                                onClose={() => setAddSongSeqId(null)}
-                                isPending={isPending}
-                              />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Edit Modal */}
-          {editingSeq && (
-            <div style={{ position: 'fixed', inset: 0, zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '76px 16px 84px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }} onClick={() => setEditingSeq(null)}>
-              <div style={{ background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.12)', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(11, 77, 36, 0.25)', maxWidth: '480px', width: '100%', padding: '24px 28px', maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-                <h2 style={{ fontWeight: 700, marginBottom: '20px', color: 'var(--primary)' }}>Edit Sequence</h2>
-                <form onSubmit={handleUpdate}>
-                  <div className="input-group">
-                    <label className="input-label">Title *</label>
-                    <input name="title" className="input-field" required defaultValue={editingSeq.title} />
-                  </div>
-                  <div className="input-group">
-                    <label className="input-label">Description</label>
-                    <input name="description" className="input-field" defaultValue={editingSeq.description ?? ''} />
-                  </div>
-                  <div className="input-group">
-                    <label className="input-label">Scheduled Date & Time</label>
-                    <input name="scheduled_at" type="datetime-local" className="input-field" defaultValue={editingSeq.scheduled_at?.slice(0, 16) ?? ''} />
-                  </div>
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                    <button type="submit" className="btn btn-primary" disabled={isPending} style={{ minHeight: '48px', flex: 1 }}>Save</button>
-                    <button type="button" className="btn btn-secondary" onClick={() => setEditingSeq(null)} style={{ minHeight: '48px', flex: 1 }}>Cancel</button>
-                  </div>
-                </form>
+        {/* Song Lyrics Preview Modal */}
+        {previewSong && (
+          <div className="fixed inset-0 z-[999999] flex items-center justify-center pt-19 px-4 pb-21 bg-black/50 backdrop-blur-md" onClick={() => setPreviewSong(null)}>
+            <div className="bg-white border border-primary/12 rounded-3xl shadow-2xl shadow-primary/25 max-w-[640px] w-full p-6 sm:py-6 sm:px-7 max-h-[calc(100vh-160px)] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-start gap-4 mb-5">
+                <div>
+                  {(previewSong.categories && previewSong.categories.length > 0
+                    ? previewSong.categories
+                    : previewSong.category
+                    ? [{ id: previewSong.category, name: previewSong.category }]
+                    : []
+                  ).map((cat: any) => (
+                    <span key={cat.id || cat.name} className="inline-block text-[0.65rem] font-bold uppercase tracking-wider text-accent bg-amber-700/6 py-0.5 px-2 rounded-full border border-amber-700/20 mb-1.5 mr-1">
+                      {cat.name}
+                    </span>
+                  ))}
+                  <h2 className="font-bold text-primary m-0 text-xl">{previewSong.title}</h2>
+                  {previewSong.composer && <p className="text-muted text-xs mt-1 mb-0">by {previewSong.composer}</p>}
+                </div>
+                <button onClick={() => setPreviewSong(null)} className="btn btn-secondary min-w-[44px] min-h-[44px] !p-2 !rounded-full flex items-center justify-center">✕</button>
+              </div>
+              
+              <div className="bg-primary/2 border border-glass-border rounded-xl p-5 overflow-x-auto">
+                {previewSong.lyrics ? (
+                  <ChordProRenderer
+                    lyrics={previewSong.lyrics}
+                    semitones={0}
+                    fontSize={15}
+                    showChords={true}
+                  />
+                ) : (
+                  <p className="text-muted text-center my-5">No lyrics available for this song.</p>
+                )}
               </div>
             </div>
-          )}
-
-          {/* Song Lyrics Preview Modal */}
-          {previewSong && (
-            <div style={{ position: 'fixed', inset: 0, zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '76px 16px 84px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }} onClick={() => setPreviewSong(null)}>
-              <div style={{ background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.12)', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(11, 77, 36, 0.25)', maxWidth: '640px', width: '100%', padding: '24px 28px', maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
-                  <div>
-                    {(previewSong.categories && previewSong.categories.length > 0
-                      ? previewSong.categories
-                      : previewSong.category
-                      ? [{ id: previewSong.category, name: previewSong.category }]
-                      : []
-                    ).map((cat: any) => (
-                      <span key={cat.id || cat.name} style={{ display: 'inline-block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', background: 'rgba(180,83,9,0.06)', padding: '2px 8px', borderRadius: '99px', border: '1px solid rgba(180,83,9,0.2)', marginBottom: '6px', marginRight: '4px' }}>
-                        {cat.name}
-                      </span>
-                    ))}
-                    <h2 style={{ fontWeight: 700, color: 'var(--primary)', margin: 0 }}>{previewSong.title}</h2>
-                    {previewSong.composer && <p style={{ color: 'var(--muted)', fontSize: '0.82rem', margin: '4px 0 0' }}>by {previewSong.composer}</p>}
-                  </div>
-                  <button onClick={() => setPreviewSong(null)} className="btn btn-secondary" style={{ minWidth: '44px', minHeight: '44px', padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                </div>
-                
-                <div style={{ background: 'rgba(30,58,138,0.02)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '20px', overflowX: 'auto' }}>
-                  {previewSong.lyrics ? (
-                    <ChordProRenderer
-                      lyrics={previewSong.lyrics}
-                      semitones={0}
-                      fontSize={15}
-                      showChords={true}
-                    />
-                  ) : (
-                    <p style={{ color: 'var(--muted)', textAlign: 'center', margin: '20px 0' }}>No lyrics available for this song.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-          {confirmDeleteSeq && (
-            <ConfirmModal
-              title="Delete Sequence"
-              message={`Are you sure you want to delete sequence "${confirmDeleteSeq.title}"? This action cannot be undone.`}
-              confirmLabel="Yes, Delete"
-              isDanger
-              onConfirm={handleConfirmDelete}
-              onCancel={() => setConfirmDeleteSeq(null)}
-            />
-          )}
+          </div>
+        )}
+        {confirmDeleteSeq && (
+          <ConfirmModal
+            title="Delete Sequence"
+            message={`Are you sure you want to delete sequence "${confirmDeleteSeq.title}"? This action cannot be undone.`}
+            confirmLabel="Yes, Delete"
+            isDanger
+            onConfirm={handleConfirmDelete}
+            onCancel={() => setConfirmDeleteSeq(null)}
+          />
+        )}
       </main>
     </div>
   );

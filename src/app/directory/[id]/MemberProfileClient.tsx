@@ -91,32 +91,31 @@ export const MemberProfileClient: React.FC<Props> = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      <div className="bg-orb bg-orb-1" style={{ width: '450px', height: '450px' }} />
-      <div className="bg-orb bg-orb-2" style={{ width: '400px', height: '400px' }} />
+    <div className="flex flex-col min-h-screen relative">
+      <div className="bg-orb bg-orb-1 w-[450px] h-[450px]" />
+      <div className="bg-orb bg-orb-2 w-[400px] h-[400px]" />
 
       <Navbar profile={currentUserProfile} />
 
-      <main style={{ flex: 1, padding: '24px 16px 120px', maxWidth: '720px', margin: '0 auto', width: '100%' }}>
+      <main className="flex-1 py-6 px-4 pb-[120px] max-w-[720px] mx-auto w-full">
         {/* Back Link */}
-        <div style={{ marginBottom: '16px' }}>
-          <Link href="/directory" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+        <div className="mb-4">
+          <Link href="/directory" className="btn btn-secondary !py-1.5 !px-3 text-[13px]">
             ← Back to Directory
           </Link>
         </div>
 
         {/* Profile Card Header (Facebook/Instagram conventions) */}
-        <div className="glass-container" style={{ padding: 0, overflow: 'hidden', marginBottom: '16px' }}>
+        <div className="glass-container p-0 overflow-hidden mb-4">
           {/* Cover Banner */}
-          <div style={{
-            height: '140px',
-            background: targetProfile.cover_url
-              ? 'none'
-              : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
-            backgroundColor: 'var(--primary)',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
+          <div
+            className="h-[140px] bg-primary relative overflow-hidden"
+            style={{
+              background: targetProfile.cover_url
+                ? 'none'
+                : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
+            }}
+          >
             {targetProfile.cover_url && (
               <Image
                 src={targetProfile.cover_url}
@@ -125,18 +124,17 @@ export const MemberProfileClient: React.FC<Props> = ({
                 priority
                 fetchPriority="high"
                 sizes="(max-width: 720px) 100vw, 720px"
+                className="object-cover z-0"
                 style={{
-                  objectFit: 'cover',
                   objectPosition: `center ${targetProfile.cover_position || '50%'}`,
-                  zIndex: 0,
                 }}
               />
             )}
           </div>
 
           {/* Profile Details Container */}
-          <div style={{ padding: '0 20px 20px', position: 'relative' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: '-44px', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
+          <div className="p-0 px-5 pb-5 relative">
+            <div className="flex items-end justify-between -mt-11 mb-3.5 flex-wrap gap-3">
               {/* 88px circle avatar */}
               <Avatar
                 src={targetProfile.avatar_url}
@@ -148,19 +146,18 @@ export const MemberProfileClient: React.FC<Props> = ({
               />
 
               {/* Message CTA & Edit Profile Actions */}
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <div className="flex gap-2.5 flex-wrap">
                 {!isOwner && (
                   <button
                     onClick={handleOpenConversation}
                     disabled={messagingLoading}
-                    className="btn btn-primary"
-                    style={{ padding: '8px 16px', fontSize: '14px', minHeight: '40px' }}
+                    className="btn btn-primary !py-2 !px-4 text-sm !min-h-[40px]"
                   >
                     💬 {messagingLoading ? 'Opening Chat...' : 'Direct Message'}
                   </button>
                 )}
                 {isOwner && (
-                  <Link href="/profile" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '14px' }}>
+                  <Link href="/profile" className="btn btn-secondary !py-2 !px-4 text-sm">
                     ⚙ Edit My Settings
                   </Link>
                 )}
@@ -168,22 +165,17 @@ export const MemberProfileClient: React.FC<Props> = ({
             </div>
 
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+              <div className="flex items-center gap-2 flex-wrap mb-1">
                 {/* 20px bold name */}
-                <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+                <h1 className="text-xl font-bold text-primary m-0">
                   {targetProfile.full_name}
                 </h1>
                 {targetProfile.voice_part && (
                   <span
+                    className="text-[11px] font-bold uppercase tracking-wider py-0.5 px-2 rounded-full"
                     style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
                       color: voiceColor,
-                      background: `${voiceColor}15`,
-                      padding: '2px 8px',
-                      borderRadius: '99px',
+                      backgroundColor: `${voiceColor}15`,
                       border: `1px solid ${voiceColor}30`,
                     }}
                   >
@@ -192,29 +184,21 @@ export const MemberProfileClient: React.FC<Props> = ({
                 )}
               </div>
 
-              <div style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '12px' }}>
+              <div className="text-[13px] text-muted mb-3">
                 {ROLE_LABELS[targetProfile.role] || targetProfile.role}
               </div>
 
               {/* Interests Section */}
               {targetProfile.interests && targetProfile.interests.length > 0 && (
-                <div style={{ marginTop: '12px', borderTop: '1px solid var(--glass-border)', paddingTop: '10px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', marginBottom: '6px' }}>
+                <div className="mt-3 border-t border-glass-border pt-2.5">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-muted mb-1.5">
                     MUSICAL INTERESTS & HOBBIES
                   </div>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <div className="flex gap-1.5 flex-wrap">
                     {targetProfile.interests.map((interest) => (
                       <span
                         key={interest}
-                        style={{
-                          background: 'rgba(30,58,138,0.08)',
-                          border: '1px solid rgba(30,58,138,0.15)',
-                          color: 'var(--primary)',
-                          borderRadius: '16px',
-                          padding: '4px 10px',
-                          fontSize: '12px',
-                          fontWeight: 600
-                        }}
+                        className="bg-blue-900/8 border border-blue-900/15 text-primary rounded-2xl py-1 px-2.5 text-xs font-semibold"
                       >
                         ✨ {interest}
                       </span>
@@ -227,38 +211,38 @@ export const MemberProfileClient: React.FC<Props> = ({
         </div>
 
         {/* Member Meta Details */}
-        <div className="glass-container" style={{ padding: '20px', marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', marginBottom: '12px' }}>
+        <div className="glass-container p-5 mb-4">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted mb-3">
             MEMBER DETAILS
           </h2>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
+          <div className="flex flex-col gap-2.5 text-sm">
             {targetProfile.phone && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: 'var(--muted)', minWidth: '80px', fontSize: '13px' }}>Phone:</span>
-                <a href={`tel:${targetProfile.phone}`} style={{ color: 'var(--primary)', fontWeight: 500, textDecoration: 'none' }}>
+              <div className="flex items-center gap-2">
+                <span className="text-muted min-w-[80px] text-[13px]">Phone:</span>
+                <a href={`tel:${targetProfile.phone}`} className="text-primary font-medium no-underline">
                   📞 {targetProfile.phone}
                 </a>
               </div>
             )}
             {targetProfile.address && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: 'var(--muted)', minWidth: '80px', fontSize: '13px' }}>Address:</span>
-                <span style={{ color: 'var(--foreground)' }}>📍 {targetProfile.address}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-muted min-w-[80px] text-[13px]">Address:</span>
+                <span className="text-foreground">📍 {targetProfile.address}</span>
               </div>
             )}
             {targetProfile.birthdate && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: 'var(--muted)', minWidth: '80px', fontSize: '13px' }}>Birthday:</span>
-                <span style={{ color: 'var(--foreground)' }}>
+              <div className="flex items-center gap-2">
+                <span className="text-muted min-w-[80px] text-[13px]">Birthday:</span>
+                <span className="text-foreground">
                   🎂 {new Date(targetProfile.birthdate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
                 </span>
               </div>
             )}
             {targetProfile.join_date && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: 'var(--muted)', minWidth: '80px', fontSize: '13px' }}>Joined:</span>
-                <span style={{ color: 'var(--muted)', fontSize: '13px' }}>
+              <div className="flex items-center gap-2">
+                <span className="text-muted min-w-[80px] text-[13px]">Joined:</span>
+                <span className="text-muted text-[13px]">
                   {new Date(targetProfile.join_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </span>
               </div>
@@ -267,7 +251,7 @@ export const MemberProfileClient: React.FC<Props> = ({
         </div>
 
         {/* Phase 3 Photo Gallery Integration */}
-        <div className="glass-container" style={{ padding: '20px' }}>
+        <div className="glass-container p-5">
           <PhotoGallery
             photos={photos}
             isOwner={isOwner}

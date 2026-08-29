@@ -21,8 +21,8 @@ export default async function SignPage({ params }: PageProps) {
 
   if ('error' in data) {
     return (
-      <div style={{ padding: '40px 20px', maxWidth: '600px', margin: '60px auto', textAlign: 'center' }}>
-        <div className="alert alert-error" style={{ fontSize: '1rem', padding: '20px' }}>
+      <div className="p-5 sm:p-10 max-w-[600px] my-15 mx-auto text-center">
+        <div className="alert alert-error text-base p-5">
           {data.error}
         </div>
       </div>

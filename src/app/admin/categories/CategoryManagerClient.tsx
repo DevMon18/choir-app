@@ -133,42 +133,37 @@ export const CategoryManagerClient: React.FC<Props> = ({ initialCategories, onCa
   };
 
   return (
-    <div style={{ maxWidth: '800px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div className="max-w-[800px]">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h2 className="text-xl font-bold text-primary m-0 flex items-center gap-2">
             <Tag size={20} />
             <span>Song Categories & Tags</span>
           </h2>
-          <p style={{ fontSize: '0.88rem', color: 'var(--muted)', marginTop: '4px', margin: 0 }}>
+          <p className="text-xs sm:text-sm text-muted mt-1 m-0">
             Manage categories used to tag repertoire songs across the app.
           </p>
         </div>
       </div>
 
       {/* Add New Category Box */}
-      <div
-        className="glass-container"
-        style={{ padding: '20px', marginBottom: '24px', background: 'rgba(255, 255, 255, 0.7)' }}
-      >
-        <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '12px', marginTop: 0 }}>
+      <div className="glass-container p-5 mb-6 bg-white/70">
+        <h4 className="text-xs sm:text-sm font-bold text-foreground mb-3 mt-0">
           Create New Category
         </h4>
-        <form onSubmit={handleCreate} className="cat-create-form">
+        <form onSubmit={handleCreate} className="flex gap-2.5 items-center flex-wrap sm:flex-nowrap">
           <input
             type="text"
-            className="input-field cat-create-input"
+            className="input-field flex-1 !py-2.5 !px-3.5 text-xs sm:text-sm"
             placeholder="e.g. Marian, Offertory, Choral..."
             value={newCatName}
             onChange={(e) => setNewCatName(e.target.value)}
             disabled={creating}
-            style={{ flex: 1 }}
           />
           <button
             type="submit"
             disabled={creating || !newCatName.trim()}
-            className="btn btn-primary cat-create-btn"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px', whiteSpace: 'nowrap' }}
+            className="btn btn-primary inline-flex items-center gap-1.5 !py-2.5 !px-5 whitespace-nowrap text-xs sm:text-sm"
           >
             <Plus size={16} />
             <span>{creating ? 'Adding…' : 'Add Category'}</span>
@@ -177,40 +172,33 @@ export const CategoryManagerClient: React.FC<Props> = ({ initialCategories, onCa
       </div>
 
       {/* Category List */}
-      <div className="glass-container" style={{ padding: '0', overflow: 'hidden' }}>
+      <div className="glass-container p-0 overflow-hidden">
         {categories.length === 0 ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
-            <Tag size={32} style={{ opacity: 0.4, marginBottom: '12px' }} />
-            <p style={{ margin: 0, fontSize: '0.92rem' }}>No categories found. Create your first category above.</p>
+          <div className="p-10 text-center text-muted">
+            <Tag size={32} className="opacity-40 mb-3 mx-auto" />
+            <p className="m-0 text-xs sm:text-sm">No categories found. Create your first category above.</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col">
             {categories.map((cat, idx) => {
               const isEditing = editingId === cat.id;
 
               return (
                 <div
                   key={cat.id}
-                  className="cat-item-row"
-                  style={{
-                    borderBottom: idx < categories.length - 1 ? '1px solid var(--glass-border)' : 'none',
-                    background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.4)' : 'transparent',
-                  }}
+                  className={`flex items-center justify-between p-3.5 sm:py-3.5 sm:px-5 flex-wrap gap-2.5 transition-colors ${
+                    idx < categories.length - 1 ? 'border-b border-glass-border' : ''
+                  } ${idx % 2 === 0 ? 'bg-white/40' : 'bg-transparent'}`}
                 >
                   {/* Left: Move handles & Category Name */}
-                  <div className="cat-item-left">
-                    <div className="cat-move-handles">
+                  <div className="flex items-center gap-3 flex-1 min-w-[200px]">
+                    <div className="flex flex-col gap-0.5">
                       <button
                         onClick={() => handleMove(idx, 'up')}
                         disabled={idx === 0 || reordering}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: idx === 0 || reordering ? 'not-allowed' : 'pointer',
-                          opacity: idx === 0 || reordering ? 0.25 : 0.7,
-                          padding: '2px',
-                          color: 'var(--foreground)',
-                        }}
+                        className={`bg-transparent border-none p-0.5 text-foreground ${
+                          idx === 0 || reordering ? 'opacity-25 cursor-not-allowed' : 'opacity-70 cursor-pointer hover:opacity-100'
+                        }`}
                         title="Move Up"
                       >
                         <ArrowUp size={14} />
@@ -218,14 +206,9 @@ export const CategoryManagerClient: React.FC<Props> = ({ initialCategories, onCa
                       <button
                         onClick={() => handleMove(idx, 'down')}
                         disabled={idx === categories.length - 1 || reordering}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: idx === categories.length - 1 || reordering ? 'not-allowed' : 'pointer',
-                          opacity: idx === categories.length - 1 || reordering ? 0.25 : 0.7,
-                          padding: '2px',
-                          color: 'var(--foreground)',
-                        }}
+                        className={`bg-transparent border-none p-0.5 text-foreground ${
+                          idx === 0 || reordering ? 'opacity-25 cursor-not-allowed' : 'opacity-70 cursor-pointer hover:opacity-100'
+                        }`}
                         title="Move Down"
                       >
                         <ArrowDown size={14} />
@@ -233,39 +216,36 @@ export const CategoryManagerClient: React.FC<Props> = ({ initialCategories, onCa
                     </div>
 
                     {isEditing ? (
-                      <div className="cat-edit-bar">
+                      <div className="flex items-center gap-2 flex-1">
                         <input
                           type="text"
-                          className="input-field"
+                          className="input-field flex-1 !py-1.5 !px-3 text-xs sm:text-sm"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
                           disabled={updating}
-                          style={{ padding: '6px 12px', fontSize: '0.9rem', flex: 1 }}
                           autoFocus
                         />
                         <button
                           onClick={() => handleSaveRename(cat.id)}
                           disabled={updating || !editName.trim()}
-                          className="btn btn-primary"
-                          style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                          className="btn btn-primary !py-1.5 !px-3 text-xs"
                         >
                           <Check size={14} />
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
                           disabled={updating}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                          className="btn btn-secondary !py-1.5 !px-3 text-xs"
                         >
                           <X size={14} />
                         </button>
                       </div>
                     ) : (
-                      <div className="cat-title-box">
-                        <span className="cat-name-text">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs sm:text-sm font-semibold text-foreground">
                           {cat.name}
                         </span>
-                        <span className="cat-count-badge">
+                        <span className="text-[0.72rem] font-bold py-0.5 px-2 rounded-md bg-primary/8 text-primary">
                           {cat.song_count ?? 0} {cat.song_count === 1 ? 'song' : 'songs'}
                         </span>
                       </div>
@@ -274,22 +254,17 @@ export const CategoryManagerClient: React.FC<Props> = ({ initialCategories, onCa
 
                   {/* Right: Edit & Delete Actions */}
                   {!isEditing && (
-                    <div className="cat-item-actions">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleStartEdit(cat)}
-                        className="btn btn-secondary cat-action-btn"
+                        className="btn btn-secondary !py-1.5 !px-3 text-xs inline-flex items-center gap-1"
                       >
                         <Edit2 size={13} />
                         <span>Rename</span>
                       </button>
                       <button
                         onClick={() => setDeleteTarget(cat)}
-                        className="btn btn-secondary cat-action-btn cat-delete-btn"
-                        style={{
-                          color: 'var(--error)',
-                          borderColor: 'rgba(239, 68, 68, 0.3)',
-                          background: 'rgba(239, 68, 68, 0.05)',
-                        }}
+                        className="btn btn-secondary !py-1.5 !px-3 text-xs inline-flex items-center gap-1 !text-error !border-red-500/30 !bg-red-500/5"
                       >
                         <Trash2 size={13} />
                         <span>Delete</span>

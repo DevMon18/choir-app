@@ -469,51 +469,30 @@ export const ChatClient: React.FC<Props> = ({
   };
 
   return (
-    <div className="chat-page-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+    <div className="chat-page-wrapper flex flex-col min-h-screen relative">
       <Navbar profile={currentUserProfile} />
 
-      <main className="chat-main-container">
-        <div className="glass-container chat-glass-card">
-          <div className="chat-header-bar">
+      <main className="chat-main-container flex-1 max-w-[860px] mx-auto w-full p-3 sm:p-5 flex flex-col pb-[120px]">
+        <div className="glass-container chat-glass-card flex-1 flex flex-col overflow-hidden p-0 rounded-2xl bg-white/75 border border-glass-border shadow-lg">
+          <div className="chat-header-bar p-3.5 sm:py-3.5 sm:px-5 border-b border-glass-border flex items-center justify-between gap-3 bg-white/50">
             <Link
               href="/messages"
-              className="btn btn-secondary"
-              style={{
-                padding: '6px 12px',
-                fontSize: '0.85rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                borderRadius: '8px',
-                flexShrink: 0
-              }}
+              className="btn btn-secondary !py-1.5 !px-3 text-xs sm:text-[0.85rem] inline-flex items-center gap-1.5 rounded-lg shrink-0"
             >
               <ArrowLeft size={16} />
               Inbox
             </Link>
 
             {otherUser.isDeletedUser ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #64748b, #334155)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    flexShrink: 0,
-                  }}
-                >
+              <div className="flex items-center gap-3 flex-1 overflow-hidden">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center text-white shrink-0">
                   <AlertCircle size={20} />
                 </div>
                 <div>
-                  <strong style={{ fontSize: '1.02rem', fontWeight: 600, color: 'var(--foreground)', display: 'block', lineHeight: 1.2 }}>
+                  <strong className="text-sm sm:text-[1.02rem] font-semibold text-foreground block leading-tight">
                     Removed Account
                   </strong>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+                  <span className="text-xs text-muted">
                     User profile no longer exists
                   </span>
                 </div>
@@ -521,7 +500,7 @@ export const ChatClient: React.FC<Props> = ({
             ) : (
               <Link
                 href={`/directory/${otherUser.id}`}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', flex: 1, overflow: 'hidden' }}
+                className="flex items-center gap-3 no-underline flex-1 overflow-hidden"
               >
                 <Avatar
                   src={otherUser.avatar_url}
@@ -531,10 +510,10 @@ export const ChatClient: React.FC<Props> = ({
                 />
 
                 <div>
-                  <strong style={{ fontSize: '1.02rem', fontWeight: 600, color: 'var(--primary)', display: 'block', lineHeight: 1.2 }}>
+                  <strong className="text-sm sm:text-[1.02rem] font-semibold text-primary block leading-tight">
                     {otherUser.full_name}
                   </strong>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+                  <span className="text-xs text-muted">
                     {otherUser.voice_part ? `${otherUser.voice_part} · ` : ''}View Profile →
                   </span>
                 </div>
@@ -542,7 +521,7 @@ export const ChatClient: React.FC<Props> = ({
             )}
 
             {!isConnected && (
-              <span style={{ fontSize: '11px', color: '#b91c1c', background: '#fee2e2', padding: '3px 10px', borderRadius: '99px', fontWeight: 500 }}>
+              <span className="text-[11px] text-red-700 bg-red-100 py-1 px-2.5 rounded-full font-medium">
                 Reconnecting…
               </span>
             )}
@@ -550,39 +529,20 @@ export const ChatClient: React.FC<Props> = ({
             <button
               onClick={() => setShowDeleteModal(true)}
               title="Delete Conversation"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--muted)',
-                padding: '8px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(159, 28, 28, 0.08)';
-                e.currentTarget.style.color = 'var(--error)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--muted)';
-              }}
+              className="bg-transparent border-none text-muted p-2 rounded-lg cursor-pointer flex items-center justify-center transition-colors hover:bg-red-500/8 hover:text-error"
             >
               <Trash2 size={18} />
             </button>
           </div>
 
-          <div className="chat-messages-area">
+          <div className="chat-messages-area flex-1 overflow-y-auto p-4 sm:p-5 flex flex-col gap-2 min-h-[350px]">
             {messages.length === 0 ? (
-              <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--muted)', padding: '40px 20px' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💬</div>
-                <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '4px' }}>
+              <div className="m-auto text-center text-muted py-10 px-5">
+                <div className="text-4xl mb-2">💬</div>
+                <h4 className="text-base font-semibold text-primary mb-1">
                   No messages yet
                 </h4>
-                <p style={{ fontSize: '0.88rem', margin: 0 }}>
+                <p className="text-xs sm:text-sm m-0">
                   Say hi to {otherUser.full_name}! 👋
                 </p>
               </div>
@@ -614,389 +574,301 @@ export const ChatClient: React.FC<Props> = ({
                 return (
                   <React.Fragment key={m.id}>
                     {showDateSeparator && (
-                      <div className="chat-date-separator">
-                        <span>{currentDateLabel}</span>
+                      <div className="chat-date-separator text-center my-3">
+                        <span className="text-[11px] font-semibold text-muted bg-black/5 py-1 px-3 rounded-full">{currentDateLabel}</span>
                       </div>
                     )}
                     <div
                       id={`msg-${m.id}`}
-                      className={`message-row ${isMe ? 'message-row-me' : 'message-row-other'} ${highlightedMessageId === m.id ? 'highlighted' : ''}`}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      justifyContent: isMe ? 'flex-end' : 'flex-start',
-                      marginBottom: '4px',
-                      position: 'relative',
-                      transform: isSwiped ? `translateX(${swipeOffset}px)` : undefined,
-                      transition: isSwiped ? 'none' : 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                    onTouchStart={(e) => handleTouchStart(e, m.id)}
-                    onTouchMove={(e) => handleTouchMove(e, m.id, isMe)}
-                    onTouchEnd={() => handleTouchEnd(m, senderName, isMe)}
-                  >
-                    {/* Mobile Swipe Reply Indicator */}
-                    {isSwiped && (
-                      <div
-                        className={`swipe-reply-icon ${isMe ? 'swipe-right' : 'swipe-left'}`}
-                        style={{
-                          opacity: Math.min(swipeMagnitude / 35, 1),
-                          transform: `translateY(-50%) scale(${Math.min(0.85 + swipeMagnitude / 100, 1.1)})`,
-                        }}
-                      >
-                        <Reply size={16} />
-                      </div>
-                    )}
-
-                    {isMe && (
-                      <div className="msg-action-bar">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenReactionMenuId(openReactionMenuId === m.id ? null : m.id);
-                            setOpenMoreMenuId(null);
+                      className={`message-row ${isMe ? 'message-row-me' : 'message-row-other'} ${highlightedMessageId === m.id ? 'highlighted' : ''} flex items-center gap-1.5 mb-1 relative ${isMe ? 'justify-end' : 'justify-start'}`}
+                      style={{
+                        transform: isSwiped ? `translateX(${swipeOffset}px)` : undefined,
+                        transition: isSwiped ? 'none' : 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                      }}
+                      onTouchStart={(e) => handleTouchStart(e, m.id)}
+                      onTouchMove={(e) => handleTouchMove(e, m.id, isMe)}
+                      onTouchEnd={() => handleTouchEnd(m, senderName, isMe)}
+                    >
+                      {/* Mobile Swipe Reply Indicator */}
+                      {isSwiped && (
+                        <div
+                          className={`swipe-reply-icon ${isMe ? 'swipe-right' : 'swipe-left'}`}
+                          style={{
+                            opacity: Math.min(swipeMagnitude / 35, 1),
+                            transform: `translateY(-50%) scale(${Math.min(0.85 + swipeMagnitude / 100, 1.1)})`,
                           }}
-                          className="msg-action-btn"
-                          title="React"
-                        >
-                          <Smile size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSetReply(m, senderName);
-                          }}
-                          className="msg-action-btn"
-                          title="Reply"
                         >
                           <Reply size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenMoreMenuId(openMoreMenuId === m.id ? null : m.id);
-                            setOpenReactionMenuId(null);
-                          }}
-                          className="msg-action-btn"
-                          title="More"
-                        >
-                          <MoreVertical size={16} />
-                        </button>
+                        </div>
+                      )}
 
-                        {openMoreMenuId === m.id && (
-                          <div
-                            style={{
-                              position: 'absolute',
-                              bottom: 'calc(100% + 6px)',
-                              right: 0,
-                              background: '#ffffff',
-                              borderRadius: '10px',
-                              padding: '4px',
-                              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                              border: '1px solid var(--glass-border)',
-                              zIndex: 110,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '2px',
-                              minWidth: '130px',
+                      {isMe && (
+                        <div className="msg-action-bar flex items-center gap-0.5 opacity-0 hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenReactionMenuId(openReactionMenuId === m.id ? null : m.id);
+                              setOpenMoreMenuId(null);
                             }}
-                            onClick={(e) => e.stopPropagation()}
+                            className="msg-action-btn p-1 text-muted hover:text-foreground rounded"
+                            title="React"
                           >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleCopyText(m.body);
-                                setOpenMoreMenuId(null);
-                              }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '6px 10px',
-                                background: 'none',
-                                border: 'none',
-                                fontSize: '0.8rem',
-                                color: 'var(--foreground)',
-                                cursor: 'pointer',
-                                borderRadius: '6px',
-                                textAlign: 'left',
-                              }}
+                            <Smile size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSetReply(m, senderName);
+                            }}
+                            className="msg-action-btn p-1 text-muted hover:text-foreground rounded"
+                            title="Reply"
+                          >
+                            <Reply size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMoreMenuId(openMoreMenuId === m.id ? null : m.id);
+                              setOpenReactionMenuId(null);
+                            }}
+                            className="msg-action-btn p-1 text-muted hover:text-foreground rounded"
+                            title="More"
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+
+                          {openMoreMenuId === m.id && (
+                            <div
+                              className="absolute bottom-[calc(100%+6px)] right-0 bg-white rounded-xl p-1 shadow-xl border border-glass-border z-[110] flex flex-col gap-0.5 min-w-[130px]"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <Copy size={13} /> Copy Text
-                            </button>
-                            {!isTemp && (
                               <button
                                 type="button"
                                 onClick={() => {
-                                  handleDeleteSingleMessage(m.id);
+                                  handleCopyText(m.body);
                                   setOpenMoreMenuId(null);
                                 }}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '8px',
-                                  padding: '6px 10px',
-                                  background: 'none',
-                                  border: 'none',
-                                  fontSize: '0.8rem',
-                                  color: 'var(--error)',
-                                  cursor: 'pointer',
-                                  borderRadius: '6px',
-                                  textAlign: 'left',
-                                }}
+                                className="flex items-center gap-2 p-1.5 px-2.5 bg-transparent border-none text-xs text-foreground cursor-pointer rounded-lg text-left hover:bg-slate-100"
                               >
-                                <Trash2 size={13} /> Delete
+                                <Copy size={13} /> Copy Text
                               </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div style={{ position: 'relative', maxWidth: '75%' }}>
-                      {openReactionMenuId === m.id && (
-                        <div
-                          className="reaction-picker-popover"
-                          style={{
-                            [isMe ? 'right' : 'left']: 0,
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {REACTION_EMOJIS.map((emoji) => (
-                            <button
-                              key={emoji}
-                              type="button"
-                              className="reaction-picker-emoji"
-                              onClick={() => {
-                                handleToggleReaction(m.id, emoji);
-                                setOpenReactionMenuId(null);
-                              }}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      <div
-                        style={{
-                          padding: '10px 14px',
-                          borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                          background: isMe
-                            ? 'var(--primary)'
-                            : 'rgba(255, 255, 255, 0.95)',
-                          color: isMe ? '#ffffff' : 'var(--foreground)',
-                          border: isMe ? 'none' : '1px solid var(--glass-border)',
-                          boxShadow: isMe
-                            ? '0 3px 12px rgba(11, 77, 36, 0.22)'
-                            : '0 2px 8px rgba(0, 0, 0, 0.04)',
-                          wordBreak: 'break-word',
-                        }}
-                      >
-                      {(() => {
-                        const bubbleReply =
-                          m.reply_snippet ||
-                          (m.reply_to_id
-                            ? (() => {
-                                const parent = messages.find((x) => x.id === m.reply_to_id);
-                                if (!parent) return null;
-                                return {
-                                  id: parent.id,
-                                  sender_name:
-                                    parent.sender_id === currentUserId
-                                      ? currentUserProfile.full_name
-                                      : otherUser.full_name,
-                                  body:
-                                    parent.body.length > 90
-                                      ? parent.body.substring(0, 90) + '…'
-                                      : parent.body,
-                                };
-                              })()
-                            : null);
-
-                        if (!bubbleReply) return null;
-
-                        return (
-                          <div
-                            className="quoted-bubble-snippet"
-                            onClick={() => scrollToMessage(bubbleReply.id)}
-                            title="Click to jump to original message"
-                          >
-                            <div className="quoted-bubble-author">
-                              ↩️ {bubbleReply.sender_name}
+                              {!isTemp && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleDeleteSingleMessage(m.id);
+                                    setOpenMoreMenuId(null);
+                                  }}
+                                  className="flex items-center gap-2 p-1.5 px-2.5 bg-transparent border-none text-xs text-error cursor-pointer rounded-lg text-left hover:bg-red-50"
+                                >
+                                  <Trash2 size={13} /> Delete
+                                </button>
+                              )}
                             </div>
-                            <div className="quoted-bubble-text">
-                              {bubbleReply.body}
-                            </div>
-                          </div>
-                        );
-                      })()}
-
-                        <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
-                          {m.body}
-                        </p>
-
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            gap: '4px',
-                            marginTop: '4px',
-                            fontSize: '0.68rem',
-                            color: isMe ? 'rgba(255, 255, 255, 0.75)' : 'var(--muted)',
-                            userSelect: 'none',
-                          }}
-                        >
-                          <span title={new Date(m.created_at).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' })}>
-                            {formatMessageTimestamp(m.created_at)}
-                          </span>
-                          {isMe && (
-                            isTemp ? (
-                              <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>· sending…</span>
-                            ) : isRead ? (
-                              <span title={`Seen at ${formatMessageTimestamp(m.read_at!)} (${new Date(m.read_at!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                <CheckCheck size={14} style={{ color: '#86efac', flexShrink: 0 }} />
-                              </span>
-                            ) : (
-                              <span title="Sent" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                <Check size={13} style={{ color: 'rgba(255, 255, 255, 0.65)', flexShrink: 0 }} />
-                              </span>
-                            )
                           )}
                         </div>
-                      </div>
-
-                      {Object.keys(reactionGroups).length > 0 && (
-                        <div
-                          className="reaction-pill-container"
-                          style={{
-                            justifyContent: isMe ? 'flex-end' : 'flex-start',
-                          }}
-                        >
-                          {Object.entries(reactionGroups).map(([emoji, group]) => (
-                            <button
-                              key={emoji}
-                              type="button"
-                              onClick={() => handleToggleReaction(m.id, emoji)}
-                              className={`reaction-pill ${group.userReacted ? 'user-reacted' : ''}`}
-                              title={group.userReacted ? 'Click to remove reaction' : 'Click to react'}
-                            >
-                              <span>{emoji}</span>
-                              {group.count > 1 && <span>{group.count}</span>}
-                            </button>
-                          ))}
-                        </div>
                       )}
-                    </div>
 
-                    {!isMe && (
-                      <div className="msg-action-bar">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenReactionMenuId(openReactionMenuId === m.id ? null : m.id);
-                            setOpenMoreMenuId(null);
-                          }}
-                          className="msg-action-btn"
-                          title="React"
-                        >
-                          <Smile size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSetReply(m, senderName);
-                          }}
-                          className="msg-action-btn"
-                          title="Reply"
-                        >
-                          <Reply size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenMoreMenuId(openMoreMenuId === m.id ? null : m.id);
-                            setOpenReactionMenuId(null);
-                          }}
-                          className="msg-action-btn"
-                          title="More"
-                        >
-                          <MoreVertical size={16} />
-                        </button>
-
-                        {openMoreMenuId === m.id && (
+                      <div className="relative max-w-[75%]">
+                        {openReactionMenuId === m.id && (
                           <div
+                            className="reaction-picker-popover absolute bottom-[calc(100%+6px)] bg-white rounded-full p-1.5 px-2 shadow-xl border border-glass-border z-[110] flex gap-1 animate-scaleIn"
                             style={{
-                              position: 'absolute',
-                              bottom: 'calc(100% + 6px)',
-                              left: 0,
-                              background: '#ffffff',
-                              borderRadius: '10px',
-                              padding: '4px',
-                              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                              border: '1px solid var(--glass-border)',
-                              zIndex: 110,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '2px',
-                              minWidth: '130px',
+                              [isMe ? 'right' : 'left']: 0,
                             }}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleCopyText(m.body);
-                                setOpenMoreMenuId(null);
-                              }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '6px 10px',
-                                background: 'none',
-                                border: 'none',
-                                fontSize: '0.8rem',
-                                color: 'var(--foreground)',
-                                cursor: 'pointer',
-                                borderRadius: '6px',
-                                textAlign: 'left',
-                              }}
+                            {REACTION_EMOJIS.map((emoji) => (
+                              <button
+                                key={emoji}
+                                type="button"
+                                className="reaction-picker-emoji bg-transparent border-none text-base cursor-pointer hover:scale-125 transition-transform p-1"
+                                onClick={() => {
+                                  handleToggleReaction(m.id, emoji);
+                                  setOpenReactionMenuId(null);
+                                }}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        <div
+                          className={`p-2.5 px-3.5 break-words ${
+                            isMe
+                              ? 'rounded-[18px_18px_4px_18px] bg-primary text-white shadow-[0_3px_12px_rgba(11,77,36,0.22)]'
+                              : 'rounded-[18px_18px_18px_4px] bg-white/95 text-foreground border border-glass-border shadow-sm'
+                          }`}
+                        >
+                        {(() => {
+                          const bubbleReply =
+                            m.reply_snippet ||
+                            (m.reply_to_id
+                              ? (() => {
+                                  const parent = messages.find((x) => x.id === m.reply_to_id);
+                                  if (!parent) return null;
+                                  return {
+                                    id: parent.id,
+                                    sender_name:
+                                      parent.sender_id === currentUserId
+                                        ? currentUserProfile.full_name
+                                        : otherUser.full_name,
+                                    body:
+                                      parent.body.length > 90
+                                        ? parent.body.substring(0, 90) + '…'
+                                        : parent.body,
+                                  };
+                                })()
+                              : null);
+
+                          if (!bubbleReply) return null;
+
+                          return (
+                            <div
+                              className="quoted-bubble-snippet mb-1.5 p-1.5 px-2.5 rounded-lg bg-black/10 text-xs cursor-pointer"
+                              onClick={() => scrollToMessage(bubbleReply.id)}
+                              title="Click to jump to original message"
                             >
-                              <Copy size={13} /> Copy Text
-                            </button>
+                              <div className="quoted-bubble-author font-bold opacity-80">
+                                ↩️ {bubbleReply.sender_name}
+                              </div>
+                              <div className="quoted-bubble-text opacity-90 truncate">
+                                {bubbleReply.body}
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                          <p className="m-0 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+                            {m.body}
+                          </p>
+
+                          <div className={`flex items-center justify-end gap-1 mt-1 text-[0.68rem] select-none ${
+                            isMe ? 'text-white/75' : 'text-muted'
+                          }`}>
+                            <span title={new Date(m.created_at).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' })}>
+                              {formatMessageTimestamp(m.created_at)}
+                            </span>
+                            {isMe && (
+                              isTemp ? (
+                                <span className="text-[0.65rem] opacity-70">· sending…</span>
+                              ) : isRead ? (
+                                <span title={`Seen at ${formatMessageTimestamp(m.read_at!)} (${new Date(m.read_at!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`} className="inline-flex items-center">
+                                  <CheckCheck size={14} className="text-green-300 shrink-0" />
+                                </span>
+                              ) : (
+                                <span title="Sent" className="inline-flex items-center">
+                                  <Check size={13} className="text-white/65 shrink-0" />
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </div>
+
+                        {Object.keys(reactionGroups).length > 0 && (
+                          <div className={`reaction-pill-container flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                            {Object.entries(reactionGroups).map(([emoji, group]) => (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={() => handleToggleReaction(m.id, emoji)}
+                                className={`reaction-pill inline-flex items-center gap-1 text-xs py-0.5 px-2 rounded-full border cursor-pointer transition-all ${
+                                  group.userReacted
+                                    ? 'bg-primary/10 border-primary text-primary font-bold'
+                                    : 'bg-white/80 border-glass-border text-foreground hover:bg-white'
+                                }`}
+                                title={group.userReacted ? 'Click to remove reaction' : 'Click to react'}
+                              >
+                                <span>{emoji}</span>
+                                {group.count > 1 && <span className="text-[11px]">{group.count}</span>}
+                              </button>
+                            ))}
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                </React.Fragment>
-              );
+
+                      {!isMe && (
+                        <div className="msg-action-bar flex items-center gap-0.5 opacity-0 hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenReactionMenuId(openReactionMenuId === m.id ? null : m.id);
+                              setOpenMoreMenuId(null);
+                            }}
+                            className="msg-action-btn p-1 text-muted hover:text-foreground rounded"
+                            title="React"
+                          >
+                            <Smile size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSetReply(m, senderName);
+                            }}
+                            className="msg-action-btn p-1 text-muted hover:text-foreground rounded"
+                            title="Reply"
+                          >
+                            <Reply size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMoreMenuId(openMoreMenuId === m.id ? null : m.id);
+                              setOpenReactionMenuId(null);
+                            }}
+                            className="msg-action-btn p-1 text-muted hover:text-foreground rounded"
+                            title="More"
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+
+                          {openMoreMenuId === m.id && (
+                            <div
+                              className="absolute bottom-[calc(100%+6px)] left-0 bg-white rounded-xl p-1 shadow-xl border border-glass-border z-[110] flex flex-col gap-0.5 min-w-[130px]"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleCopyText(m.body);
+                                  setOpenMoreMenuId(null);
+                                }}
+                                className="flex items-center gap-2 p-1.5 px-2.5 bg-transparent border-none text-xs text-foreground cursor-pointer rounded-lg text-left hover:bg-slate-100"
+                              >
+                                <Copy size={13} /> Copy Text
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </React.Fragment>
+                );
               })
             )}
             <div ref={messagesEndRef} />
           </div>
 
           {activeReply && (
-            <div className="active-reply-banner">
-              <div className="active-reply-content">
-                <div className="active-reply-header">
+            <div className="active-reply-banner p-2.5 px-4 bg-primary/6 border-t border-primary/15 flex items-center justify-between gap-3">
+              <div className="active-reply-content flex-1 overflow-hidden">
+                <div className="active-reply-header flex items-center gap-1.5 text-xs text-primary font-semibold mb-0.5">
                   <Reply size={13} />
                   <span>Replying to <strong>{activeReply.sender_name}</strong></span>
                 </div>
-                <p className="active-reply-body">{activeReply.body}</p>
+                <p className="active-reply-body text-xs text-muted m-0 truncate">{activeReply.body}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveReply(null)}
-                className="active-reply-close"
+                className="active-reply-close bg-transparent border-none text-muted hover:text-foreground p-1 rounded cursor-pointer"
                 title="Cancel Reply"
               >
                 <X size={15} />
@@ -1004,11 +876,11 @@ export const ChatClient: React.FC<Props> = ({
             </div>
           )}
 
-          <form onSubmit={handleSend} className="chat-input-bar">
+          <form onSubmit={handleSend} className="chat-input-bar p-3 sm:py-3 sm:px-4 border-t border-glass-border flex items-center gap-2 bg-white/70">
             <input
               ref={inputRef}
               type="text"
-              className="input-field"
+              className="input-field flex-1 !rounded-full !py-2.5 !px-4.5 text-xs sm:text-sm"
               placeholder={activeReply ? `Reply to ${activeReply.sender_name}…` : `Message ${otherUser.full_name}…`}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -1018,25 +890,14 @@ export const ChatClient: React.FC<Props> = ({
                 }
               }}
               disabled={sending}
-              style={{ flex: 1, borderRadius: '24px', padding: '10px 18px', fontSize: '0.92rem' }}
             />
             <button
               type="submit"
               disabled={!inputText.trim() || sending}
-              className="btn btn-primary"
-              style={{
-                minWidth: '48px',
-                height: '42px',
-                borderRadius: '21px',
-                padding: '0 18px',
-                fontSize: '0.9rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
+              className="btn btn-primary !min-w-[48px] !h-[42px] !rounded-full !px-4 text-xs sm:text-sm inline-flex items-center justify-center gap-1.5"
             >
               <Send size={15} />
-              {sending ? '…' : 'Send'}
+              <span>{sending ? '…' : 'Send'}</span>
             </button>
           </form>
         </div>
@@ -1044,50 +905,30 @@ export const ChatClient: React.FC<Props> = ({
 
       {showDeleteModal && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 99999,
-            background: 'rgba(0, 0, 0, 0.55)',
-            backdropFilter: 'blur(6px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-          }}
+          className="fixed inset-0 z-[99999] bg-black/55 backdrop-blur-sm flex items-center justify-center p-5 animate-fadeIn"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowDeleteModal(false);
           }}
         >
-          <div
-            className="glass-container"
-            style={{
-              maxWidth: '420px',
-              width: '100%',
-              padding: '24px',
-              background: '#ffffff',
-              borderRadius: '16px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(159, 28, 28, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--error)' }}>
+          <div className="glass-container max-w-[420px] w-full p-6 bg-white rounded-2xl shadow-2xl animate-slideUpModal">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-9.5 h-9.5 rounded-full bg-red-500/10 flex items-center justify-center text-error">
                 <Trash2 size={20} />
               </div>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', color: 'var(--foreground)' }}>
+              <h3 className="m-0 text-base sm:text-lg font-bold text-foreground">
                 Delete Conversation?
               </h3>
             </div>
 
-            <p style={{ fontSize: '0.9rem', color: 'var(--muted)', lineHeight: 1.4, margin: '0 0 20px' }}>
+            <p className="text-xs sm:text-sm text-muted leading-relaxed m-0 mb-5">
               This will permanently delete all messages in this conversation for both participants. This action cannot be undone.
             </p>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <div className="flex justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(false)}
-                className="btn btn-secondary"
+                className="btn btn-secondary !py-2 !px-4 text-xs sm:text-sm"
                 disabled={deletingConv}
               >
                 Cancel
@@ -1095,8 +936,7 @@ export const ChatClient: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handleConfirmDeleteConv}
-                className="btn btn-primary"
-                style={{ background: 'var(--error)', borderColor: 'var(--error)' }}
+                className="btn btn-primary !bg-error !border-error !py-2 !px-4 text-xs sm:text-sm"
                 disabled={deletingConv}
               >
                 {deletingConv ? 'Deleting…' : 'Delete for All'}

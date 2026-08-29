@@ -2,28 +2,11 @@ import React from 'react';
 
 export default function LiveLoading() {
   return (
-    <div style={{ padding: '24px 16px 120px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+    <div className="py-6 px-4 pb-[120px] max-w-[800px] mx-auto w-full">
       {/* Top Live Session Bar skeleton */}
-      <div
-        className="glass-container"
-        style={{
-          height: '70px',
-          borderRadius: '16px',
-          marginBottom: '20px',
-          background: 'rgba(11, 77, 36, 0.05)',
-          animation: 'pulse 1.5s infinite ease-in-out',
-        }}
-      />
+      <div className="glass-container h-[70px] rounded-2xl mb-5 bg-primary/5 animate-pulse" />
       {/* Live Lyrics Sheet Skeleton */}
-      <div
-        className="glass-container"
-        style={{
-          height: '420px',
-          borderRadius: '16px',
-          background: 'rgba(255, 255, 255, 0.4)',
-          animation: 'pulse 1.5s infinite ease-in-out',
-        }}
-      />
+      <div className="glass-container h-[420px] rounded-2xl bg-white/40 animate-pulse" />
     </div>
   );
 }

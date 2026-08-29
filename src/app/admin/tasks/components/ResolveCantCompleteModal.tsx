@@ -80,68 +80,24 @@ export const ResolveCantCompleteModal: React.FC<ResolveCantCompleteModalProps> =
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.72)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.2s ease',
-      }}
+      className="fixed inset-0 bg-black/75 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          maxHeight: '90vh',
-          background: '#ffffff',
-          borderRadius: '24px',
-          border: '1px solid rgba(11, 77, 36, 0.16)',
-          boxShadow: '0 30px 80px rgba(0, 0, 0, 0.45)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        }}
+        className="w-full max-w-[560px] max-h-[90vh] bg-white rounded-3xl border border-primary/16 shadow-2xl flex flex-col overflow-hidden animate-slideUpModal"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div
-          style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid rgba(11, 77, 36, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(217, 119, 6, 0.25)',
-              }}
-            >
+        <div className="py-5 px-6 border-b border-primary/10 flex items-center justify-between bg-gradient-to-br from-yellow-50 to-amber-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-600 to-amber-700 text-white flex items-center justify-center shadow-md shadow-amber-600/25">
               <ShieldCheck size={22} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#78350f' }}>
+              <h2 className="text-lg font-extrabold m-0 text-amber-900">
                 Resolve &ldquo;Can&rsquo;t Complete&rdquo; Issue
               </h2>
-              <p style={{ fontSize: '0.8rem', color: '#92400e', margin: '2px 0 0' }}>
+              <p className="text-xs text-amber-800 mt-0.5 mb-0">
                 Provide assistance notes and resume this task for the member
               </p>
             </div>
@@ -149,21 +105,7 @@ export const ResolveCantCompleteModal: React.FC<ResolveCantCompleteModalProps> =
 
           <button
             onClick={onClose}
-            className="btn btn-secondary"
-            style={{
-              width: '34px',
-              height: '34px',
-              padding: 0,
-              borderRadius: '50%',
-              minHeight: 'auto',
-              border: '1px solid rgba(217, 119, 6, 0.25)',
-              background: '#ffffff',
-              color: '#92400e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
+            className="btn btn-secondary !w-[34px] !h-[34px] !p-0 !rounded-full !min-h-0 !border-amber-600/25 bg-white text-amber-800 flex items-center justify-center cursor-pointer"
             aria-label="Close modal"
           >
             <X size={16} />
@@ -171,54 +113,34 @@ export const ResolveCantCompleteModal: React.FC<ResolveCantCompleteModalProps> =
         </div>
 
         {/* Modal Form Body */}
-        <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:py-5.5 sm:px-6 flex flex-col gap-4.5">
           {/* Member & Blocker Detail Card */}
-          <div
-            style={{
-              padding: '16px',
-              borderRadius: '16px',
-              background: '#faf8f3',
-              border: '1.5px solid rgba(217, 119, 6, 0.2)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="p-4 rounded-2xl bg-[#faf8f3] border-1.5 border-amber-600/20 flex flex-col gap-3">
+            <div className="flex items-center gap-3">
               <Avatar
                 src={assignment.member?.avatar_url}
                 name={assignment.member?.full_name}
                 size="md"
                 border
               />
-              <div style={{ flex: 1 }}>
-                <strong style={{ fontSize: '0.96rem', color: '#111c14', display: 'block' }}>
+              <div className="flex-1">
+                <strong className="text-sm sm:text-[0.96rem] text-foreground block">
                   {assignment.member?.full_name || 'Member'}
                 </strong>
-                <span style={{ fontSize: '0.82rem', color: '#5c675e' }}>
+                <span className="text-xs sm:text-[0.82rem] text-muted">
                   {taskTitle ? `${taskTitle} · ` : ''}{assignment.responsibility}
                 </span>
               </div>
             </div>
 
             {assignment.blocker_reason && (
-              <div
-                style={{
-                  padding: '10px 12px',
-                  borderRadius: '10px',
-                  background: 'rgba(234, 88, 12, 0.08)',
-                  border: '1px solid rgba(234, 88, 12, 0.2)',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '8px',
-                }}
-              >
-                <AlertTriangle size={16} style={{ color: '#ea580c', flexShrink: 0, marginTop: '2px' }} />
+              <div className="py-2.5 px-3 rounded-xl bg-orange-600/8 border border-orange-600/20 flex items-start gap-2">
+                <AlertTriangle size={16} className="text-orange-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#c2410c', textTransform: 'uppercase', display: 'block' }}>
+                  <span className="text-xs font-bold text-orange-700 uppercase block">
                     Member&apos;s Stated Reason:
                   </span>
-                  <p style={{ margin: '2px 0 0', fontSize: '0.86rem', color: '#9a3412', lineHeight: 1.4 }}>
+                  <p className="mt-0.5 mb-0 text-xs sm:text-sm text-orange-800 leading-normal">
                     &ldquo;{assignment.blocker_reason}&rdquo;
                   </p>
                 </div>
@@ -228,48 +150,28 @@ export const ResolveCantCompleteModal: React.FC<ResolveCantCompleteModalProps> =
 
           {/* Resolution Note Field */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, color: '#111c14', marginBottom: '6px' }}>
-              Officer Assistance / Resolution Instructions <span style={{ color: 'var(--error)' }}>*</span>
+            <label className="block text-xs sm:text-sm font-bold text-foreground mb-1.5">
+              Officer Assistance / Resolution Instructions <span className="text-error">*</span>
             </label>
             <textarea
-              className="input-field"
+              className="input-field w-full !rounded-xl !py-3 !px-3.5 text-sm bg-white border-primary/20 text-foreground leading-normal"
               rows={3}
               placeholder="e.g. Provided updated materials, rescheduled deadline, assisted with transportation..."
               value={resolutionNote}
               onChange={(e) => setResolutionNote(e.target.value)}
               required
-              style={{
-                width: '100%',
-                borderRadius: '12px',
-                padding: '12px 14px',
-                fontSize: '0.9rem',
-                background: '#ffffff',
-                border: '1.5px solid rgba(11, 77, 36, 0.18)',
-                color: '#111c14',
-                lineHeight: 1.4,
-              }}
             />
-            <span style={{ display: 'block', fontSize: '0.76rem', color: '#5c675e', marginTop: '4px' }}>
+            <span className="block text-xs text-muted mt-1">
               This note will be logged in the task history and the member will be notified that the task is resumed.
             </span>
           </div>
 
           {/* Action Buttons */}
-          <div
-            style={{
-              paddingTop: '14px',
-              borderTop: '1px solid rgba(11, 77, 36, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: '12px',
-            }}
-          >
+          <div className="pt-3.5 border-t border-primary/10 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-secondary"
-              style={{ padding: '10px 18px', fontSize: '0.88rem', borderRadius: '12px' }}
+              className="btn btn-secondary !py-2.5 !px-4.5 text-xs sm:text-sm !rounded-xl"
               disabled={loading}
             >
               Cancel
@@ -277,17 +179,7 @@ export const ResolveCantCompleteModal: React.FC<ResolveCantCompleteModalProps> =
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary"
-              style={{
-                padding: '10px 22px',
-                fontSize: '0.9rem',
-                borderRadius: '12px',
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 14px rgba(11, 77, 36, 0.3)',
-              }}
+              className="btn btn-primary !py-2.5 !px-5 text-xs sm:text-sm !rounded-xl font-bold inline-flex items-center gap-2 shadow-md shadow-primary/30"
             >
               <CheckCircle2 size={16} />
               <span>{loading ? 'Resolving...' : 'Resolve Issue & Resume Task'}</span>

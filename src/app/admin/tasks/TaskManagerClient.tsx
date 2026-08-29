@@ -333,44 +333,22 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
   };
 
   return (
-    <div ref={containerRef} style={{ minHeight: '100vh', background: 'var(--background)', color: 'var(--foreground)' }}>
+    <div ref={containerRef} className="min-h-screen bg-background text-foreground">
       <Navbar profile={currentUserProfile} />
 
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 16px 100px 16px' }}>
+      <main className="max-w-[1200px] mx-auto pt-8 px-4 pb-[100px]">
         {/* Header Title Bar */}
-        <div
-          className="anim-header"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '24px',
-            flexWrap: 'wrap',
-            gap: '16px',
-          }}
-        >
+        <div className="anim-header flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, var(--primary) 0%, #15803d 100%)',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 6px 18px rgba(11, 77, 36, 0.25)',
-                }}
-              >
+            <div className="flex items-center gap-2.5">
+              <div className="w-10.5 h-10.5 rounded-xl bg-gradient-to-br from-primary to-green-700 text-white flex items-center justify-center shadow-lg shadow-primary/25">
                 <ListTodo size={22} />
               </div>
               <div>
-                <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: 'var(--foreground)' }}>
+                <h1 className="text-2xl sm:text-[1.75rem] font-extrabold m-0 tracking-tight text-foreground">
                   Task Manager & Delegation
                 </h1>
-                <p style={{ fontSize: '0.86rem', color: 'var(--muted)', margin: '2px 0 0' }}>
+                <p className="text-xs sm:text-sm text-muted mt-0.5 mb-0">
                   Delegate choir tasks, manage voice section responsibilities & committees
                 </p>
               </div>
@@ -378,36 +356,21 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <div className="flex items-center gap-2.5 flex-wrap">
             {isDirectorOrSuperAdmin && (
               <button
                 onClick={openGeneralMergeModal}
-                className="btn btn-secondary"
-                style={{
-                  padding: '10px 16px',
-                  fontSize: '0.88rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  borderColor: duplicateClusters.length > 0 ? '#2563eb' : undefined,
-                  color: duplicateClusters.length > 0 ? '#2563eb' : undefined,
-                  background: duplicateClusters.length > 0 ? 'rgba(37, 99, 235, 0.06)' : undefined,
-                }}
+                className={`btn btn-secondary !py-2.5 !px-4 text-xs sm:text-sm inline-flex items-center gap-1.5 ${
+                  duplicateClusters.length > 0
+                    ? '!border-blue-600 !text-blue-600 !bg-blue-600/6'
+                    : ''
+                }`}
                 title="Consolidate duplicate tasks into one"
               >
                 <GitMerge size={16} />
                 <span>Merge Tasks</span>
                 {duplicateClusters.length > 0 && (
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      padding: '1px 6px',
-                      borderRadius: '999px',
-                      background: '#2563eb',
-                      color: '#ffffff',
-                    }}
-                  >
+                  <span className="text-[0.72rem] font-extrabold py-px px-1.5 rounded-full bg-blue-600 text-white">
                     {duplicateClusters.length}
                   </span>
                 )}
@@ -416,14 +379,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
 
             <button
               onClick={() => setShowGroupModal(true)}
-              className="btn btn-secondary"
-              style={{
-                padding: '10px 16px',
-                fontSize: '0.88rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
+              className="btn btn-secondary !py-2.5 !px-4 text-xs sm:text-sm inline-flex items-center gap-1.5"
               title="Manage Custom Groups and Committees"
             >
               <Users size={16} />
@@ -432,17 +388,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
 
             <button
               onClick={() => setShowCreateModal(true)}
-              className="btn btn-primary"
-              style={{
-                padding: '10px 20px',
-                fontSize: '0.9rem',
-                borderRadius: '12px',
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 14px rgba(11, 77, 36, 0.3)',
-              }}
+              className="btn btn-primary !py-2.5 !px-5 text-xs sm:text-sm !rounded-xl font-bold inline-flex items-center gap-2 shadow-md shadow-primary/30"
             >
               <Plus size={18} />
               <span>Create Task</span>
@@ -462,66 +408,27 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
 
         {/* Smart Duplicate Task Cluster Notice (Director & Super Admin only) */}
         {isDirectorOrSuperAdmin && duplicateClusters.length > 0 && (
-          <div
-            className="anim-card"
-            style={{
-              marginBottom: '20px',
-              padding: '14px 18px',
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-              border: '1.5px solid rgba(37, 99, 235, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px',
-              boxShadow: '0 4px 16px rgba(37, 99, 235, 0.08)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: '#2563eb',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
+          <div className="anim-card mb-5 py-3.5 px-4.5 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border-[1.5px] border-blue-600/25 flex items-center justify-between flex-wrap gap-3 shadow-md shadow-blue-600/8">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
                 <Layers size={18} />
               </div>
               <div>
-                <strong style={{ fontSize: '0.92rem', color: '#1e3a8a', display: 'block' }}>
+                <strong className="text-xs sm:text-sm text-blue-900 block">
                   {duplicateClusters.length} Potential Duplicate Task Group(s) Detected
                 </strong>
-                <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#3b82f6' }}>
+                <p className="mt-0.5 mb-0 text-xs text-blue-600">
                   e.g. {duplicateClusters.map((c) => `"${c.commonTitle}"`).slice(0, 2).join(', ')} have high similarity (95%+) and can be consolidated.
                 </p>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div className="flex items-center gap-2 flex-wrap">
               {duplicateClusters.slice(0, 2).map((cluster, idx) => (
                 <button
                   key={idx}
                   onClick={() => startMergeCluster(cluster)}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '8px',
-                    background: '#ffffff',
-                    border: '1px solid rgba(37, 99, 235, 0.3)',
-                    color: '#1d4ed8',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                  }}
+                  className="py-1.5 px-3 rounded-lg bg-white border border-blue-600/30 text-blue-700 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5"
                 >
                   <GitMerge size={13} /> Merge &ldquo;{cluster.commonTitle}&rdquo;
                 </button>
@@ -529,16 +436,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
 
               <button
                 onClick={() => setIgnoredClusterIds((prev) => [...prev, ...duplicateClusters.map((c) => c.id)])}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  background: '#ffffff',
-                  border: '1px solid rgba(100, 116, 139, 0.25)',
-                  color: '#64748b',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
+                className="py-1.5 px-3 rounded-lg bg-white border border-slate-500/25 text-slate-600 text-xs font-semibold cursor-pointer"
                 title="Dismiss duplicate notice"
               >
                 Ignore
@@ -548,116 +446,75 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
         )}
 
         {/* Filter and Tab Bar */}
-        <div
-          className="glass-container anim-card"
-          style={{
-            padding: '12px 18px',
-            borderRadius: '16px',
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', width: '100%', justifyContent: 'space-between' }}>
+        <div className="glass-container anim-card py-3 px-4.5 rounded-2xl mb-5 flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2 flex-wrap w-full justify-between">
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: '6px', background: 'rgba(0,0,0,0.04)', padding: '4px', borderRadius: '24px', flexWrap: 'wrap' }}>
+            <div className="flex gap-1.5 bg-black/4 p-1 rounded-full flex-wrap">
               <button
                 onClick={() => setActiveTab('active')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '20px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: activeTab === 'active' ? 'var(--primary)' : 'transparent',
-                  color: activeTab === 'active' ? '#fff' : 'var(--muted)',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`py-1.5 px-3.5 rounded-full text-xs font-semibold border-none cursor-pointer transition-all duration-150 ${
+                  activeTab === 'active'
+                    ? 'bg-primary text-white'
+                    : 'bg-transparent text-muted'
+                }`}
               >
                 Active Tasks ({tasks.filter((t) => !t.is_archived).length})
               </button>
 
               <button
                 onClick={() => setActiveTab('blocked')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '20px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: activeTab === 'blocked' ? '#ea580c' : 'transparent',
-                  color: activeTab === 'blocked' ? '#fff' : 'var(--muted)',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`py-1.5 px-3.5 rounded-full text-xs font-semibold border-none cursor-pointer transition-all duration-150 ${
+                  activeTab === 'blocked'
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-transparent text-muted'
+                }`}
               >
                 Can&apos;t Complete ({blockedAssignments.length})
               </button>
 
               <button
                 onClick={() => setActiveTab('overdue')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '20px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: activeTab === 'overdue' ? '#dc2626' : 'transparent',
-                  color: activeTab === 'overdue' ? '#fff' : 'var(--muted)',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`py-1.5 px-3.5 rounded-full text-xs font-semibold border-none cursor-pointer transition-all duration-150 ${
+                  activeTab === 'overdue'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-transparent text-muted'
+                }`}
               >
                 Overdue ({overdueAssignments.length})
               </button>
 
               <button
                 onClick={() => setActiveTab('all')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '20px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: activeTab === 'all' ? 'rgba(0,0,0,0.08)' : 'transparent',
-                  color: activeTab === 'all' ? 'var(--foreground)' : 'var(--muted)',
-                }}
+                className={`py-1.5 px-3.5 rounded-full text-xs font-semibold border-none cursor-pointer ${
+                  activeTab === 'all'
+                    ? 'bg-black/8 text-foreground'
+                    : 'bg-transparent text-muted'
+                }`}
               >
                 All ({tasks.length})
               </button>
 
               <button
                 onClick={() => setActiveTab('archived')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '20px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: activeTab === 'archived' ? 'rgba(0,0,0,0.08)' : 'transparent',
-                  color: activeTab === 'archived' ? 'var(--foreground)' : 'var(--muted)',
-                }}
+                className={`py-1.5 px-3.5 rounded-full text-xs font-semibold border-none cursor-pointer ${
+                  activeTab === 'archived'
+                    ? 'bg-black/8 text-foreground'
+                    : 'bg-transparent text-muted'
+                }`}
               >
                 Archived ({tasks.filter((t) => t.is_archived).length})
               </button>
             </div>
 
             {/* Search Input */}
-            <div style={{ position: 'relative', minWidth: '220px', flex: 1, maxWidth: '320px' }}>
-              <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
+            <div className="relative min-w-[220px] flex-1 max-w-[320px]">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
               <input
                 type="text"
                 placeholder="Search tasks, members, or roles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-field"
-                style={{ width: '100%', paddingLeft: '34px', paddingRight: '12px', height: '36px', fontSize: '0.84rem', borderRadius: '18px' }}
+                className="input-field w-full pl-8.5 pr-3 h-9 text-xs rounded-full"
               />
             </div>
           </div>
@@ -665,26 +522,25 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
 
         {/* Tasks List */}
         {filteredTasks.length === 0 ? (
-          <div className="glass-container anim-card" style={{ padding: '40px 20px', textAlign: 'center', borderRadius: '20px' }}>
-            <ListTodo size={40} style={{ margin: '0 auto 12px', opacity: 0.35, color: 'var(--primary)' }} />
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 6px', color: 'var(--foreground)' }}>
+          <div className="glass-container anim-card py-10 px-5 text-center rounded-3xl">
+            <ListTodo size={40} className="mx-auto mb-3 opacity-35 text-primary" />
+            <h3 className="text-lg sm:text-xl font-bold m-0 mb-1.5 text-foreground">
               No tasks found
             </h3>
-            <p style={{ fontSize: '0.88rem', color: 'var(--muted)', maxWidth: '420px', margin: '0 auto 16px' }}>
+            <p className="text-xs sm:text-sm text-muted max-w-[420px] mx-auto mb-4">
               {activeTab === 'active'
                 ? 'Create a new task and delegate responsibilities to choir members.'
                 : 'No tasks match your current filter or query.'}
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="btn btn-primary"
-              style={{ padding: '8px 18px', fontSize: '0.86rem' }}
+              className="btn btn-primary !py-2 !px-4.5 text-xs sm:text-sm"
             >
               + Create First Task
             </button>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="flex flex-col gap-4">
             {filteredTasks.map((t) => {
               const assignments = t.assignments || [];
               const total = assignments.length;
@@ -695,73 +551,53 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
               return (
                 <div
                   key={t.id}
-                  className="anim-card"
-                  style={{
-                    padding: '22px 24px',
-                    borderRadius: '20px',
-                    background: '#ffffff',
-                    border: '1px solid rgba(11, 77, 36, 0.12)',
-                    boxShadow: '0 4px 20px rgba(11, 77, 36, 0.06)',
-                  }}
+                  className="anim-card p-5.5 sm:py-5.5 sm:px-6 rounded-3xl bg-white border border-primary/12 shadow-sm"
                 >
                   {/* Task Card Header */}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-                    <div style={{ flex: 1, minWidth: '240px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                  <div className="flex items-start justify-between flex-wrap gap-3">
+                    <div className="flex-1 min-w-[240px]">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span
-                          style={{
-                            padding: '2px 8px',
-                            borderRadius: '6px',
-                            fontSize: '0.74rem',
-                            fontWeight: 700,
-                            background: t.priority === 'urgent' ? 'rgba(239,68,68,0.12)' : t.priority === 'high' ? 'rgba(249,115,22,0.12)' : 'rgba(59,130,246,0.12)',
-                            color: t.priority === 'urgent' ? '#dc2626' : t.priority === 'high' ? '#ea580c' : '#2563eb',
-                            textTransform: 'uppercase',
-                          }}
+                          className={`py-0.5 px-2 rounded-md text-[0.74rem] font-bold uppercase ${
+                            t.priority === 'urgent'
+                              ? 'bg-red-500/12 text-red-600'
+                              : t.priority === 'high'
+                              ? 'bg-orange-500/12 text-orange-600'
+                              : 'bg-blue-500/12 text-blue-600'
+                          }`}
                         >
                           {t.priority}
                         </span>
 
                         {t.is_archived && (
-                          <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 600, background: 'rgba(100,116,139,0.15)', color: '#64748b' }}>
+                          <span className="py-0.5 px-2 rounded-md text-[0.72rem] font-semibold bg-slate-500/15 text-slate-600">
                             Archived
                           </span>
                         )}
 
                         {t.due_date && (
-                          <span style={{ fontSize: '0.78rem', color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <span className="text-xs text-muted inline-flex items-center gap-1">
                             <Calendar size={13} /> Due: {new Date(t.due_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                           </span>
                         )}
                       </div>
 
-                      <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--foreground)', margin: '0 0 6px 0' }}>
+                      <h2 className="text-lg sm:text-xl font-extrabold text-foreground m-0 mb-1.5">
                         {t.title}
                       </h2>
                       {t.description && (
-                        <p style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: 'var(--muted)', lineHeight: 1.4 }}>
+                        <p className="m-0 mb-2.5 text-xs sm:text-sm text-muted leading-normal">
                           {t.description}
                         </p>
                       )}
 
                       {/* Related Entities */}
                       {(t.related_song || t.related_sequence) && (
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                        <div className="flex gap-2 flex-wrap mb-2">
                           {t.related_song && (
                             <Link
                               href={`/repertoire/${t.related_song.id}`}
-                              style={{
-                                textDecoration: 'none',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                padding: '3px 8px',
-                                borderRadius: '8px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                background: 'rgba(30,58,138,0.08)',
-                                color: 'var(--primary)',
-                              }}
+                              className="no-underline inline-flex items-center gap-1.5 py-0.5 px-2 rounded-lg text-xs font-semibold bg-blue-900/8 text-primary"
                             >
                               <Music size={12} /> Song: {t.related_song.title}
                             </Link>
@@ -769,18 +605,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                           {t.related_sequence && (
                             <Link
                               href={`/calendar`}
-                              style={{
-                                textDecoration: 'none',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                padding: '3px 8px',
-                                borderRadius: '8px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                background: 'rgba(197,160,89,0.12)',
-                                color: 'var(--accent)',
-                              }}
+                              className="no-underline inline-flex items-center gap-1.5 py-0.5 px-2 rounded-lg text-xs font-semibold bg-accent/12 text-accent"
                             >
                               <Mic size={12} /> Mass: {t.related_sequence.title}
                             </Link>
@@ -790,20 +615,10 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                     </div>
 
                     {/* Right Action Menu */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => setForwardTargetTask(t)}
-                        className="btn btn-secondary"
-                        style={{
-                          padding: '6px 12px',
-                          fontSize: '0.78rem',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          borderColor: 'rgba(11, 77, 36, 0.25)',
-                          color: 'var(--primary)',
-                          background: 'rgba(11, 77, 36, 0.04)',
-                        }}
+                        className="btn btn-secondary !py-1.5 !px-3 text-xs inline-flex items-center gap-1.5 !border-primary/25 !text-primary !bg-primary/4"
                         title="Forward / Add Assignees to this task"
                         aria-label="Forward / Add Assignees to this task"
                       >
@@ -817,17 +632,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                             setMergeSourceTasks([]);
                             setShowMergeModal(true);
                           }}
-                          className="btn btn-secondary"
-                          style={{
-                            padding: '6px 10px',
-                            fontSize: '0.78rem',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            color: '#2563eb',
-                            borderColor: 'rgba(37, 99, 235, 0.2)',
-                            background: 'rgba(37, 99, 235, 0.04)',
-                          }}
+                          className="btn btn-secondary !py-1.5 !px-2.5 text-xs inline-flex items-center gap-1 !text-blue-600 !border-blue-600/20 !bg-blue-600/4"
                           title="Merge duplicate task"
                           aria-label="Merge duplicate task"
                         >
@@ -837,17 +642,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
 
                       <button
                         onClick={() => setTimelineTask(t)}
-                        className="btn btn-secondary"
-                        style={{
-                          padding: '6px 12px',
-                          fontSize: '0.78rem',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          borderColor: 'rgba(11, 77, 36, 0.2)',
-                          color: 'var(--primary)',
-                          background: 'rgba(11, 77, 36, 0.04)',
-                        }}
+                        className="btn btn-secondary !py-1.5 !px-3 text-xs inline-flex items-center gap-1.5 !border-primary/20 !text-primary !bg-primary/4"
                         title="View Task Progress History & Timeline"
                         aria-label="View Task Progress History & Timeline"
                       >
@@ -856,8 +651,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
 
                       <button
                         onClick={() => handleToggleArchive(t)}
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 12px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        className="btn btn-secondary !py-1.5 !px-3 text-xs inline-flex items-center gap-1"
                         title={t.is_archived ? 'Restore Task' : 'Archive Task'}
                         aria-label={t.is_archived ? 'Restore Task' : 'Archive Task'}
                       >
@@ -866,8 +660,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
 
                       <button
                         onClick={() => setDeleteConfirmTaskId(t.id)}
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 10px', fontSize: '0.78rem', color: 'var(--error)', border: 'none' }}
+                        className="btn btn-secondary !py-1.5 !px-2.5 text-xs !text-error !border-none"
                         title="Delete Task"
                         aria-label="Delete Task"
                       >
@@ -877,71 +670,48 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                   </div>
 
                   {/* Progress Rollup Bar */}
-                  <div style={{ marginTop: '14px', marginBottom: '14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', fontSize: '0.82rem' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--foreground)' }}>
+                  <div className="my-3.5">
+                    <div className="flex justify-between items-center mb-1.5 text-xs sm:text-[0.82rem]">
+                      <span className="font-bold text-foreground">
                         Overall Progress: {completed}/{total} Completed ({percent}%)
                       </span>
                       <button
                         onClick={() => toggleExpand(t.id)}
                         aria-expanded={isExpanded}
                         aria-label={isExpanded ? `Hide responsibilities for ${t.title}` : `View responsibilities for ${t.title}`}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--primary)',
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                          fontSize: '0.8rem',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
+                        className="bg-transparent border-none text-primary cursor-pointer font-semibold text-xs inline-flex items-center gap-1"
                       >
                         {isExpanded ? <>Hide Responsibilities <ChevronUp size={14} /></> : <>View Responsibilities ({total}) <ChevronDown size={14} /></>}
                       </button>
                     </div>
 
-                    <div style={{ height: '8px', width: '100%', background: 'rgba(0,0,0,0.08)', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div className="h-2 w-full bg-black/8 rounded-full overflow-hidden">
                       <div
-                        style={{
-                          height: '100%',
-                          width: `${percent}%`,
-                          background: percent === 100 ? '#10b981' : 'linear-gradient(90deg, var(--primary), var(--accent))',
-                          borderRadius: '999px',
-                          transition: 'width 0.4s ease',
-                        }}
+                        className={`h-full rounded-full transition-all duration-400 ${
+                          percent === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-primary to-accent'
+                        }`}
+                        style={{ width: `${percent}%` }}
                       />
                     </div>
                   </div>
 
                   {/* Collapsible Responsibilities List */}
                   {isExpanded && (
-                    <div
-                      style={{
-                        borderTop: '1px solid var(--glass-border)',
-                        paddingTop: '14px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                      }}
-                    >
+                    <div className="border-t border-glass-border pt-3.5 flex flex-col gap-2">
                       {assignments.map((a) => (
                         <div
                           key={a.id}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '10px 14px',
-                            borderRadius: '12px',
-                            background: a.status === 'blocked' ? 'rgba(249,115,22,0.08)' : a.status === 'overdue' ? 'rgba(239,68,68,0.08)' : a.status === 'completed' ? 'rgba(16,185,129,0.05)' : 'rgba(0,0,0,0.02)',
-                            border: a.status === 'blocked' ? '1px solid rgba(249,115,22,0.25)' : a.status === 'overdue' ? '1px solid rgba(239,68,68,0.25)' : '1px solid var(--glass-border)',
-                            flexWrap: 'wrap',
-                            gap: '8px',
-                          }}
+                          className={`flex items-center justify-between p-2.5 sm:py-2.5 sm:px-3.5 rounded-xl flex-wrap gap-2 ${
+                            a.status === 'blocked'
+                              ? 'bg-orange-500/8 border border-orange-500/25'
+                              : a.status === 'overdue'
+                              ? 'bg-red-500/8 border border-red-500/25'
+                              : a.status === 'completed'
+                              ? 'bg-emerald-500/5 border border-glass-border'
+                              : 'bg-black/2 border border-glass-border'
+                          }`}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '220px' }}>
+                          <div className="flex items-center gap-3 flex-1 min-w-[220px]">
                             <Avatar
                               src={a.member?.avatar_url}
                               name={a.member?.full_name}
@@ -949,72 +719,51 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                               border
                             />
                             <div>
-                              <strong style={{ fontSize: '0.9rem', color: 'var(--foreground)', display: 'block' }}>
+                              <strong className="text-xs sm:text-sm text-foreground block">
                                 {a.member?.full_name || 'Unassigned'}
                               </strong>
-                              <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+                              <span className="text-xs text-muted">
                                 {a.responsibility}
                               </span>
                               {a.blocker_reason && (
-                                <div style={{ fontSize: '0.78rem', color: '#ea580c', fontWeight: 600, marginTop: '2px' }}>
+                                <div className="text-xs text-orange-600 font-semibold mt-0.5">
                                   Reason: {a.blocker_reason}
                                 </div>
                               )}
                               {a.status === 'completed' && a.completion_comment && (
-                                <div style={{ fontSize: '0.78rem', color: 'var(--success, #0b6623)', fontWeight: 600, marginTop: '2px' }}>
+                                <div className="text-xs text-primary font-semibold mt-0.5">
                                   Note: &ldquo;{a.completion_comment}&rdquo;
                                 </div>
                               )}
                             </div>
                           </div>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div className="flex items-center gap-2">
                             <span
-                              style={{
-                                padding: '3px 8px',
-                                borderRadius: '6px',
-                                fontSize: '0.74rem',
-                                fontWeight: 600,
-                                background: a.status === 'completed'
-                                  ? 'rgba(16,185,129,0.15)'
+                              className={`py-0.5 px-2 rounded-md text-[0.74rem] font-semibold capitalize ${
+                                a.status === 'completed'
+                                  ? 'bg-emerald-500/15 text-emerald-600'
                                   : a.status === 'blocked'
-                                  ? 'rgba(249,115,22,0.18)'
+                                  ? 'bg-orange-500/18 text-orange-600'
                                   : a.status === 'overdue'
-                                  ? 'rgba(239,68,68,0.15)'
+                                  ? 'bg-red-500/15 text-red-600'
                                   : a.status === 'in_progress'
-                                  ? 'rgba(59,130,246,0.15)'
-                                  : 'rgba(100,116,139,0.12)',
-                                color: a.status === 'completed'
-                                  ? '#059669'
-                                  : a.status === 'blocked'
-                                  ? '#ea580c'
-                                  : a.status === 'overdue'
-                                  ? '#dc2626'
-                                  : a.status === 'in_progress'
-                                  ? '#2563eb'
-                                  : '#64748b',
-                                textTransform: 'capitalize',
-                              }}
+                                  ? 'bg-blue-500/15 text-blue-600'
+                                  : 'bg-slate-500/12 text-slate-600'
+                              }`}
                             >
                               {a.status === 'blocked' ? "Can't Complete" : a.status.replace('_', ' ')}
                             </span>
 
                             {a.due_date && (
-                              <span style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>
+                              <span className="text-xs text-muted">
                                 Due {new Date(a.due_date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                               </span>
                             )}
 
                             <button
                               onClick={() => setSelectedCommentAssignment({ assignment: a, taskTitle: t.title })}
-                              className="btn btn-secondary"
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '0.74rem',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}
+                              className="btn btn-secondary !py-1 !px-2 text-xs inline-flex items-center gap-1"
                               title="View Discussion & Audit Trail"
                               aria-label="View Discussion & Audit Trail"
                             >
@@ -1031,17 +780,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
                                   responsibility: a.responsibility,
                                 })
                               }
-                              className="btn btn-secondary"
-                              style={{
-                                padding: '4px 7px',
-                                fontSize: '0.74rem',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'var(--error)',
-                                borderColor: 'rgba(220, 38, 38, 0.22)',
-                                background: 'rgba(220, 38, 38, 0.04)',
-                              }}
+                              className="btn btn-secondary !py-1 !px-1.5 text-xs inline-flex items-center justify-center !text-error !border-red-600/22 !bg-red-600/4"
                               title={`Remove ${a.member?.full_name || 'member'} from this task`}
                               aria-label={`Remove ${a.member?.full_name || 'member'} from this task`}
                             >
@@ -1065,7 +804,7 @@ export const TaskManagerClient: React.FC<TaskManagerClientProps> = ({
         className="btn btn-primary tasks-mobile-fab"
         aria-label="Create New Task"
       >
-        <Plus size={18} style={{ marginRight: '6px' }} /> Create Task
+        <Plus size={18} className="mr-1.5" /> Create Task
       </button>
 
       {/* Create Task Modal (with live duplicate detection) */}

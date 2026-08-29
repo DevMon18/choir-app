@@ -168,34 +168,33 @@ export const AnnouncementsManagerClient = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      <div className="bg-orb bg-orb-1" style={{ width: '450px', height: '450px' }} />
-      <div className="bg-orb bg-orb-2" style={{ width: '400px', height: '400px' }} />
+    <div className="flex flex-col min-h-screen relative">
+      <div className="bg-orb bg-orb-1 w-[450px] h-[450px]" />
+      <div className="bg-orb bg-orb-2 w-[400px] h-[400px]" />
 
       <Navbar profile={currentUserProfile} />
 
-      <main className="admin-content-full" style={{ flex: 1, maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+      <main className="admin-content-full flex-1 max-w-[1100px] mx-auto w-full">
+        <div className="flex justify-between items-center mb-7 flex-wrap gap-4">
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+            <h1 className="text-2xl sm:text-[1.75rem] font-bold text-primary m-0">
               Announcements Manager
             </h1>
-            <p style={{ color: 'var(--muted)', margin: '4px 0 0 0', fontSize: '0.95rem' }}>
+            <p className="text-muted mt-1 m-0 text-sm sm:text-base">
               Broadcast choir news, rehearsal alerts, and mass updates. Urgent announcements send instant push alerts.
             </p>
           </div>
           {/* Desktop-only primary action — hidden on mobile, replaced by sticky FAB below */}
           <button
             onClick={handleOpenCreate}
-            className="btn btn-primary ann-desktop-create"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            className="btn btn-primary ann-desktop-create inline-flex items-center gap-2"
           >
             <Plus size={16} /> Create Announcement
           </button>
         </div>
 
         {announcements.length === 0 ? (
-          <div className="glass-container" style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' }}>
+          <div className="glass-container text-center py-15 px-5 text-muted">
             No announcements created yet. Click <strong>+ Create Announcement</strong> to post news.
           </div>
         ) : (
@@ -214,18 +213,18 @@ export const AnnouncementsManagerClient = ({
                 {announcements.map((item) => (
                   <tr key={item.id}>
                     <td data-label="Priority / Status">
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div className="flex flex-col gap-1">
                         {item.priority === 'urgent' ? (
-                          <span className="badge" style={{ background: 'rgba(159,28,28,0.12)', color: 'var(--error)', fontWeight: 700 }}>
+                          <span className="badge !bg-red-700/12 !text-error !font-bold">
                             🚨 Urgent
                           </span>
                         ) : (
-                          <span className="badge" style={{ background: 'rgba(11,77,36,0.08)', color: 'var(--primary)' }}>
+                          <span className="badge !bg-primary/8 !text-primary">
                             📢 Normal
                           </span>
                         )}
                         {item.is_pinned && (
-                          <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 600 }}>
+                          <span className="text-xs text-accent font-semibold">
                             📌 Pinned
                           </span>
                         )}
@@ -233,26 +232,26 @@ export const AnnouncementsManagerClient = ({
                     </td>
                     <td data-label="Title & Content">
                       <div>
-                        <strong style={{ fontSize: '1rem', color: 'var(--foreground)' }}>{item.title}</strong>
-                        <p style={{ margin: '4px 0 0 0', fontSize: '0.88rem', color: 'var(--muted)', whiteSpace: 'pre-wrap' }}>
+                        <strong className="text-base font-bold text-foreground">{item.title}</strong>
+                        <p className="mt-1 m-0 text-sm text-muted whitespace-pre-wrap">
                           {item.body.length > 120 ? item.body.substring(0, 120) + '…' : item.body}
                         </p>
                       </div>
                     </td>
                     <td data-label="Created By">
-                      <span style={{ fontSize: '0.88rem' }}>{item.profiles?.full_name || 'Admin'}</span>
+                      <span className="text-sm">{item.profiles?.full_name || 'Admin'}</span>
                     </td>
                     <td data-label="Expiry Date">
-                      <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+                      <span className="text-xs sm:text-sm text-muted">
                         {item.ends_at ? new Date(item.ends_at).toLocaleDateString() : 'No expiry'}
                       </span>
                     </td>
                     <td data-label="Actions">
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={() => handleOpenEdit(item)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleOpenEdit(item)} className="btn btn-secondary !py-1.5 !px-3 text-xs">
                           Edit
                         </button>
-                        <button onClick={() => handleDeleteClick(item.id)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', color: 'var(--error)', borderColor: 'var(--error)' }}>
+                        <button onClick={() => handleDeleteClick(item.id)} className="btn btn-secondary !py-1.5 !px-3 text-xs !text-error !border-error">
                           Delete
                         </button>
                       </div>
@@ -267,21 +266,21 @@ export const AnnouncementsManagerClient = ({
 
       {/* Modal Dialog */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass-container" style={{ width: '100%', maxWidth: '550px', maxHeight: '90vh', overflowY: 'auto', padding: '30px' }}>
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '20px' }}>
+        <div className="fixed inset-0 z-[1000] bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-5">
+          <div className="glass-container w-full max-w-[550px] max-h-[90vh] overflow-y-auto p-7.5">
+            <h3 className="text-xl sm:text-[1.4rem] font-bold text-primary mb-5">
               {editingId ? 'Edit Announcement' : 'Create New Announcement'}
             </h3>
 
             {errorMsg && (
-              <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(159,28,28,0.1)', color: 'var(--error)', fontSize: '0.85rem', marginBottom: '16px' }}>
+              <div className="py-2.5 px-3.5 rounded-lg bg-red-700/10 text-error text-sm mb-4">
                 {errorMsg}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '6px' }}>
+                <label className="block text-sm font-semibold text-muted mb-1.5">
                   Title *
                 </label>
                 <input
@@ -295,23 +294,22 @@ export const AnnouncementsManagerClient = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '6px' }}>
+                <label className="block text-sm font-semibold text-muted mb-1.5">
                   Announcement Body *
                 </label>
                 <textarea
-                  className="input-field"
+                  className="input-field resize-y"
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   placeholder="Enter detailed message…"
                   rows={4}
                   required
-                  style={{ resize: 'vertical' }}
                 />
               </div>
 
-              <div className="ann-modal-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="ann-modal-grid grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '6px' }}>
+                  <label className="block text-sm font-semibold text-muted mb-1.5">
                     Event Date & Time (for Calendar) *
                   </label>
                   <input
@@ -324,7 +322,7 @@ export const AnnouncementsManagerClient = ({
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '6px' }}>
+                  <label className="block text-sm font-semibold text-muted mb-1.5">
                     Priority
                   </label>
                   <select
@@ -339,7 +337,7 @@ export const AnnouncementsManagerClient = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '6px' }}>
+                <label className="block text-sm font-semibold text-muted mb-1.5">
                   Expiry Date (Optional)
                 </label>
                 <input
@@ -350,20 +348,20 @@ export const AnnouncementsManagerClient = ({
                 />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+              <div className="flex items-center gap-2 mt-1">
                 <input
                   type="checkbox"
                   id="isPinned"
                   checked={isPinned}
                   onChange={(e) => setIsPinned(e.target.checked)}
-                  style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
+                  className="w-4.5 h-4.5 accent-primary cursor-pointer"
                 />
-                <label htmlFor="isPinned" style={{ fontSize: '0.9rem', color: 'var(--foreground)', cursor: 'pointer' }}>
+                <label htmlFor="isPinned" className="text-sm sm:text-[0.9rem] text-foreground cursor-pointer">
                   Pin announcement to top of dashboard
                 </label>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+              <div className="flex justify-end gap-3 mt-3">
                 <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">
                   Cancel
                 </button>

@@ -25,8 +25,8 @@ export const ProvisioningForm = ({ createLoading, onCreateUser }: ProvisioningFo
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', alignItems: 'end' }}>
-      <div className="input-group" style={{ marginBottom: 0 }}>
+    <form onSubmit={handleSubmit} className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 items-end">
+      <div className="input-group !mb-0">
         <label className="input-label" htmlFor="createName">Full Name</label>
         <input
           id="createName"
@@ -40,7 +40,7 @@ export const ProvisioningForm = ({ createLoading, onCreateUser }: ProvisioningFo
         />
       </div>
       
-      <div className="input-group" style={{ marginBottom: 0 }}>
+      <div className="input-group !mb-0">
         <label className="input-label" htmlFor="createEmail">Email Address</label>
         <input
           id="createEmail"
@@ -54,15 +54,14 @@ export const ProvisioningForm = ({ createLoading, onCreateUser }: ProvisioningFo
         />
       </div>
 
-      <div className="input-group" style={{ marginBottom: 0 }}>
+      <div className="input-group !mb-0">
         <label className="input-label" htmlFor="createRole">Assigned Role</label>
         <select
           id="createRole"
-          className="input-field"
+          className="input-field bg-white cursor-pointer"
           value={role}
           onChange={(e) => setRole(e.target.value as any)}
           disabled={createLoading}
-          style={{ background: '#ffffff', cursor: 'pointer' }}
         >
           <option value="member">Member</option>
           <option value="secretary">Secretary</option>
@@ -73,8 +72,7 @@ export const ProvisioningForm = ({ createLoading, onCreateUser }: ProvisioningFo
 
       <button
         type="submit"
-        className={`btn btn-primary ${createLoading ? 'btn-disabled' : ''}`}
-        style={{ width: '100%', height: '45px' }}
+        className={`btn btn-primary ${createLoading ? 'btn-disabled' : ''} w-full h-[45px]`}
         disabled={createLoading}
       >
         {createLoading ? 'Creating...' : 'Provision'}

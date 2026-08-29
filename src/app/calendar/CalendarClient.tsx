@@ -143,52 +143,42 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      <div className="bg-orb bg-orb-1" style={{ width: '450px', height: '450px' }} />
-      <div className="bg-orb bg-orb-2" style={{ width: '400px', height: '400px' }} />
+    <div className="flex flex-col min-h-screen relative">
+      <div className="bg-orb bg-orb-1 w-[450px] h-[450px]" />
+      <div className="bg-orb bg-orb-2 w-[400px] h-[400px]" />
 
       <Navbar profile={currentUserProfile} />
 
-      <main style={{ flex: 1, padding: '40px 16px 120px', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
+      <main className="flex-1 py-10 px-4 pb-[120px] max-w-[1100px] mx-auto w-full">
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+        <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
           <div>
-            <h1 style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+            <h1 className="text-2xl sm:text-3xl font-bold text-primary m-0">
               Schedule & Mass Calendar
             </h1>
-            <p style={{ color: 'var(--muted)', margin: '4px 0 0 0', fontSize: '0.95rem' }}>
+            <p className="text-muted mt-1 m-0 text-sm sm:text-base">
               Unified schedule for choir rehearsals, Mass singing engagements, and member celebrations.
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.03)', padding: '4px', borderRadius: '12px' }}>
+          <div className="flex gap-2 bg-black/3 p-1 rounded-xl">
             <button
               onClick={() => setViewMode('auto')}
-              className="btn"
-              style={{
-                padding: '6px 14px',
-                fontSize: '0.82rem',
-                minHeight: '34px',
-                background: viewMode === 'auto' ? '#fff' : 'transparent',
-                color: viewMode === 'auto' ? 'var(--primary)' : 'var(--muted)',
-                boxShadow: viewMode === 'auto' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                fontWeight: viewMode === 'auto' ? 700 : 500,
-              }}
+              className={`btn !py-1.5 !px-3.5 text-xs sm:text-[0.82rem] !min-h-[34px] ${
+                viewMode === 'auto'
+                  ? 'bg-white !text-primary shadow-sm font-bold'
+                  : 'bg-transparent !text-muted font-medium'
+              }`}
             >
               Month View
             </button>
             <button
               onClick={() => setViewMode('agenda')}
-              className="btn"
-              style={{
-                padding: '6px 14px',
-                fontSize: '0.82rem',
-                minHeight: '34px',
-                background: viewMode === 'agenda' ? '#fff' : 'transparent',
-                color: viewMode === 'agenda' ? 'var(--primary)' : 'var(--muted)',
-                boxShadow: viewMode === 'agenda' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                fontWeight: viewMode === 'agenda' ? 700 : 500,
-              }}
+              className={`btn !py-1.5 !px-3.5 text-xs sm:text-[0.82rem] !min-h-[34px] ${
+                viewMode === 'agenda'
+                  ? 'bg-white !text-primary shadow-sm font-bold'
+                  : 'bg-transparent !text-muted font-medium'
+              }`}
             >
               Agenda List
             </button>
@@ -196,8 +186,8 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
         </div>
 
         {/* Legend / Interactive Type Filters */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center', fontSize: '0.82rem' }}>
-          <span style={{ fontWeight: 700, color: 'var(--muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Filter:</span>
+        <div className="flex gap-2.5 mb-6 flex-wrap items-center text-xs sm:text-[0.82rem]">
+          <span className="font-bold text-muted text-xs uppercase tracking-wider">Filter:</span>
           {Object.entries(TYPE_CONFIG).map(([key, cfg]) => {
             const isSelected = selectedTypeFilter === key;
             return (
@@ -205,22 +195,27 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
                 key={key}
                 type="button"
                 onClick={() => setSelectedTypeFilter(isSelected ? null : key)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '5px 12px',
-                  borderRadius: '20px',
-                  background: isSelected ? cfg.bg : 'rgba(255,255,255,0.7)',
-                  border: isSelected ? `1.5px solid ${cfg.dot}` : '1px solid var(--glass-border)',
-                  color: isSelected ? cfg.color : 'var(--foreground)',
-                  cursor: 'pointer',
-                  fontWeight: isSelected ? 700 : 500,
-                  transition: 'all 0.15s ease',
-                  boxShadow: isSelected ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
-                }}
+                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-full cursor-pointer transition-all duration-150 ${
+                  isSelected
+                    ? 'font-bold shadow-sm'
+                    : 'bg-white/70 border border-glass-border text-foreground font-medium'
+                }`}
+                style={
+                  isSelected
+                    ? {
+                        background: cfg.bg,
+                        borderColor: cfg.dot,
+                        borderWidth: '1.5px',
+                        borderStyle: 'solid',
+                        color: cfg.color,
+                      }
+                    : undefined
+                }
               >
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: cfg.dot }} />
+                <span
+                  className="w-2 h-2 rounded-full inline-block"
+                  style={{ background: cfg.dot }}
+                />
                 <span>{cfg.label}</span>
               </button>
             );
@@ -229,16 +224,7 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
             <button
               type="button"
               onClick={() => setSelectedTypeFilter(null)}
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: 'var(--muted)',
-                background: 'rgba(0,0,0,0.05)',
-                border: 'none',
-                padding: '4px 10px',
-                borderRadius: '12px',
-                cursor: 'pointer',
-              }}
+              className="text-xs font-semibold text-muted bg-black/5 border-none py-1 px-2.5 rounded-xl cursor-pointer"
             >
               Clear Filter ✕
             </button>
@@ -248,32 +234,32 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
         {/* MONTH GRID VIEW (Shown in Auto Mode or Grid Mode) */}
         {(viewMode === 'grid' || viewMode === 'auto') && (
           <div className="desktop-grid-block">
-            <div className="glass-container" style={{ padding: '24px', marginBottom: '24px' }}>
+            <div className="glass-container p-6 mb-6">
               {/* Month Selector Controls */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xl sm:text-[1.35rem] font-bold text-primary m-0">
                   {monthName}
                 </h2>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={prevMonth} className="btn btn-secondary" style={{ padding: '6px 12px', minHeight: '34px' }}>
+                <div className="flex gap-2">
+                  <button onClick={prevMonth} className="btn btn-secondary !py-1.5 !px-3 !min-h-[34px]">
                     ‹ Prev
                   </button>
-                  <button onClick={nextMonth} className="btn btn-secondary" style={{ padding: '6px 12px', minHeight: '34px' }}>
+                  <button onClick={nextMonth} className="btn btn-secondary !py-1.5 !px-3 !min-h-[34px]">
                     Next ›
                   </button>
                 </div>
               </div>
 
               {/* Grid Header Days */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', textAlign: 'center', fontWeight: 700, fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '8px' }}>
+              <div className="grid grid-cols-7 gap-1.5 text-center font-bold text-xs text-muted mb-2">
                 <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
               </div>
 
               {/* Days Grid — Fixed Cell Height to prevent grid distortion */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
+              <div className="grid grid-cols-7 gap-1.5">
                 {daysArray.map((item, idx) => {
                   if (!item) {
-                    return <div key={`empty_${idx}`} style={{ height: '92px', background: 'rgba(0,0,0,0.01)', borderRadius: '10px' }} />;
+                    return <div key={`empty_${idx}`} className="h-[92px] bg-black/1 rounded-xl" />;
                   }
 
                   const dayEvs = eventsByDate[item.dateStr] || [];
@@ -283,40 +269,26 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
                     <div
                       key={item.dateStr}
                       onClick={() => setSelectedDateStr(isSelected ? null : item.dateStr)}
-                      style={{
-                        height: '92px',
-                        padding: '6px 8px',
-                        borderRadius: '10px',
-                        background: isSelected ? 'rgba(11, 77, 36, 0.08)' : 'rgba(255,255,255,0.6)',
-                        border: isSelected ? '2px solid var(--primary)' : '1px solid var(--glass-border)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        overflow: 'hidden',
-                        transition: 'all 0.15s ease',
-                      }}
+                      className={`h-[92px] p-1.5 sm:py-1.5 sm:px-2 rounded-xl cursor-pointer flex flex-col justify-between overflow-hidden transition-all duration-150 ${
+                        isSelected
+                          ? 'bg-primary/8 border-2 border-primary'
+                          : 'bg-white/60 border border-glass-border'
+                      }`}
                     >
-                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: isSelected ? 'var(--primary)' : 'var(--foreground)' }}>
+                      <div className={`font-bold text-xs sm:text-sm ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                         {item.day}
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
+                      <div className="flex flex-col gap-0.5 overflow-hidden">
                         {dayEvs.slice(0, 2).map((ev) => {
                           const cfg = TYPE_CONFIG[ev.type];
                           return (
                             <div
                               key={ev.id}
+                              className="text-[0.65rem] py-0.5 px-1 rounded font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
                               style={{
-                                fontSize: '0.65rem',
-                                padding: '2px 4px',
-                                borderRadius: '4px',
                                 background: cfg.bg,
                                 color: cfg.color,
-                                fontWeight: 600,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
                               }}
                             >
                               {ev.type === 'birthday' ? '🎂' : '•'} {ev.title.replace('🎂 ', '').replace("'s Birthday", '')}
@@ -324,7 +296,7 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
                           );
                         })}
                         {dayEvs.length > 2 && (
-                          <div style={{ fontSize: '0.62rem', color: 'var(--muted)', fontWeight: 700 }}>
+                          <div className="text-[0.62rem] text-muted font-bold">
                             +{dayEvs.length - 2} more
                           </div>
                         )}
@@ -336,50 +308,47 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
 
               {/* Day Filter Details Drawer */}
               {selectedDateStr && (
-                <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--glass-border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+                <div className="mt-6 pt-5 border-t border-glass-border">
+                  <div className="flex justify-between items-center mb-3.5 flex-wrap gap-2">
+                    <h3 className="text-base sm:text-lg font-bold text-primary m-0">
                       Selected Date: {new Date(selectedDateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                     </h3>
-                    <button onClick={() => setSelectedDateStr(null)} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.78rem' }}>
+                    <button onClick={() => setSelectedDateStr(null)} className="btn btn-secondary !py-1 !px-2.5 text-xs">
                       Close Details ✕
                     </button>
                   </div>
 
                   {selectedDayEvents.length === 0 ? (
-                    <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>No events or celebrations scheduled for this day.</p>
+                    <p className="text-muted text-xs sm:text-sm m-0">No events or celebrations scheduled for this day.</p>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div className="flex flex-col gap-2.5">
                       {selectedDayEvents.map((ev) => {
                         const cfg = TYPE_CONFIG[ev.type];
                         return (
                           <div
                             key={ev.id}
-                            style={{
-                              padding: '12px 16px',
-                              borderRadius: '12px',
-                              background: ev.type === 'birthday' ? 'rgba(236, 72, 153, 0.08)' : 'rgba(255,255,255,0.7)',
-                              border: ev.type === 'birthday' ? '1px solid rgba(236, 72, 153, 0.25)' : '1px solid var(--glass-border)',
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              flexWrap: 'wrap',
-                              gap: '10px',
-                            }}
+                            className={`p-3 sm:py-3 sm:px-4 rounded-xl flex justify-between items-center flex-wrap gap-2.5 ${
+                              ev.type === 'birthday'
+                                ? 'bg-pink-500/8 border border-pink-500/25'
+                                : 'bg-white/70 border border-glass-border'
+                            }`}
                           >
                             <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                <span className="badge" style={{ background: cfg.bg, color: cfg.color, fontSize: '0.72rem' }}>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span
+                                  className="badge text-xs"
+                                  style={{ background: cfg.bg, color: cfg.color }}
+                                >
                                   {cfg.label}
                                 </span>
                               </div>
-                              <strong style={{ color: ev.type === 'birthday' ? '#db2777' : 'var(--foreground)', fontSize: '0.95rem' }}>
+                              <strong className={`text-xs sm:text-sm ${ev.type === 'birthday' ? 'text-pink-600' : 'text-foreground'}`}>
                                 {ev.title}
                               </strong>
-                              {ev.details && <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginTop: '2px' }}>{ev.details}</div>}
+                              {ev.details && <div className="text-xs text-muted mt-0.5">{ev.details}</div>}
                             </div>
                             {ev.linkHref && (
-                              <Link href={ev.linkHref} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+                              <Link href={ev.linkHref} className="btn btn-secondary !py-1.5 !px-3 text-xs">
                                 {getEventActionLabel(ev)}
                               </Link>
                             )}
@@ -398,68 +367,58 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
         {(viewMode === 'agenda' || (viewMode === 'auto' && !selectedDateStr)) && (
           <div className="agenda-block">
             {/* Section 1: Rehearsals & Mass Engagements */}
-            <div className="glass-container" style={{ padding: '24px', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="glass-container p-6 mb-6">
+              <h2 className="text-lg sm:text-xl font-bold text-primary mb-4 flex items-center gap-2">
                 <span>🎵</span> Rehearsals & Mass Engagements ({agendaScheduleEvents.length})
               </h2>
 
               {agendaScheduleEvents.length === 0 ? (
-                <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '24px 0', margin: 0 }}>
+                <p className="text-muted text-center py-6 m-0 text-xs sm:text-sm">
                   No upcoming rehearsals or Mass engagements scheduled.
                 </p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="flex flex-col gap-3">
                   {agendaScheduleEvents.map((ev) => {
                     const cfg = TYPE_CONFIG[ev.type];
                     const dateObj = new Date(ev.dateTimeISO);
                     return (
                       <div
                         key={ev.id}
-                        style={{
-                          padding: '16px',
-                          borderRadius: '14px',
-                          background: 'rgba(255,255,255,0.7)',
-                          border: '1px solid var(--glass-border)',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          justifyContent: 'space-between',
-                          flexWrap: 'wrap',
-                          gap: '12px',
-                        }}
+                        className="p-4 rounded-2xl bg-white/70 border border-glass-border flex items-start justify-between flex-wrap gap-3"
                       >
-                        <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                        <div className="flex gap-3.5 items-start">
                           <div
+                            className="py-2 px-3 rounded-xl text-center min-w-[60px]"
                             style={{
                               background: cfg.bg,
                               color: cfg.color,
-                              padding: '8px 12px',
-                              borderRadius: '10px',
-                              textAlign: 'center',
-                              minWidth: '60px',
                             }}
                           >
-                            <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 700 }}>
+                            <div className="text-xs uppercase font-bold">
                               {dateObj.toLocaleString('default', { month: 'short' })}
                             </div>
-                            <div style={{ fontSize: '1.3rem', fontWeight: 700, lineHeight: 1 }}>
+                            <div className="text-xl font-bold leading-none">
                               {dateObj.getDate()}
                             </div>
                           </div>
 
                           <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                              <span className="badge" style={{ background: cfg.bg, color: cfg.color, fontSize: '0.72rem' }}>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span
+                                className="badge text-xs"
+                                style={{ background: cfg.bg, color: cfg.color }}
+                              >
                                 {cfg.label}
                               </span>
-                              <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+                              <span className="text-xs text-muted">
                                 {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
-                            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--foreground)', margin: '0 0 4px 0' }}>
+                            <h3 className="text-sm sm:text-base font-bold text-foreground m-0 mb-1">
                               {ev.title}
                             </h3>
                             {ev.details && (
-                              <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--muted)' }}>
+                              <p className="m-0 text-xs sm:text-sm text-muted">
                                 {ev.details}
                               </p>
                             )}
@@ -467,7 +426,7 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
                         </div>
 
                         {ev.linkHref && (
-                          <Link href={ev.linkHref} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                          <Link href={ev.linkHref} className="btn btn-secondary !py-1.5 !px-3 text-xs">
                             {getEventActionLabel(ev)}
                           </Link>
                         )}
@@ -479,57 +438,39 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
             </div>
 
             {/* Section 2: Choir Member Birthdays */}
-            <div className="glass-container" style={{ padding: '24px', background: 'rgba(255, 254, 252, 0.85)' }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#db2777', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="glass-container p-6 bg-pink-50/85">
+              <h2 className="text-lg sm:text-xl font-bold text-pink-600 mb-4 flex items-center gap-2">
                 <span>🎂</span> Member Birthday Calendar ({agendaBirthdayEvents.length})
               </h2>
 
               {agendaBirthdayEvents.length === 0 ? (
-                <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '24px 0', margin: 0 }}>
+                <p className="text-muted text-center py-6 m-0 text-xs sm:text-sm">
                   No upcoming public member birthdays recorded.
                 </p>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3">
                   {agendaBirthdayEvents.map((ev) => {
                     const dateObj = new Date(ev.dateTimeISO);
                     return (
                       <div
                         key={ev.id}
-                        style={{
-                          padding: '14px 16px',
-                          borderRadius: '14px',
-                          background: 'rgba(236, 72, 153, 0.06)',
-                          border: '1px solid rgba(236, 72, 153, 0.2)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '12px',
-                        }}
+                        className="p-3.5 sm:py-3.5 sm:px-4 rounded-2xl bg-pink-500/6 border border-pink-500/20 flex items-center justify-between gap-3"
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div
-                            style={{
-                              background: '#fce7f3',
-                              color: '#db2777',
-                              padding: '6px 10px',
-                              borderRadius: '10px',
-                              textAlign: 'center',
-                              minWidth: '50px',
-                            }}
-                          >
-                            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 700 }}>
+                        <div className="flex items-center gap-3">
+                          <div className="bg-pink-100 text-pink-600 py-1.5 px-2.5 rounded-xl text-center min-w-[50px]">
+                            <div className="text-[0.7rem] uppercase font-bold">
                               {dateObj.toLocaleString('default', { month: 'short' })}
                             </div>
-                            <div style={{ fontSize: '1.15rem', fontWeight: 700, lineHeight: 1 }}>
+                            <div className="text-lg font-bold leading-none">
                               {dateObj.getDate()}
                             </div>
                           </div>
 
                           <div>
-                            <strong style={{ display: 'block', fontSize: '0.95rem', color: '#831843' }}>
+                            <strong className="block text-xs sm:text-sm text-pink-950">
                               {ev.title}
                             </strong>
-                            <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+                            <span className="text-xs text-muted">
                               🎉 Annual Member Celebration
                             </span>
                           </div>
@@ -538,14 +479,7 @@ export const CalendarClient = ({ currentUserProfile, events: initialEvents }: Pr
                         {ev.linkHref && (
                           <Link
                             href={ev.linkHref}
-                            className="btn btn-secondary"
-                            style={{
-                              padding: '6px 12px',
-                              fontSize: '0.78rem',
-                              color: '#db2777',
-                              borderColor: 'rgba(236, 72, 153, 0.4)',
-                              background: '#fff',
-                            }}
+                            className="btn btn-secondary !py-1.5 !px-3 text-xs !text-pink-600 !border-pink-500/40 bg-white"
                           >
                             Profile →
                           </Link>

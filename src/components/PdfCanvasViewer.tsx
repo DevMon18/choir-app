@@ -129,68 +129,34 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
   };
 
   return (
-    <div
-      className="pdf-canvas-viewer-container"
-      style={{
-        borderRadius: '12px',
-        border: '1px solid var(--glass-border)',
-        background: '#ffffff',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-        height: '100%',
-        width: '100%',
-      }}
-    >
+    <div className="pdf-canvas-viewer-container rounded-xl border border-glass-border bg-white overflow-hidden flex flex-col shadow-sm h-full w-full">
       {/* Top Controls Toolbar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 14px',
-          background: 'rgba(11,77,36,0.06)',
-          borderBottom: '1px solid var(--glass-border)',
-          flexWrap: 'wrap',
-          gap: '8px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--primary)' }}>
+      <div className="flex items-center justify-between p-2.5 sm:px-3.5 bg-primary/6 border-b border-glass-border flex-wrap gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-bold text-primary">
             📄 {title || 'Document Preview'}
           </span>
           {numPages > 0 && (
-            <span
-              className="badge"
-              style={{
-                fontSize: '0.75rem',
-                background: 'rgba(11,77,36,0.12)',
-                color: 'var(--primary)',
-                fontWeight: 700,
-              }}
-            >
+            <span className="badge text-xs bg-primary/12 text-primary font-bold">
               Page {currentPage} of {numPages}
             </span>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="flex items-center gap-2 flex-wrap">
           {numPages > 1 && (
-            <div style={{ display: 'flex', gap: '4px' }}>
+            <div className="flex gap-1">
               <button
                 type="button"
                 onClick={() => changePage(1)}
-                className={`btn ${currentPage === 1 ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: 600 }}
+                className={`btn !py-1 !px-2.5 text-xs font-semibold ${currentPage === 1 ? 'btn-primary' : 'btn-secondary'}`}
               >
                 Page 1 (Letter)
               </button>
               <button
                 type="button"
                 onClick={() => changePage(2)}
-                className={`btn ${currentPage === 2 ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: 600 }}
+                className={`btn !py-1 !px-2.5 text-xs font-semibold ${currentPage === 2 ? 'btn-primary' : 'btn-secondary'}`}
               >
                 Page 2 (Waiver)
               </button>
@@ -201,8 +167,7 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-secondary"
-            style={{ padding: '5px 12px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+            className="btn btn-secondary !py-1.5 !px-3 text-xs inline-flex items-center gap-1"
           >
             <span>Open PDF ↗</span>
           </a>
@@ -212,45 +177,29 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
       {/* PDF Viewport Body (Scrollable Container) */}
       <div
         ref={containerRef}
-        style={{
-          flex: 1,
-          width: '100%',
-          maxHeight: '68vh',
-          minHeight: '340px',
-          overflowY: 'auto',
-          overflowX: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          background: '#525659',
-          padding: '16px 8px',
-          boxSizing: 'border-box',
-        }}
+        className="flex-1 w-full max-h-[68vh] min-h-[340px] overflow-y-auto overflow-x-auto flex flex-col items-center justify-start bg-[#525659] p-4 sm:p-2 box-border"
       >
         {loading && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: '#ffffff', margin: 'auto' }}>
-            <div style={{ width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.2)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Loading document page…</span>
+          <div className="flex flex-col items-center gap-3 text-white m-auto">
+            <div className="w-8 h-8 border-3 border-white/20 border-t-accent rounded-full animate-spin" />
+            <span className="text-sm font-semibold">Loading document page…</span>
           </div>
         )}
 
         {error && !loading && (
-          <div style={{ textAlign: 'center', color: '#ffffff', padding: '32px 16px', maxWidth: '380px', margin: 'auto' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📄</div>
-            <p style={{ fontWeight: 700, fontSize: '1rem', margin: '0 0 6px' }}>
+          <div className="text-center text-white p-8 sm:px-4 max-w-[380px] m-auto">
+            <div className="text-4xl mb-2">📄</div>
+            <p className="font-bold text-base m-0 mb-1.5">
               Document Ready
             </p>
-            <p style={{ fontSize: '0.85rem', color: '#d1d5db', margin: '0 0 16px' }}>
+            <p className="text-xs text-gray-300 m-0 mb-4">
               Tap below to view or download the complete PDF file.
             </p>
             <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-primary"
-              style={{ fontSize: '0.9rem', padding: '10px 20px', width: '100%' }}
+              className="btn btn-primary text-sm !py-2.5 !px-5 w-full inline-block"
             >
               📄 Tap to Open PDF Document ↗
             </a>
@@ -259,24 +208,18 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
 
         <canvas
           ref={canvasRef}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-            display: loading || error ? 'none' : 'block',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
-            borderRadius: '4px',
-            background: '#ffffff',
-            margin: '0 auto',
-          }}
+          className={`max-w-full h-auto shadow-2xl rounded bg-white mx-auto ${
+            loading || error ? 'hidden' : 'block'
+          }`}
         />
 
         {numPages > 1 && !loading && !error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px', padding: '8px 16px', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', borderRadius: '999px', color: '#fff', fontSize: '0.8rem' }}>
+          <div className="flex items-center gap-3 mt-4 py-2 px-4 bg-black/40 backdrop-blur-sm rounded-full text-white text-xs">
             <button
               type="button"
               onClick={() => changePage(currentPage - 1)}
               disabled={currentPage <= 1}
-              style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', opacity: currentPage <= 1 ? 0.4 : 1, fontWeight: 700 }}
+              className="bg-transparent border-0 text-white cursor-pointer font-bold disabled:opacity-40"
             >
               ◀ Prev Page
             </button>
@@ -285,7 +228,7 @@ export const PdfCanvasViewer = ({ url, title, height = '450px' }: PdfCanvasViewe
               type="button"
               onClick={() => changePage(currentPage + 1)}
               disabled={currentPage >= numPages}
-              style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', opacity: currentPage >= numPages ? 0.4 : 1, fontWeight: 700 }}
+              className="bg-transparent border-0 text-white cursor-pointer font-bold disabled:opacity-40"
             >
               Next Page ▶
             </button>

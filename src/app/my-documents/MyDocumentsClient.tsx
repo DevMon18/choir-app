@@ -178,20 +178,20 @@ export default function MyDocumentsClient({
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      <div className="bg-orb bg-orb-1" style={{ width: '450px', height: '450px' }} />
-      <div className="bg-orb bg-orb-2" style={{ width: '400px', height: '400px' }} />
+    <div className="flex flex-col min-h-screen relative">
+      <div className="bg-orb bg-orb-1 w-[450px] h-[450px]" />
+      <div className="bg-orb bg-orb-2 w-[400px] h-[400px]" />
 
       <Navbar profile={currentUserProfile} />
 
-      <main style={{ flex: 1, maxWidth: '1000px', margin: '0 auto', width: '100%', padding: '24px 16px 120px' }}>
+      <main className="flex-1 max-w-[1000px] mx-auto w-full py-6 px-4 pb-[120px]">
         {/* Header Title */}
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div className="mb-5 flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+            <h1 className="text-2xl sm:text-[1.75rem] font-bold text-primary m-0">
               📁 Choir Document &amp; Waiver Drive
             </h1>
-            <p style={{ color: 'var(--muted)', margin: '4px 0 0', fontSize: '0.95rem' }}>
+            <p className="text-muted mt-1 m-0 text-sm sm:text-[0.95rem]">
               Browse choir folders, download guidelines, and manage your signed activity waivers.
             </p>
           </div>
@@ -199,21 +199,20 @@ export default function MyDocumentsClient({
           {isAdmin && (
             <Link
               href="/admin/documents"
-              className="btn btn-primary"
-              style={{ fontSize: '0.85rem', padding: '8px 16px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              className="btn btn-primary text-xs sm:text-[0.85rem] !py-2 !px-4 font-semibold inline-flex items-center gap-1.5"
             >
-              <Settings size={15} /> Manage Drive
+              <Settings size={15} />
+              <span>Manage Drive</span>
             </Link>
           )}
         </div>
 
         {/* Main Tab Switcher */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', borderBottom: '2px solid rgba(11,77,36,0.1)', paddingBottom: '8px' }}>
+        <div className="flex gap-2.5 mb-6 border-b-2 border-primary/10 pb-2">
           <button
             type="button"
             onClick={() => setActiveTab('storage')}
-            className={`btn ${activeTab === 'storage' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ fontSize: '0.925rem', padding: '10px 20px', fontWeight: 700, borderRadius: '10px' }}
+            className={`btn ${activeTab === 'storage' ? 'btn-primary' : 'btn-secondary'} text-xs sm:text-[0.925rem] !py-2.5 !px-5 font-bold rounded-xl`}
           >
             📁 Choir File Drive ({initialDocuments.length})
           </button>
@@ -221,22 +220,11 @@ export default function MyDocumentsClient({
           <button
             type="button"
             onClick={() => setActiveTab('waivers')}
-            className={`btn ${activeTab === 'waivers' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ fontSize: '0.925rem', padding: '10px 20px', fontWeight: 700, borderRadius: '10px', position: 'relative' }}
+            className={`btn ${activeTab === 'waivers' ? 'btn-primary' : 'btn-secondary'} text-xs sm:text-[0.925rem] !py-2.5 !px-5 font-bold rounded-xl relative`}
           >
             ✍️ My Signed Waivers ({initialSignatures.length})
             {pendingWaiversCount > 0 && (
-              <span
-                style={{
-                  marginLeft: '8px',
-                  background: '#dc2626',
-                  color: '#ffffff',
-                  borderRadius: '12px',
-                  padding: '2px 8px',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                }}
-              >
+              <span className="ml-2 bg-red-600 text-white rounded-xl py-0.5 px-2 text-xs font-extrabold">
                 {pendingWaiversCount}
               </span>
             )}
@@ -249,35 +237,15 @@ export default function MyDocumentsClient({
         {activeTab === 'storage' && (
           <div>
             {/* Storage Controls Bar */}
-            <div
-              className="glass-container"
-              style={{
-                padding: '14px 18px',
-                marginBottom: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '12px',
-              }}
-            >
+            <div className="glass-container p-3.5 sm:py-3.5 sm:px-4.5 mb-5 flex items-center justify-between flex-wrap gap-3">
               {/* Breadcrumb Navigation */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setSelectedFolderId(null)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '0.925rem',
-                    fontWeight: selectedFolderId === null ? 700 : 500,
-                    color: selectedFolderId === null ? 'var(--primary)' : 'var(--muted)',
-                    cursor: 'pointer',
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
+                  className={`bg-transparent border-none text-xs sm:text-[0.925rem] p-0 flex items-center gap-1.5 cursor-pointer ${
+                    selectedFolderId === null ? 'font-bold text-primary' : 'font-medium text-muted'
+                  }`}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -287,8 +255,8 @@ export default function MyDocumentsClient({
 
                 {currentFolder && (
                   <>
-                    <span style={{ color: 'var(--muted)' }}>/</span>
-                    <span style={{ fontSize: '0.925rem', fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="text-muted">/</span>
+                    <span className="text-xs sm:text-[0.925rem] font-bold text-primary flex items-center gap-1.5">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
                       </svg>
@@ -299,35 +267,22 @@ export default function MyDocumentsClient({
               </div>
 
               {/* Search & Grid/List View Selector */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <input
                   type="text"
                   placeholder="Search storage files..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    padding: '7px 14px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--glass-border)',
-                    fontSize: '0.85rem',
-                    outline: 'none',
-                    width: '190px',
-                  }}
+                  className="input-field !py-1.5 !px-3 text-xs sm:text-[0.85rem] w-[190px]"
                 />
 
-                <div style={{ display: 'flex', border: '1px solid var(--glass-border)', borderRadius: '8px', overflow: 'hidden' }}>
+                <div className="flex border border-glass-border rounded-lg overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setViewMode('grid')}
-                    style={{
-                      border: 'none',
-                      padding: '6px 12px',
-                      background: viewMode === 'grid' ? 'var(--primary)' : '#ffffff',
-                      color: viewMode === 'grid' ? '#ffffff' : 'var(--foreground)',
-                      cursor: 'pointer',
-                      fontSize: '0.825rem',
-                      fontWeight: 600,
-                    }}
+                    className={`border-none py-1.5 px-3 cursor-pointer text-xs font-semibold ${
+                      viewMode === 'grid' ? 'bg-primary text-white' : 'bg-white text-foreground'
+                    }`}
                     title="Grid View"
                   >
                     Grid
@@ -335,15 +290,9 @@ export default function MyDocumentsClient({
                   <button
                     type="button"
                     onClick={() => setViewMode('list')}
-                    style={{
-                      border: 'none',
-                      padding: '6px 12px',
-                      background: viewMode === 'list' ? 'var(--primary)' : '#ffffff',
-                      color: viewMode === 'list' ? '#ffffff' : 'var(--foreground)',
-                      cursor: 'pointer',
-                      fontSize: '0.825rem',
-                      fontWeight: 600,
-                    }}
+                    className={`border-none py-1.5 px-3 cursor-pointer text-xs font-semibold ${
+                      viewMode === 'list' ? 'bg-primary text-white' : 'bg-white text-foreground'
+                    }`}
                     title="List View"
                   >
                     List
@@ -357,8 +306,7 @@ export default function MyDocumentsClient({
               <button
                 type="button"
                 onClick={() => setSelectedFolderId(currentFolder?.parent_id || null)}
-                className="btn btn-secondary"
-                style={{ marginBottom: '16px', fontSize: '0.85rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                className="btn btn-secondary mb-4 text-xs sm:text-[0.85rem] !py-1.5 !px-3.5 inline-flex items-center gap-1.5"
               >
                 <span>⬅️ Back to Main Folders</span>
               </button>
@@ -366,44 +314,25 @@ export default function MyDocumentsClient({
 
             {/* Folder Grid Section */}
             {displayedFolders.length > 0 && (
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '12px', fontWeight: 700 }}>
+              <div className="mb-6">
+                <h3 className="text-xs sm:text-[0.9rem] uppercase tracking-wider text-muted mb-3 font-bold">
                   Folders ({displayedFolders.length})
                 </h3>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px' }}>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3.5">
                   {displayedFolders.map((folder) => {
                     const fileCount = initialDocuments.filter((d) => d.folder_id === folder.id).length;
                     return (
                       <div
                         key={folder.id}
                         onClick={() => setSelectedFolderId(folder.id)}
-                        className="glass-container anim-card"
-                        style={{
-                          padding: '16px',
-                          cursor: 'pointer',
-                          borderRadius: '14px',
-                          border: '1px solid var(--glass-border)',
-                          background: 'rgba(255,255,255,0.7)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '14px',
-                          transition: 'all 0.2s ease',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-                        }}
+                        className="glass-container anim-card p-4 cursor-pointer rounded-2xl border border-glass-border bg-white/70 flex items-center gap-3.5 transition-all shadow-sm hover:shadow-md"
                       >
                         <div
+                          className="w-11.5 h-11.5 rounded-xl flex items-center justify-center text-2xl shrink-0"
                           style={{
-                            width: '46px',
-                            height: '46px',
-                            borderRadius: '12px',
-                            background: folder.color ? `${folder.color}15` : 'rgba(11,77,36,0.1)',
+                            backgroundColor: folder.color ? `${folder.color}15` : 'rgba(11,77,36,0.1)',
                             color: folder.color || 'var(--primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.5rem',
-                            flexShrink: 0,
                           }}
                         >
                           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -411,11 +340,11 @@ export default function MyDocumentsClient({
                           </svg>
                         </div>
 
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <h4 style={{ margin: '0 0 2px', fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="m-0 mb-0.5 text-xs sm:text-sm font-bold text-foreground overflow-hidden text-ellipsis whitespace-nowrap">
                             {folder.name}
                           </h4>
-                          <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--muted)' }}>
+                          <p className="m-0 text-[0.78rem] text-muted">
                             {fileCount} {fileCount === 1 ? 'file' : 'files'}
                           </p>
                         </div>
@@ -428,77 +357,57 @@ export default function MyDocumentsClient({
 
             {/* Files Grid / List Section */}
             <div>
-              <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '12px', fontWeight: 700 }}>
+              <h3 className="text-xs sm:text-[0.9rem] uppercase tracking-wider text-muted mb-3 font-bold">
                 Files ({displayedDocuments.length})
               </h3>
 
               {displayedDocuments.length === 0 ? (
-                <div className="glass-container" style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📄</div>
-                  <h4 style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                <div className="glass-container p-10 text-center text-muted">
+                  <div className="text-4xl mb-2">📄</div>
+                  <h4 className="m-0 mb-1 text-base font-bold text-foreground">
                     No Files in This Folder
                   </h4>
-                  <p style={{ margin: 0, fontSize: '0.88rem' }}>
+                  <p className="m-0 text-xs sm:text-sm">
                     There are no documents uploaded in this folder location yet.
                   </p>
                 </div>
               ) : viewMode === 'grid' ? (
                 /* GRID VIEW */
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
                   {displayedDocuments.map((doc) => (
                     <div
                       key={doc.id}
-                      className="glass-container anim-card"
-                      style={{
-                        padding: '16px',
-                        borderRadius: '14px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        background: 'rgba(255,255,255,0.85)',
-                        border: '1px solid var(--glass-border)',
-                      }}
+                      className="glass-container anim-card p-4 rounded-2xl flex flex-col justify-between bg-white/85 border border-glass-border"
                     >
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <div className="flex items-center justify-between mb-2.5">
                           <span
-                            className="badge"
+                            className="badge text-xs font-bold"
                             style={{
-                              fontSize: '0.725rem',
-                              fontWeight: 700,
-                              background: DOC_TYPE_COLORS[doc.type] || 'rgba(11,77,36,0.1)',
+                              backgroundColor: DOC_TYPE_COLORS[doc.type] || 'rgba(11,77,36,0.1)',
                               color: DOC_TYPE_TEXT[doc.type] || 'var(--primary)',
                             }}
                           >
                             {DOC_TYPE_LABELS[doc.type] || doc.type}
                           </span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                          <span className="text-xs text-muted">
                             {new Date(doc.created_at).toLocaleDateString()}
                           </span>
                         </div>
 
                         <h4
                           title={doc.title}
-                          style={{
-                            margin: '0 0 6px',
-                            fontSize: '0.95rem',
-                            fontWeight: 700,
-                            color: 'var(--foreground)',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
+                          className="m-0 mb-1.5 text-xs sm:text-sm font-bold text-foreground overflow-hidden text-ellipsis whitespace-nowrap"
                         >
                           📄 {doc.title}
                         </h4>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px' }}>
+                      <div className="flex items-center gap-2 mt-4">
                         <button
                           type="button"
                           onClick={() => setPreviewDoc(doc)}
-                          className="btn btn-secondary"
-                          style={{ flex: 1, padding: '7px 12px', fontSize: '0.825rem', fontWeight: 600 }}
+                          className="btn btn-secondary flex-1 !py-1.5 !px-3 text-xs font-semibold"
                         >
                           👁️ Preview
                         </button>
@@ -507,8 +416,7 @@ export default function MyDocumentsClient({
                           target="_blank"
                           rel="noopener noreferrer"
                           download
-                          className="btn btn-primary"
-                          style={{ flex: 1, padding: '7px 12px', fontSize: '0.825rem', fontWeight: 600, textAlign: 'center' }}
+                          className="btn btn-primary flex-1 !py-1.5 !px-3 text-xs font-semibold text-center"
                         >
                           ⬇️ Download
                         </a>
@@ -518,50 +426,34 @@ export default function MyDocumentsClient({
                 </div>
               ) : (
                 /* LIST VIEW */
-                <div className="glass-container" style={{ padding: '8px', borderRadius: '14px' }}>
+                <div className="glass-container p-2 rounded-2xl">
                   {displayedDocuments.map((doc, idx) => (
                     <div
                       key={doc.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 16px',
-                        borderBottom: idx === displayedDocuments.length - 1 ? 'none' : '1px solid var(--glass-border)',
-                        flexWrap: 'wrap',
-                        gap: '10px',
-                      }}
+                      className={`flex items-center justify-between p-3 sm:py-3 sm:px-4 flex-wrap gap-2.5 ${
+                        idx === displayedDocuments.length - 1 ? '' : 'border-b border-glass-border'
+                      }`}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                        <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>📄</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="flex items-center gap-3 flex-1 min-w-0 overflow-hidden">
+                        <span className="text-2xl shrink-0">📄</span>
+                        <div className="flex-1 min-w-0">
                           <h4
                             title={doc.title}
-                            style={{
-                              margin: 0,
-                              fontSize: '0.95rem',
-                              fontWeight: 700,
-                              color: 'var(--foreground)',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
+                            className="m-0 text-xs sm:text-sm font-bold text-foreground overflow-hidden text-ellipsis whitespace-nowrap"
                           >
                             {doc.title}
                           </h4>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                          <span className="text-xs text-muted">
                             Uploaded: {new Date(doc.created_at).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className="flex items-center gap-2.5">
                         <span
-                          className="badge"
+                          className="badge text-xs font-bold"
                           style={{
-                            fontSize: '0.725rem',
-                            fontWeight: 700,
-                            background: DOC_TYPE_COLORS[doc.type] || 'rgba(11,77,36,0.1)',
+                            backgroundColor: DOC_TYPE_COLORS[doc.type] || 'rgba(11,77,36,0.1)',
                             color: DOC_TYPE_TEXT[doc.type] || 'var(--primary)',
                           }}
                         >
@@ -571,8 +463,7 @@ export default function MyDocumentsClient({
                         <button
                           type="button"
                           onClick={() => setPreviewDoc(doc)}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: 600 }}
+                          className="btn btn-secondary !py-1.5 !px-3 text-xs font-semibold"
                         >
                           👁️ Preview
                         </button>
@@ -581,8 +472,7 @@ export default function MyDocumentsClient({
                           target="_blank"
                           rel="noopener noreferrer"
                           download
-                          className="btn btn-primary"
-                          style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: 600 }}
+                          className="btn btn-primary !py-1.5 !px-3 text-xs font-semibold"
                         >
                           ⬇️ Download
                         </a>
@@ -601,50 +491,43 @@ export default function MyDocumentsClient({
         {activeTab === 'waivers' && (
           <div>
             {/* Filter Pills */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            <div className="flex gap-2 mb-5 flex-wrap">
               <button
                 type="button"
                 onClick={() => setWaiverFilter('all')}
-                className={`btn ${waiverFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+                className={`btn ${waiverFilter === 'all' ? 'btn-primary' : 'btn-secondary'} text-xs sm:text-sm !py-2 !px-4`}
               >
                 Active Documents ({initialSignatures.filter((s) => !s.is_archived).length})
               </button>
               <button
                 type="button"
                 onClick={() => setWaiverFilter('pending')}
-                className={`btn ${waiverFilter === 'pending' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{
-                  fontSize: '0.85rem',
-                  padding: '8px 16px',
-                  color: waiverFilter === 'pending' ? '#fff' : '#dc2626',
-                  background: waiverFilter === 'pending' ? '#dc2626' : undefined,
-                  borderColor: waiverFilter === 'pending' ? '#dc2626' : undefined,
-                }}
+                className={`btn ${
+                  waiverFilter === 'pending'
+                    ? '!bg-red-600 !border-red-600 !text-white'
+                    : 'btn-secondary !text-red-600'
+                } text-xs sm:text-sm !py-2 !px-4`}
               >
                 Action Required ({pendingWaiversCount})
               </button>
               <button
                 type="button"
                 onClick={() => setWaiverFilter('submitted')}
-                className={`btn ${waiverFilter === 'submitted' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+                className={`btn ${waiverFilter === 'submitted' ? 'btn-primary' : 'btn-secondary'} text-xs sm:text-sm !py-2 !px-4`}
               >
                 Submitted ({initialSignatures.filter((s) => !s.is_archived && s.status === 'submitted').length})
               </button>
               <button
                 type="button"
                 onClick={() => setWaiverFilter('verified')}
-                className={`btn ${waiverFilter === 'verified' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+                className={`btn ${waiverFilter === 'verified' ? 'btn-primary' : 'btn-secondary'} text-xs sm:text-sm !py-2 !px-4`}
               >
                 Verified ({initialSignatures.filter((s) => !s.is_archived && (s.status === 'verified' || s.status === 'verified_manual')).length})
               </button>
               <button
                 type="button"
                 onClick={() => setWaiverFilter('archived')}
-                className={`btn ${waiverFilter === 'archived' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+                className={`btn ${waiverFilter === 'archived' ? 'btn-primary' : 'btn-secondary'} text-xs sm:text-sm !py-2 !px-4`}
               >
                 📁 Archived ({archivedWaiversCount})
               </button>
@@ -652,17 +535,17 @@ export default function MyDocumentsClient({
 
             {/* Waiver List */}
             {filteredSignatures.length === 0 ? (
-              <div className="glass-container" style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--muted)' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📄</div>
-                <h3 style={{ margin: '0 0 4px', fontSize: '1.05rem', color: 'var(--foreground)' }}>
+              <div className="glass-container p-12 text-center text-muted">
+                <div className="text-4xl mb-2">📄</div>
+                <h3 className="m-0 mb-1 text-base font-bold text-foreground">
                   No documents in this view
                 </h3>
-                <p style={{ margin: 0, fontSize: '0.88rem' }}>
+                <p className="m-0 text-xs sm:text-sm">
                   You don&apos;t have any assigned document waivers in this category.
                 </p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="flex flex-col gap-3.5">
                 {filteredSignatures.map((sig) => {
                   const doc = sig.documents;
                   const docType = doc?.type || 'general';
@@ -671,46 +554,28 @@ export default function MyDocumentsClient({
                   return (
                     <div
                       key={sig.id}
-                      className="glass-container anim-card"
-                      style={{
-                        padding: '18px',
-                        borderRadius: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '16px',
-                        flexWrap: 'wrap',
-                      }}
+                      className="glass-container anim-card p-4 sm:p-4.5 rounded-2xl flex items-center justify-between gap-4 flex-wrap"
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '240px' }}>
+                      <div className="flex items-center gap-3.5 flex-1 min-w-[240px]">
                         <div
+                          className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0"
                           style={{
-                            width: '44px',
-                            height: '44px',
-                            borderRadius: '12px',
-                            background: DOC_TYPE_COLORS[docType] || 'rgba(11,77,36,0.1)',
+                            backgroundColor: DOC_TYPE_COLORS[docType] || 'rgba(11,77,36,0.1)',
                             color: DOC_TYPE_TEXT[docType] || 'var(--primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.3rem',
-                            flexShrink: 0,
                           }}
                         >
                           📄
                         </div>
 
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                            <h3 style={{ margin: 0, fontSize: '1.025rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="m-0 text-xs sm:text-base font-bold text-foreground">
                               {doc?.title || 'Choir Waiver Document'}
                             </h3>
                             <span
-                              className="badge"
+                              className="badge text-xs font-bold"
                               style={{
-                                fontSize: '0.725rem',
-                                fontWeight: 700,
-                                background:
+                                backgroundColor:
                                   sig.status === 'pending' ? 'rgba(220,38,38,0.12)' :
                                   sig.status === 'submitted' ? 'rgba(197,160,89,0.18)' :
                                   sig.status === 'rejected' ? 'rgba(220,38,38,0.12)' :
@@ -729,13 +594,13 @@ export default function MyDocumentsClient({
                             </span>
                           </div>
 
-                          <span style={{ fontSize: '0.8rem', color: 'var(--muted)', display: 'block', marginTop: '4px' }}>
+                          <span className="text-xs text-muted block mt-1">
                             Assigned: {new Date(sig.created_at).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <div className="flex items-center gap-2 flex-wrap">
                         {sig.signedPdfSignedUrl && (
                           <button
                             type="button"
@@ -750,8 +615,7 @@ export default function MyDocumentsClient({
                                 signedUrl: sig.signedPdfSignedUrl!,
                               })
                             }
-                            className="btn btn-secondary"
-                            style={{ padding: '9px 14px', fontSize: '0.825rem', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--primary)' }}
+                            className="btn btn-secondary !py-2 !px-3.5 text-xs whitespace-nowrap font-semibold !text-primary"
                           >
                             📄 Stamped PDF
                           </button>
@@ -759,16 +623,9 @@ export default function MyDocumentsClient({
 
                         <Link
                           href={`/sign/${sig.id}`}
-                          className={`btn ${isUrgent ? 'btn-primary' : 'btn-secondary'}`}
-                          style={{
-                            padding: '9px 16px',
-                            fontSize: '0.88rem',
-                            fontWeight: 700,
-                            whiteSpace: 'nowrap',
-                            background: isUrgent ? '#dc2626' : undefined,
-                            borderColor: isUrgent ? '#dc2626' : undefined,
-                            color: isUrgent ? '#ffffff' : undefined,
-                          }}
+                          className={`btn ${
+                            isUrgent ? '!bg-red-600 !border-red-600 !text-white' : 'btn-secondary'
+                          } !py-2 !px-4 text-xs sm:text-sm font-bold whitespace-nowrap`}
                         >
                           {isUrgent ? 'Sign Waiver Now →' : 'View Submission →'}
                         </Link>
@@ -792,8 +649,7 @@ export default function MyDocumentsClient({
                                 addToast({ type: 'error', title: 'Action Failed', message: res.error });
                               }
                             }}
-                            className="btn btn-secondary"
-                            style={{ padding: '9px 14px', fontSize: '0.825rem', whiteSpace: 'nowrap' }}
+                            className="btn btn-secondary !py-2 !px-3.5 text-xs whitespace-nowrap"
                           >
                             {sig.is_archived ? '📂 Unarchive' : '📁 Archive'}
                           </button>
@@ -812,75 +668,44 @@ export default function MyDocumentsClient({
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {previewDoc && (
           <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 9999,
-              background: 'rgba(0,0,0,0.65)',
-              backdropFilter: 'blur(6px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '16px',
-            }}
+            className="fixed inset-0 z-[9999] bg-black/65 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
             onClick={() => setPreviewDoc(null)}
           >
             <div
-              className="glass-container"
-              style={{
-                width: '100%',
-                maxWidth: '850px',
-                background: '#ffffff',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-              }}
+              className="glass-container w-full max-w-[850px] bg-white rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-slideUpModal"
               onClick={(e) => e.stopPropagation()}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '14px 20px',
-                  background: 'var(--primary)',
-                  color: '#ffffff',
-                }}
-              >
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
+              <div className="flex items-center justify-between py-3.5 px-5 bg-primary text-white">
+                <h3 className="m-0 text-sm sm:text-base font-bold">
                   📄 {previewDoc.title}
                 </h3>
                 <button
                   type="button"
                   onClick={() => setPreviewDoc(null)}
-                  style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '1.25rem', cursor: 'pointer' }}
+                  className="bg-transparent border-none text-white text-xl cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
 
-              <div style={{ padding: '16px' }}>
+              <div className="p-4">
                 <PdfCanvasViewer url={previewDoc.signedUrl} title={previewDoc.title} height="500px" />
               </div>
 
-              <div style={{ padding: '12px 20px', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <div className="py-3 px-5 border-t border-glass-border flex justify-end gap-2.5">
                 <a
                   href={previewDoc.signedUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   download
-                  className="btn btn-primary"
-                  style={{ fontSize: '0.88rem', padding: '8px 18px' }}
+                  className="btn btn-primary text-xs sm:text-sm !py-2 !px-4.5"
                 >
                   ⬇️ Download PDF
                 </a>
                 <button
                   type="button"
                   onClick={() => setPreviewDoc(null)}
-                  className="btn btn-secondary"
-                  style={{ fontSize: '0.88rem', padding: '8px 18px' }}
+                  className="btn btn-secondary text-xs sm:text-sm !py-2 !px-4.5"
                 >
                   Close
                 </button>

@@ -3,7 +3,7 @@ import { TableSkeleton } from '@/components/skeletons/TableSkeleton';
 
 export default function AdminTasksLoading() {
   return (
-    <div style={{ padding: '24px 16px 120px', maxWidth: '1060px', margin: '0 auto', width: '100%' }}>
+    <div className="py-6 px-4 pb-[120px] max-w-[1060px] mx-auto w-full">
       <TableSkeleton rows={5} />
     </div>
   );

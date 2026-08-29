@@ -76,49 +76,30 @@ const ToastItem = ({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
 
   return (
     <div
+      className={`flex items-start gap-3 p-3.5 sm:px-4 rounded-xl shadow-lg min-w-[300px] max-w-[420px] w-full transition-all duration-300 cursor-default ${
+        visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+      }`}
       style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '12px',
-        padding: '14px 16px',
         background: colors.bg,
         border: `1px solid ${colors.border}`,
-        borderRadius: '12px',
-        boxShadow: '0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
-        minWidth: '300px',
-        maxWidth: '420px',
-        width: '100%',
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateX(0)' : 'translateX(30px)',
-        transition: 'opacity 0.3s ease, transform 0.3s ease',
-        cursor: 'default',
       }}
     >
-      <span style={{ color: colors.icon, flexShrink: 0, marginTop: '1px' }}>
+      <span style={{ color: colors.icon }} className="shrink-0 mt-0.5">
         {ICONS[toast.type]}
       </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontWeight: 600, fontSize: '0.9rem', color: colors.title, margin: 0 }}>
+      <div className="flex-1 min-w-0">
+        <p style={{ color: colors.title }} className="font-semibold text-sm m-0">
           {toast.title}
         </p>
         {toast.message && (
-          <p style={{ fontSize: '0.82rem', color: '#6b7280', margin: '3px 0 0', lineHeight: 1.4 }}>
+          <p className="text-xs text-gray-500 mt-1 m-0 leading-snug">
             {toast.message}
           </p>
         )}
       </div>
       <button
         onClick={handleClose}
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          color: '#9ca3af',
-          padding: '0',
-          lineHeight: 1,
-          flexShrink: 0,
-          fontSize: '1.1rem',
-        }}
+        className="bg-transparent border-0 cursor-pointer text-gray-400 p-0 leading-none shrink-0 text-lg hover:text-gray-600 transition-colors"
         aria-label="Dismiss"
       >
         ×
@@ -144,20 +125,9 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     <ToastContext.Provider value={{ addToast, removeToast }}>
       {children}
       {/* Toast container */}
-      <div
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          zIndex: 99999,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-          pointerEvents: 'none',
-        }}
-      >
+      <div className="fixed top-5 right-5 z-[99999] flex flex-col gap-2.5 pointer-events-none">
         {toasts.map((toast) => (
-          <div key={toast.id} style={{ pointerEvents: 'all' }}>
+          <div key={toast.id} className="pointer-events-auto">
             <ToastItem
               toast={toast}
               onRemove={() => removeToast(toast.id)}

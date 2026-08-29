@@ -110,33 +110,33 @@ const LoginPage = () => {
   };
 
   return (
-    <main className="auth-page">
-      <div className="bg-orb bg-orb-1"></div>
-      <div className="bg-orb bg-orb-2"></div>
+    <main className="auth-page min-h-screen flex items-center justify-center p-4 relative">
+      <div className="bg-orb bg-orb-1 w-[450px] h-[450px]" />
+      <div className="bg-orb bg-orb-2 w-[400px] h-[400px]" />
 
       <div
         ref={cardRef}
-        className="auth-card glass-container"
+        className="auth-card glass-container max-w-[440px] w-full p-8 sm:p-10 rounded-2xl bg-white/80 border border-glass-border shadow-xl"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="auth-header stagger-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+        <div className="auth-header stagger-item flex flex-col items-center gap-4 text-center mb-6">
           <Image
             src="/collective-logo.png"
             alt="Choir Collective Logo"
             width={84}
             height={84}
             priority
-            style={{ borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)', boxShadow: 'var(--card-shadow)' }}
+            className="rounded-full object-cover border-2 border-border shadow-md"
           />
           <div>
-            <h1 className="auth-title">Choir Collective</h1>
-            <p className="auth-subtitle">Sign in to your account to continue</p>
+            <h1 className="auth-title text-2xl font-bold text-foreground">Choir Collective</h1>
+            <p className="auth-subtitle text-muted text-xs sm:text-sm mt-1">Sign in to your account to continue</p>
           </div>
         </div>
 
         {error && (
-          <div className="alert alert-error stagger-item">
+          <div className="alert alert-error stagger-item mb-4">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
@@ -144,8 +144,8 @@ const LoginPage = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} ref={formRef}>
-          <div className="input-group stagger-item">
+        <form onSubmit={handleSubmit} ref={formRef} className="flex flex-col gap-4">
+          <div className="input-group stagger-item !mb-0">
             <label className="input-label" htmlFor="email">Email Address</label>
             <input
               className="input-field"
@@ -158,7 +158,7 @@ const LoginPage = () => {
             />
           </div>
 
-          <div className="input-group stagger-item">
+          <div className="input-group stagger-item !mb-0">
             <PasswordInput
               label="Password"
               id="password"
@@ -169,27 +169,25 @@ const LoginPage = () => {
             />
           </div>
 
-
           <button
             type="submit"
-            className={`btn btn-primary form-submit-btn stagger-item ${loading ? 'btn-disabled' : ''}`}
+            className={`btn btn-primary form-submit-btn stagger-item !p-3 text-base font-semibold ${loading ? 'btn-disabled' : ''}`}
             disabled={loading || googleLoading}
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
-        <div className="stagger-item" style={{ margin: '24px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }}></div>
-          <span style={{ fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase' }}>or</span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }}></div>
+        <div className="stagger-item my-6 flex items-center gap-3">
+          <div className="flex-1 h-px bg-glass-border" />
+          <span className="text-xs text-muted font-semibold uppercase">or</span>
+          <div className="flex-1 h-px bg-glass-border" />
         </div>
 
         <button
           onClick={handleGoogleLogin}
-          className={`btn btn-secondary form-submit-btn stagger-item ${googleLoading ? 'btn-disabled' : ''}`}
+          className={`btn btn-secondary form-submit-btn stagger-item w-full flex items-center justify-center gap-2.5 !p-3 text-base font-semibold ${googleLoading ? 'btn-disabled' : ''}`}
           disabled={loading || googleLoading}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
         >
           <svg width="18" height="18" viewBox="0 0 18 18">
             <path
@@ -209,12 +207,12 @@ const LoginPage = () => {
               d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.3A8.99 8.99 0 0 0 9 0 9 9 0 0 0 .95 4.96l2.95 2.4C4.61 5.16 6.6 3.58 9 3.58z"
             />
           </svg>
-          {googleLoading ? 'Connecting...' : 'Continue with Google'}
+          <span>{googleLoading ? 'Connecting...' : 'Continue with Google'}</span>
         </button>
 
-        <div className="auth-footer stagger-item">
-          Don't have an account?{' '}
-          <Link href="/signup" className="auth-link">
+        <div className="auth-footer stagger-item mt-6 text-center text-xs sm:text-sm text-muted">
+          Don&apos;t have an account?{' '}
+          <Link href="/signup" className="auth-link text-primary font-semibold hover:underline">
             Request to join
           </Link>
         </div>

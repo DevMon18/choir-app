@@ -32,26 +32,17 @@ const RequestResetForm = () => {
 
   if (sent) {
     return (
-      <div style={{ textAlign: 'center' }}>
-        <div style={{
-          width: '64px',
-          height: '64px',
-          borderRadius: '50%',
-          background: 'rgba(34,197,94,0.12)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 20px',
-        }}>
-          <svg width="32" height="32" viewBox="0 0 20 20" fill="var(--success)">
+      <div className="text-center">
+        <div className="w-16 h-16 rounded-full bg-emerald-500/12 flex items-center justify-center mx-auto mb-5 text-success">
+          <svg width="32" height="32" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
         </div>
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '12px' }}>Check your inbox</h2>
-        <p style={{ color: 'var(--muted)', fontSize: '0.95rem', lineHeight: 1.6 }}>
-          If an account exists for <strong>{email}</strong>, you'll receive a password reset link shortly.
+        <h2 className="text-xl sm:text-[1.35rem] font-bold text-primary mb-3">Check your inbox</h2>
+        <p className="text-muted text-xs sm:text-sm leading-relaxed m-0">
+          If an account exists for <strong>{email}</strong>, you&apos;ll receive a password reset link shortly.
         </p>
-        <Link href="/login" className="btn btn-secondary" style={{ marginTop: '28px', display: 'inline-block' }}>
+        <Link href="/login" className="btn btn-secondary mt-7 inline-block">
           Back to Sign In
         </Link>
       </div>
@@ -60,13 +51,13 @@ const RequestResetForm = () => {
 
   return (
     <>
-      <div className="auth-header stagger-item">
-        <h1 className="auth-title">Reset Password</h1>
-        <p className="auth-subtitle">Enter your email and we'll send a reset link</p>
+      <div className="auth-header stagger-item text-center mb-6">
+        <h1 className="auth-title text-2xl sm:text-3xl font-bold text-foreground">Reset Password</h1>
+        <p className="auth-subtitle text-muted text-xs sm:text-sm mt-1">Enter your email and we&apos;ll send a reset link</p>
       </div>
 
       {error && (
-        <div className="alert alert-error stagger-item">
+        <div className="alert alert-error stagger-item mb-4">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
@@ -74,8 +65,8 @@ const RequestResetForm = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div className="input-group stagger-item">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="input-group stagger-item !mb-0">
           <label className="input-label" htmlFor="email">Email Address</label>
           <input
             className="input-field"
@@ -92,15 +83,15 @@ const RequestResetForm = () => {
 
         <button
           type="submit"
-          className={`btn btn-primary form-submit-btn stagger-item ${loading ? 'btn-disabled' : ''}`}
+          className={`btn btn-primary form-submit-btn stagger-item !p-3 text-base font-semibold ${loading ? 'btn-disabled' : ''}`}
           disabled={loading}
         >
           {loading ? 'Sending link...' : 'Send Reset Link'}
         </button>
       </form>
 
-      <div className="auth-footer stagger-item">
-        <Link href="/login" className="auth-link">← Back to Sign In</Link>
+      <div className="auth-footer stagger-item mt-6 text-center text-xs sm:text-sm text-muted">
+        <Link href="/login" className="auth-link text-primary font-semibold hover:underline">← Back to Sign In</Link>
       </div>
     </>
   );
@@ -130,24 +121,15 @@ const UpdatePasswordForm = () => {
 
   if (done) {
     return (
-      <div style={{ textAlign: 'center' }}>
-        <div style={{
-          width: '64px',
-          height: '64px',
-          borderRadius: '50%',
-          background: 'rgba(34,197,94,0.12)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 20px',
-        }}>
-          <svg width="32" height="32" viewBox="0 0 20 20" fill="var(--success)">
+      <div className="text-center">
+        <div className="w-16 h-16 rounded-full bg-emerald-500/12 flex items-center justify-center mx-auto mb-5 text-success">
+          <svg width="32" height="32" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
         </div>
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '12px' }}>Password updated!</h2>
-        <p style={{ color: 'var(--muted)', fontSize: '0.95rem' }}>Your password has been changed successfully.</p>
-        <Link href="/login" className="btn btn-primary" style={{ marginTop: '28px', display: 'inline-block' }}>
+        <h2 className="text-xl sm:text-[1.35rem] font-bold text-primary mb-3">Password updated!</h2>
+        <p className="text-muted text-xs sm:text-sm m-0">Your password has been changed successfully.</p>
+        <Link href="/login" className="btn btn-primary mt-7 inline-block">
           Sign In
         </Link>
       </div>
@@ -156,13 +138,13 @@ const UpdatePasswordForm = () => {
 
   return (
     <>
-      <div className="auth-header stagger-item">
-        <h1 className="auth-title">Choose New Password</h1>
-        <p className="auth-subtitle">Pick a strong password for your account</p>
+      <div className="auth-header stagger-item text-center mb-6">
+        <h1 className="auth-title text-2xl sm:text-3xl font-bold text-foreground">Choose New Password</h1>
+        <p className="auth-subtitle text-muted text-xs sm:text-sm mt-1">Pick a strong password for your account</p>
       </div>
 
       {error && (
-        <div className="alert alert-error stagger-item">
+        <div className="alert alert-error stagger-item mb-4">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
@@ -170,8 +152,8 @@ const UpdatePasswordForm = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div className="input-group stagger-item">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="input-group stagger-item !mb-0">
           <PasswordInput
             label="New Password"
             id="password"
@@ -183,7 +165,7 @@ const UpdatePasswordForm = () => {
           />
         </div>
 
-        <div className="input-group stagger-item">
+        <div className="input-group stagger-item !mb-0">
           <PasswordInput
             label="Confirm New Password"
             id="confirmPassword"
@@ -197,7 +179,7 @@ const UpdatePasswordForm = () => {
 
         <button
           type="submit"
-          className={`btn btn-primary form-submit-btn stagger-item ${loading ? 'btn-disabled' : ''}`}
+          className={`btn btn-primary form-submit-btn stagger-item !p-3 text-base font-semibold ${loading ? 'btn-disabled' : ''}`}
           disabled={loading}
         >
           {loading ? 'Updating...' : 'Update Password'}
@@ -255,7 +237,7 @@ const ResetPasswordInner = () => {
   return (
     <div
       ref={cardRef}
-      className="auth-card glass-container"
+      className="auth-card glass-container max-w-[440px] w-full p-8 sm:p-10 rounded-2xl bg-white/80 border border-glass-border shadow-xl"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
@@ -266,12 +248,12 @@ const ResetPasswordInner = () => {
 
 const ResetPasswordPage = () => {
   return (
-    <main className="auth-page">
-      <div className="bg-orb bg-orb-1"></div>
-      <div className="bg-orb bg-orb-2"></div>
+    <main className="auth-page min-h-screen flex items-center justify-center p-4 relative">
+      <div className="bg-orb bg-orb-1 w-[450px] h-[450px]" />
+      <div className="bg-orb bg-orb-2 w-[400px] h-[400px]" />
       <Suspense fallback={
-        <div className="auth-card glass-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
-          <span style={{ color: 'var(--muted)', fontSize: '0.95rem' }}>Loading...</span>
+        <div className="auth-card glass-container max-w-[440px] w-full p-8 sm:p-10 rounded-2xl bg-white/80 border border-glass-border shadow-xl flex items-center justify-center min-h-[200px]">
+          <span className="text-muted text-sm">Loading...</span>
         </div>
       }>
         <ResetPasswordInner />

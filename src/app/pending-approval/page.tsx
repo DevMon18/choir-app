@@ -8,18 +8,13 @@ const PendingApprovalPage = async () => {
   const isConfirmed = !!user?.email_confirmed_at;
 
   return (
-    <main className="auth-page">
-      <div className="auth-card glass-container" style={{ textAlign: 'center' }}>
-        <div style={{ marginBottom: '24px' }}>
+    <main className="auth-page min-h-screen flex items-center justify-center p-4">
+      <div className="auth-card glass-container max-w-[480px] w-full p-8 text-center rounded-2xl bg-white/80 border border-glass-border shadow-xl">
+        <div className="mb-6">
           <div
-            style={{
-              display: 'inline-flex',
-              padding: '16px',
-              borderRadius: '50%',
-              background: isConfirmed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-              color: isConfirmed ? 'var(--success)' : 'var(--warning)',
-              marginBottom: '16px',
-            }}
+            className={`inline-flex p-4 rounded-full mb-4 ${
+              isConfirmed ? 'bg-emerald-500/10 text-success' : 'bg-amber-500/10 text-warning'
+            }`}
           >
             {isConfirmed ? (
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -35,25 +30,25 @@ const PendingApprovalPage = async () => {
               </svg>
             )}
           </div>
-          <h1 className="auth-title" style={{ fontSize: '1.75rem' }}>
+          <h1 className="auth-title text-2xl sm:text-[1.75rem] font-bold text-foreground">
             {isConfirmed ? 'Awaiting Approval' : 'Confirm Your Email'}
           </h1>
-          <p className="auth-subtitle" style={{ marginTop: '8px' }}>
+          <p className="auth-subtitle text-muted text-xs sm:text-sm mt-2">
             {isConfirmed
               ? `Hi ${user?.user_metadata?.full_name || 'there'}, your email is confirmed. A director or secretary will review and approve your access soon.`
               : 'Before our directors can approve your access, you must confirm your email. We sent a verification link to your email address.'}
           </p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="flex flex-col gap-3">
           {!isConfirmed && (
-            <div className="alert alert-warning" style={{ margin: '0 0 12px 0', textAlign: 'left' }}>
+            <div className="alert alert-warning m-0 mb-3 text-left">
               <span>Awaiting email confirmation. Please check your inbox (and spam folder) for the verification link.</span>
             </div>
           )}
 
           <form action={logout}>
-            <button type="submit" className="btn btn-secondary" style={{ width: '100%' }}>
+            <button type="submit" className="btn btn-secondary w-full">
               Log Out
             </button>
           </form>

@@ -246,382 +246,346 @@ export const AttendanceClient = ({
   const excusedCount = Object.values(attendance).filter((s) => s === 'excused').length;
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      <div className="bg-orb bg-orb-1" style={{ width: '500px', height: '500px' }} />
-      <div className="bg-orb bg-orb-2" style={{ width: '400px', height: '400px' }} />
+    <div ref={containerRef} className="flex flex-col min-h-screen relative">
+      <div className="bg-orb bg-orb-1 w-[500px] h-[500px]" />
+      <div className="bg-orb bg-orb-2 w-[400px] h-[400px]" />
 
       <Navbar profile={currentUserProfile} />
 
       <main className="admin-content-full">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
-            {/* Header */}
-            <div className="content-anim-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px' }}>
-              <div>
-                <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '6px', color: 'var(--primary)' }}>Attendance Tally</h2>
-                <p style={{ color: 'var(--muted)' }}>Tap a member card to cycle their status. Save when done.</p>
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => setViewMode('tally')}
-                  className={`btn ${viewMode === 'tally' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-                >
-                  📋 Quick Tally
-                </button>
-                <button
-                  onClick={() => setViewMode('history')}
-                  className={`btn ${viewMode === 'history' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-                >
-                  📅 All Sessions
-                </button>
-              </div>
+        <div className="flex flex-col gap-6">
+          {/* Header */}
+          <div className="content-anim-item flex justify-between items-end flex-wrap gap-3">
+            <div>
+              <h2 className="text-2xl sm:text-[1.75rem] font-bold mb-1.5 text-primary">Attendance Tally</h2>
+              <p className="text-muted text-sm sm:text-base">Tap a member card to cycle their status. Save when done.</p>
             </div>
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => setViewMode('tally')}
+                className={`btn !py-2 !px-4 text-xs sm:text-sm ${viewMode === 'tally' ? 'btn-primary' : 'btn-secondary'}`}
+              >
+                📋 Quick Tally
+              </button>
+              <button
+                onClick={() => setViewMode('history')}
+                className={`btn !py-2 !px-4 text-xs sm:text-sm ${viewMode === 'history' ? 'btn-primary' : 'btn-secondary'}`}
+              >
+                📅 All Sessions
+              </button>
+            </div>
+          </div>
 
-            {viewMode === 'tally' ? (
-              <>
-                {/* Date + Type Picker */}
-                <div className="glass-container content-anim-item" style={{ padding: '24px' }}>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '12px' }}>
-                    📅 Quick Select Date & Session Type
-                  </h3>
-                  
-                  {/* Quick Dates Badges */}
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                    {quickDates.map((item) => {
-                      const isSelected = selectedDate === item.date && selectedType === item.type;
-                      return (
-                        <button
-                          key={item.date + '-' + item.label}
-                          onClick={() => {
-                            setSelectedDate(item.date);
-                            setSelectedType(item.type);
-                            loadOrCreateSession(item.date, item.type);
-                          }}
-                          className="btn"
-                          style={{
-                            padding: '6px 14px',
-                            fontSize: '0.8rem',
-                            borderRadius: '20px',
-                            fontWeight: 600,
-                            background: isSelected ? 'var(--primary)' : 'rgba(11, 77, 36, 0.05)',
-                            color: isSelected ? '#fff' : 'var(--primary)',
-                            border: isSelected ? '1px solid var(--primary)' : '1px solid rgba(11, 77, 36, 0.15)',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                          }}
-                        >
-                          {item.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end', borderTop: '1px solid var(--glass-border)', paddingTop: '16px' }}>
-                    <div style={{ flex: '1', minWidth: '160px' }}>
-                      <label className="input-label" htmlFor="tallyDate">Or Custom Date</label>
-                      <input
-                        id="tallyDate"
-                        type="date"
-                        className="input-field"
-                        value={selectedDate}
-                        onChange={(e) => {
-                          setSelectedDate(e.target.value);
-                          if (e.target.value) {
-                            loadOrCreateSession(e.target.value, selectedType);
-                          }
+          {viewMode === 'tally' ? (
+            <>
+              {/* Date + Type Picker */}
+              <div className="glass-container content-anim-item p-6">
+                <h3 className="text-base sm:text-[1.05rem] font-semibold text-primary mb-3">
+                  📅 Quick Select Date & Session Type
+                </h3>
+                
+                {/* Quick Dates Badges */}
+                <div className="flex gap-2 flex-wrap mb-5">
+                  {quickDates.map((item) => {
+                    const isSelected = selectedDate === item.date && selectedType === item.type;
+                    return (
+                      <button
+                        key={item.date + '-' + item.label}
+                        onClick={() => {
+                          setSelectedDate(item.date);
+                          setSelectedType(item.type);
+                          loadOrCreateSession(item.date, item.type);
                         }}
-                      />
-                    </div>
-                    <div style={{ flex: '1', minWidth: '180px' }}>
-                      <label className="input-label" htmlFor="tallyType">Session Type</label>
-                      <select
-                        id="tallyType"
-                        className="input-field"
-                        value={selectedType}
-                        onChange={(e) => {
-                          const val = e.target.value as any;
-                          setSelectedType(val);
-                          loadOrCreateSession(selectedDate, val);
-                        }}
-                        style={{ background: '#fff' }}
+                        className={`btn !py-1.5 !px-3.5 text-xs !rounded-full font-semibold cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-primary text-white border-primary'
+                            : 'bg-primary/5 text-primary border-primary/15 hover:bg-primary/10'
+                        }`}
                       >
-                        <option value="mass">⛪ Mass</option>
-                        <option value="rehearsal">🎵 Rehearsal</option>
-                        <option value="performance">🎭 Performance</option>
-                        <option value="special_event">⭐ Special Event</option>
-                      </select>
-                    </div>
-                    <button
-                      onClick={handleLoadDate}
-                      disabled={loadingSession}
-                      className="btn btn-primary"
-                      style={{ padding: '12px 24px', height: '48px' }}
-                    >
-                      {loadingSession ? 'Loading...' : activeSession ? 'Switch Session' : 'Start Tally'}
-                    </button>
-                  </div>
-
-                  {activeSession && (
-                    <div style={{
-                      marginTop: '16px',
-                      padding: '12px 16px',
-                      background: 'rgba(11,77,36,0.06)',
-                      borderRadius: '10px',
-                      border: '1px solid rgba(11,77,36,0.12)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                    }}>
-                      <span style={{ color: '#0b4d24', fontSize: '1.1rem' }}>✓</span>
-                      <div>
-                        <p style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--primary)' }}>{activeSession.name}</p>
-                        <p style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{TYPE_LABELS[activeSession.type]} · {new Date(activeSession.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                      </div>
-                    </div>
-                  )}
+                        {item.label}
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {/* Summary counters */}
-                {activeSession && roster.length > 0 && (
-                  <div className="content-anim-item attendance-counter-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-                    {[
-                      { label: 'Present', count: presentCount, color: '#0b4d24', bg: 'rgba(11,77,36,0.07)' },
-                      { label: 'Absent',  count: absentCount,  color: '#9f1c1c', bg: 'rgba(159,28,28,0.06)' },
-                      { label: 'Late',    count: lateCount,    color: '#b45309', bg: 'rgba(197,160,89,0.1)' },
-                      { label: 'Excused', count: excusedCount, color: '#5c675e', bg: 'rgba(92,103,94,0.06)' },
-                    ].map(({ label, count, color, bg }) => (
-                      <div key={label} className="glass-container" style={{ padding: '16px', textAlign: 'center', background: bg }}>
-                        <p style={{ fontSize: '1.8rem', fontWeight: 700, color }}>{count}</p>
-                        <p style={{ fontSize: '0.78rem', fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</p>
-                      </div>
-                    ))}
+                <div className="flex gap-3 flex-wrap items-end border-t border-glass-border pt-4">
+                  <div className="flex-1 min-w-[160px]">
+                    <label className="input-label" htmlFor="tallyDate">Or Custom Date</label>
+                    <input
+                      id="tallyDate"
+                      type="date"
+                      className="input-field"
+                      value={selectedDate}
+                      onChange={(e) => {
+                        setSelectedDate(e.target.value);
+                        if (e.target.value) {
+                          loadOrCreateSession(e.target.value, selectedType);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-[180px]">
+                    <label className="input-label" htmlFor="tallyType">Session Type</label>
+                    <select
+                      id="tallyType"
+                      className="input-field bg-white"
+                      value={selectedType}
+                      onChange={(e) => {
+                        const val = e.target.value as any;
+                        setSelectedType(val);
+                        loadOrCreateSession(selectedDate, val);
+                      }}
+                    >
+                      <option value="mass">⛪ Mass</option>
+                      <option value="rehearsal">🎵 Rehearsal</option>
+                      <option value="performance">🎭 Performance</option>
+                      <option value="special_event">⭐ Special Event</option>
+                    </select>
+                  </div>
+                  <button
+                    onClick={handleLoadDate}
+                    disabled={loadingSession}
+                    className="btn btn-primary !py-3 !px-6 h-12"
+                  >
+                    {loadingSession ? 'Loading...' : activeSession ? 'Switch Session' : 'Start Tally'}
+                  </button>
+                </div>
+
+                {activeSession && (
+                  <div className="mt-4 p-3 sm:py-3 sm:px-4 bg-primary/6 rounded-xl border border-primary/12 flex items-center gap-2.5">
+                    <span className="text-success text-lg">✓</span>
+                    <div>
+                      <p className="font-semibold text-sm text-primary">{activeSession.name}</p>
+                      <p className="text-xs text-muted">
+                        {TYPE_LABELS[activeSession.type]} · {new Date(activeSession.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
+                    </div>
                   </div>
                 )}
+              </div>
 
-                {/* Member tally cards */}
-                {activeSession ? (
-                  <div className="glass-container content-anim-item" style={{ padding: '24px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
-                      <div>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--primary)' }}>
-                          Member Roll Call
-                          <span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--muted)', marginLeft: '10px' }}>
-                            Tap a card to cycle status
-                          </span>
-                        </h3>
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        {/* Search */}
-                        <div style={{ position: 'relative' }}>
-                          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                            <circle cx="9" cy="9" r="7" /><path strokeLinecap="round" d="m15 15 4 4" />
-                          </svg>
-                          <input
-                            type="text"
-                            placeholder="Search member..."
-                            className="input-field"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            style={{ paddingLeft: '30px', fontSize: '0.85rem', width: '180px' }}
-                          />
-                        </div>
-                        {/* Quick mark all present */}
-                        <button
-                          onClick={() => {
-                            const all: Record<string, 'present'> = {};
-                            roster.forEach((m) => (all[m.id] = 'present'));
-                            setAttendance(all);
-                          }}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 14px', fontSize: '0.8rem', color: 'var(--primary)', borderColor: 'var(--primary)' }}
-                        >
-                          ✓ All Present
-                        </button>
-                        {/* Reset */}
-                        <button
-                          onClick={() => {
-                            const all: Record<string, 'absent'> = {};
-                            roster.forEach((m) => (all[m.id] = 'absent'));
-                            setAttendance(all);
-                          }}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 14px', fontSize: '0.8rem' }}
-                        >
-                          Reset
-                        </button>
-                      </div>
+              {/* Summary counters */}
+              {activeSession && roster.length > 0 && (
+                <div className="content-anim-item attendance-counter-grid grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: 'Present', count: presentCount, color: '#0b4d24', bg: 'rgba(11,77,36,0.07)' },
+                    { label: 'Absent',  count: absentCount,  color: '#9f1c1c', bg: 'rgba(159,28,28,0.06)' },
+                    { label: 'Late',    count: lateCount,    color: '#b45309', bg: 'rgba(197,160,89,0.1)' },
+                    { label: 'Excused', count: excusedCount, color: '#5c675e', bg: 'rgba(92,103,94,0.06)' },
+                  ].map(({ label, count, color, bg }) => (
+                    <div key={label} className="glass-container p-4 text-center" style={{ background: bg }}>
+                      <p className="text-2xl sm:text-[1.8rem] font-bold" style={{ color }}>{count}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider" style={{ color }}>{label}</p>
                     </div>
+                  ))}
+                </div>
+              )}
 
-                    {/* Legend */}
-                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '20px', padding: '10px 14px', background: 'rgba(0,0,0,0.02)', borderRadius: '10px' }}>
-                      {Object.entries(STATUS_CONFIG).map(([status, cfg]) => (
-                        <div key={status} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: cfg.color, fontWeight: 500 }}>
-                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: cfg.dot, display: 'inline-block' }} />
-                          {cfg.icon} {cfg.label}
-                        </div>
-                      ))}
-                      <span style={{ fontSize: '0.78rem', color: 'var(--muted)', marginLeft: 'auto', alignSelf: 'center' }}>
-                        Tap card to change →
-                      </span>
+              {/* Member tally cards */}
+              {activeSession ? (
+                <div className="glass-container content-anim-item p-6">
+                  <div className="flex justify-between items-center mb-5 gap-3 flex-wrap">
+                    <div>
+                      <h3 className="text-base sm:text-[1.1rem] font-semibold text-primary">
+                        Member Roll Call
+                        <span className="text-xs font-normal text-muted ml-2.5">
+                          Tap a card to cycle status
+                        </span>
+                      </h3>
                     </div>
-
-                    {/* Card grid */}
-                    {filteredRoster.length === 0 ? (
-                      <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '40px 0' }}>No members match your search.</p>
-                    ) : (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
-                        {filteredRoster.map((member) => {
-                          const status = attendance[member.id] || 'absent';
-                          const cfg = STATUS_CONFIG[status];
-                          return (
-                            <div
-                              key={member.id}
-                              className={`attendance-member-card status-${status}`}
-                              style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center', justifyContent: 'space-between', padding: '16px 12px' }}
-                            >
-                              {/* Top area — Tap to toggle Present/Absent */}
-                              <div
-                                onClick={() => handleTapMember(member.id)}
-                                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', width: '100%' }}
-                                title={`${member.full_name} — Tap to toggle Present/Absent`}
-                              >
-                                {/* Status indicator dot + icon */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
-                                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
-                                  <span style={{ fontSize: '1rem' }}>{cfg.icon}</span>
-                                </div>
-                                <p style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--foreground)', lineHeight: 1.25, wordBreak: 'break-word', margin: 0, textAlign: 'center' }}>
-                                  {member.full_name}
-                                </p>
-                                {member.voice_part && (
-                                  <span style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
-                                    {member.voice_part}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Direct Status Selector Buttons */}
-                              <div style={{ display: 'flex', gap: '3px', width: '100%', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '8px', marginTop: '4px' }}>
-                                {Object.entries(STATUS_CONFIG).map(([key, itemCfg]) => {
-                                  const isActive = status === key;
-                                  return (
-                                    <button
-                                      key={key}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setAttendance((prev) => ({ ...prev, [member.id]: key as any }));
-                                      }}
-                                      style={{
-                                        flex: 1,
-                                        padding: '6px 0',
-                                        fontSize: '0.65rem',
-                                        fontWeight: 800,
-                                        borderRadius: '6px',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        background: isActive ? itemCfg.dot : 'rgba(0,0,0,0.03)',
-                                        color: isActive ? '#fff' : '#6b7280',
-                                        transition: 'all 0.15s ease',
-                                        textAlign: 'center',
-                                        minHeight: '36px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                      }}
-                                      title={itemCfg.label}
-                                    >
-                                      {key.charAt(0).toUpperCase()}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
+                    <div className="flex gap-2 items-center flex-wrap">
+                      {/* Search */}
+                      <div className="relative">
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--muted)" strokeWidth="2" className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <circle cx="9" cy="9" r="7" /><path strokeLinecap="round" d="m15 15 4 4" />
+                        </svg>
+                        <input
+                          type="text"
+                          placeholder="Search member..."
+                          className="input-field pl-7.5 text-xs sm:text-sm w-[180px]"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                       </div>
-                    )}
-
-                    {/* Save button */}
-                    <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
+                      {/* Quick mark all present */}
                       <button
-                        onClick={handleSaveAttendance}
-                        disabled={saving || roster.length === 0}
-                        className={`btn btn-primary ${saving ? 'btn-disabled' : ''}`}
-                        style={{ padding: '12px 32px', fontSize: '0.95rem', minWidth: '160px' }}
+                        onClick={() => {
+                          const all: Record<string, 'present'> = {};
+                          roster.forEach((m) => (all[m.id] = 'present'));
+                          setAttendance(all);
+                        }}
+                        className="btn btn-secondary !py-1.5 !px-3.5 text-xs text-primary border-primary"
                       >
-                        {saving ? 'Saving...' : '💾 Save Attendance'}
+                        ✓ All Present
+                      </button>
+                      {/* Reset */}
+                      <button
+                        onClick={() => {
+                          const all: Record<string, 'absent'> = {};
+                          roster.forEach((m) => (all[m.id] = 'absent'));
+                          setAttendance(all);
+                        }}
+                        className="btn btn-secondary !py-1.5 !px-3.5 text-xs"
+                      >
+                        Reset
                       </button>
                     </div>
                   </div>
-                ) : (
-                  <div className="glass-container content-anim-item" style={{ padding: '48px', textAlign: 'center' }}>
-                    <p style={{ fontSize: '3rem', marginBottom: '16px' }}>📋</p>
-                    <p style={{ fontWeight: 600, color: 'var(--primary)', marginBottom: '8px' }}>No session loaded</p>
-                    <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>Pick a date above and click "Start Tally" to begin recording.</p>
-                  </div>
-                )}
-              </>
-            ) : (
-              /* History / all sessions view */
-              <div className="glass-container content-anim-item" style={{ padding: '28px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--primary)' }}>Session History</h3>
-                  {uniqueSessions.length > 0 && (
-                    <select
-                      className="input-field"
-                      value={selectedSessionId}
-                      onChange={(e) => setSelectedSessionId(e.target.value)}
-                      style={{ background: '#fff', minWidth: '260px', fontSize: '0.9rem' }}
-                    >
-                      {uniqueSessions.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name} — {new Date(s.date + 'T00:00:00').toLocaleDateString()}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
 
-                {uniqueSessions.length === 0 ? (
-                  <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '40px 0' }}>No sessions recorded yet.</p>
-                ) : roster.length === 0 ? (
-                  <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '40px 0' }}>No active choir members.</p>
-                ) : (
-                  <div className="table-container">
-                    <table className="custom-table">
-                      <thead>
-                        <tr>
-                          <th>Full Name</th>
-                          <th>Voice Part</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {roster.map((member) => {
-                          const status = attendance[member.id] || 'absent';
-                          const cfg = STATUS_CONFIG[status];
-                          return (
-                            <tr key={member.id}>
-                              <td data-label="Full Name"><strong>{member.full_name}</strong></td>
-                              <td data-label="Voice Part">{member.voice_part || <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>—</span>}</td>
-                              <td data-label="Status">
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, fontSize: '0.85rem', color: cfg.color }}>
-                                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: cfg.dot }} />
-                                  {cfg.label}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  {/* Legend */}
+                  <div className="flex gap-4 flex-wrap mb-5 py-2.5 px-3.5 bg-black/2 rounded-xl">
+                    {Object.entries(STATUS_CONFIG).map(([status, cfg]) => (
+                      <div key={status} className="flex items-center gap-1.5 text-xs font-medium" style={{ color: cfg.color }}>
+                        <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: cfg.dot }} />
+                        {cfg.icon} {cfg.label}
+                      </div>
+                    ))}
+                    <span className="text-xs text-muted ml-auto self-center">
+                      Tap card to change →
+                    </span>
                   </div>
+
+                  {/* Card grid */}
+                  {filteredRoster.length === 0 ? (
+                    <p className="text-muted text-center py-10">No members match your search.</p>
+                  ) : (
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3">
+                      {filteredRoster.map((member) => {
+                        const status = attendance[member.id] || 'absent';
+                        const cfg = STATUS_CONFIG[status];
+                        return (
+                          <div
+                            key={member.id}
+                            className={`attendance-member-card status-${status} flex flex-col gap-2 items-center justify-between p-4 sm:py-4 sm:px-3`}
+                          >
+                            {/* Top area — Tap to toggle Present/Absent */}
+                            <div
+                              onClick={() => handleTapMember(member.id)}
+                              className="flex flex-col items-center gap-1.5 cursor-pointer w-full"
+                              title={`${member.full_name} — Tap to toggle Present/Absent`}
+                            >
+                              {/* Status indicator dot + icon */}
+                              <div className="flex items-center gap-1.5 justify-center">
+                                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
+                                <span className="text-base">{cfg.icon}</span>
+                              </div>
+                              <p className="font-semibold text-xs sm:text-sm text-foreground leading-tight break-words m-0 text-center">
+                                {member.full_name}
+                              </p>
+                              {member.voice_part && (
+                                <span className="text-[0.7rem] text-muted uppercase tracking-wider text-center">
+                                  {member.voice_part}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Direct Status Selector Buttons */}
+                            <div className="flex gap-0.75 w-full border-t border-black/6 pt-2 mt-1">
+                              {Object.entries(STATUS_CONFIG).map(([key, itemCfg]) => {
+                                const isActive = status === key;
+                                return (
+                                  <button
+                                    key={key}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAttendance((prev) => ({ ...prev, [member.id]: key as any }));
+                                    }}
+                                    className={`flex-1 py-1.5 text-[0.65rem] font-extrabold rounded-md border-0 cursor-pointer transition-all text-center min-h-[36px] flex items-center justify-center ${
+                                      isActive ? 'text-white' : 'bg-black/3 text-gray-500'
+                                    }`}
+                                    style={{
+                                      background: isActive ? itemCfg.dot : undefined,
+                                    }}
+                                    title={itemCfg.label}
+                                  >
+                                    {key.charAt(0).toUpperCase()}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Save button */}
+                  <div className="mt-6 flex justify-end border-t border-glass-border pt-5">
+                    <button
+                      onClick={handleSaveAttendance}
+                      disabled={saving || roster.length === 0}
+                      className={`btn btn-primary ${saving ? 'btn-disabled' : ''} !py-3 !px-8 text-sm sm:text-base min-w-[160px]`}
+                    >
+                      {saving ? 'Saving...' : '💾 Save Attendance'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="glass-container content-anim-item p-12 text-center">
+                  <p className="text-4xl sm:text-5xl mb-4">📋</p>
+                  <p className="font-semibold text-primary mb-2">No session loaded</p>
+                  <p className="text-muted text-sm sm:text-base">Pick a date above and click &quot;Start Tally&quot; to begin recording.</p>
+                </div>
+              )}
+            </>
+          ) : (
+            /* History / all sessions view */
+            <div className="glass-container content-anim-item p-7">
+              <div className="flex justify-between items-center mb-5 flex-wrap gap-3">
+                <h3 className="text-lg font-semibold text-primary">Session History</h3>
+                {uniqueSessions.length > 0 && (
+                  <select
+                    className="input-field bg-white min-w-[260px] text-sm"
+                    value={selectedSessionId}
+                    onChange={(e) => setSelectedSessionId(e.target.value)}
+                  >
+                    {uniqueSessions.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} — {new Date(s.date + 'T00:00:00').toLocaleDateString()}
+                      </option>
+                    ))}
+                  </select>
                 )}
               </div>
-            )}
-          </div>
+
+              {uniqueSessions.length === 0 ? (
+                <p className="text-muted text-center py-10">No sessions recorded yet.</p>
+              ) : roster.length === 0 ? (
+                <p className="text-muted text-center py-10">No active choir members.</p>
+              ) : (
+                <div className="table-container">
+                  <table className="custom-table">
+                    <thead>
+                      <tr>
+                        <th>Full Name</th>
+                        <th>Voice Part</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {roster.map((member) => {
+                        const status = attendance[member.id] || 'absent';
+                        const cfg = STATUS_CONFIG[status];
+                        return (
+                          <tr key={member.id}>
+                            <td data-label="Full Name"><strong>{member.full_name}</strong></td>
+                            <td data-label="Voice Part">{member.voice_part || <span className="text-muted italic">—</span>}</td>
+                            <td data-label="Status">
+                              <span className="inline-flex items-center gap-1.5 font-semibold text-xs sm:text-sm" style={{ color: cfg.color }}>
+                                <span className="w-2 h-2 rounded-full" style={{ background: cfg.dot }} />
+                                {cfg.label}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

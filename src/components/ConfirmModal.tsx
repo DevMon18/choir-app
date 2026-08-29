@@ -30,56 +30,28 @@ export const ConfirmModal = ({
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 999999999, // Highest z-index to stay in front of all pop-ups & history modals
-        padding: '20px',
-        animation: 'fadeIn 0.2s ease',
-      }}
+      className="fixed inset-0 bg-black/75 backdrop-blur-[4px] flex items-center justify-center z-[999999999] p-5 animate-in fade-in duration-200"
       onClick={onCancel}
     >
       <div
-        style={{
-          background: '#ffffff',
-          border: '1px solid #cbd5e1',
-          borderRadius: '20px',
-          padding: '32px',
-          maxWidth: '440px',
-          width: '100%',
-          color: '#0f172a',
-          boxShadow: '0 30px 70px rgba(0, 0, 0, 0.5)',
-          animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        }}
+        className="bg-white border border-slate-300 rounded-[20px] p-8 max-w-[440px] w-full text-slate-900 shadow-2xl animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Icon */}
         <div
-          style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            background: isDanger ? 'rgba(220, 38, 38, 0.1)' : 'rgba(11, 77, 36, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '20px',
-          }}
+          className={`w-14 h-14 rounded-full flex items-center justify-center mb-5 ${
+            isDanger ? 'bg-red-500/10 text-red-600' : 'bg-primary/10 text-primary'
+          }`}
         >
           {isDanger ? (
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="3 6 5 6 21 6" />
               <path d="M19 6l-1 14H6L5 6" />
               <path d="M10 11v6M14 11v6" />
               <path d="M9 6V4h6v2" />
             </svg>
           ) : (
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0b4d24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -88,56 +60,31 @@ export const ConfirmModal = ({
         </div>
 
         <h3
-          style={{
-            fontSize: '1.25rem',
-            fontWeight: 700,
-            color: isDanger ? '#b91c1c' : '#0f172a',
-            marginBottom: '10px',
-          }}
+          className={`text-xl font-bold mb-2.5 ${
+            isDanger ? 'text-red-700' : 'text-slate-900'
+          }`}
         >
           {title}
         </h3>
 
-        <p
-          style={{
-            fontSize: '0.95rem',
-            color: '#475569',
-            lineHeight: 1.6,
-            marginBottom: '28px',
-          }}
-        >
+        <p className="text-sm text-slate-600 leading-relaxed mb-7 m-0">
           {message}
         </p>
 
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+        <div className="flex gap-3 justify-end">
           <button
             onClick={onCancel}
-            style={{
-              padding: '10px 20px',
-              minWidth: '90px',
-              borderRadius: '8px',
-              border: '1px solid #cbd5e1',
-              background: '#ffffff',
-              color: '#0f172a',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
+            className="py-2.5 px-5 min-w-[90px] rounded-lg border border-slate-300 bg-white text-slate-900 font-bold cursor-pointer hover:bg-slate-50 transition-colors"
           >
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
-            style={{
-              padding: '10px 20px',
-              minWidth: '90px',
-              borderRadius: '8px',
-              border: 'none',
-              background: isDanger ? '#dc2626' : '#0b4d24',
-              color: '#ffffff',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: isDanger ? '0 4px 12px rgba(220, 38, 38, 0.3)' : '0 4px 12px rgba(11, 77, 36, 0.3)',
-            }}
+            className={`py-2.5 px-5 min-w-[90px] rounded-lg border-0 font-bold cursor-pointer text-white shadow-md transition-all ${
+              isDanger
+                ? 'bg-red-600 shadow-red-600/30 hover:bg-red-700'
+                : 'bg-primary shadow-primary/30 hover:opacity-90'
+            }`}
           >
             {confirmLabel}
           </button>

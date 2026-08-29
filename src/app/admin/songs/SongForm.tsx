@@ -110,22 +110,21 @@ export const SongForm = ({
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)' }}>
+      <div className="flex justify-between items-center mb-5">
+        <h3 className="text-lg sm:text-xl font-bold text-primary">
           {isEdit ? 'Edit Song' : 'Add New Song'}
         </h3>
         <button
           type="button"
           onClick={() => setShowPreview(!showPreview)}
-          className="btn btn-secondary"
-          style={{ padding: '6px 14px', fontSize: '0.8rem' }}
+          className="btn btn-secondary !py-1.5 !px-3.5 text-xs"
         >
           {showPreview ? 'Hide Preview' : 'Show Preview'}
         </button>
       </div>
 
       {error && (
-        <div className="alert alert-error" style={{ marginBottom: '16px' }}>
+        <div className="alert alert-error mb-4">
           <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
@@ -135,8 +134,8 @@ export const SongForm = ({
 
       <div className={`song-form-grid ${showPreview && lyrics ? 'has-preview' : ''}`}>
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="input-group" style={{ marginBottom: 0 }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="input-group !mb-0">
             <label className="input-label" htmlFor="songTitle">Title *</label>
             <input
               id="songTitle"
@@ -152,9 +151,9 @@ export const SongForm = ({
           </div>
 
           {/* Multi-Select Category Tags Picker */}
-          <div className="input-group" style={{ marginBottom: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label className="input-label" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="input-group !mb-0">
+            <div className="flex justify-between items-center mb-2">
+              <label className="input-label !mb-0 flex items-center gap-1.5">
                 <Tag size={14} />
                 <span>Categories / Tags</span>
               </label>
@@ -162,18 +161,7 @@ export const SongForm = ({
                 <button
                   type="button"
                   onClick={() => setShowAddCatInput(true)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--primary)',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '2px 6px',
-                  }}
+                  className="bg-transparent border-0 text-primary text-xs font-semibold cursor-pointer flex items-center gap-1 py-0.5 px-1.5"
                 >
                   <Plus size={14} />
                   <span>New Category</span>
@@ -186,20 +174,18 @@ export const SongForm = ({
               <div className="song-form-cat-add-bar">
                 <input
                   type="text"
-                  className="input-field"
+                  className="input-field text-xs sm:text-sm !py-1.5 !px-3"
                   placeholder="Category Name (e.g. Marian, Offertory)"
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
                   disabled={creatingCat}
-                  style={{ fontSize: '0.85rem', padding: '6px 12px' }}
                   autoFocus
                 />
                 <button
                   type="button"
                   onClick={handleInlineCreateCategory}
                   disabled={creatingCat || !newCatName.trim()}
-                  className="btn btn-primary"
-                  style={{ padding: '6px 14px', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
+                  className="btn btn-primary !py-1.5 !px-3.5 text-xs whitespace-nowrap"
                 >
                   {creatingCat ? 'Adding…' : 'Add'}
                 </button>
@@ -209,8 +195,7 @@ export const SongForm = ({
                     setShowAddCatInput(false);
                     setNewCatName('');
                   }}
-                  className="btn btn-secondary"
-                  style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                  className="btn btn-secondary !py-1.5 !px-3 text-xs"
                 >
                   Cancel
                 </button>
@@ -218,22 +203,10 @@ export const SongForm = ({
             )}
 
             {/* Category Toggle Chips */}
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '8px',
-                padding: '12px',
-                background: 'rgba(255, 255, 255, 0.5)',
-                border: '1px solid var(--glass-border)',
-                borderRadius: '12px',
-                minHeight: '48px',
-                alignItems: 'center',
-              }}
-            >
+            <div className="flex flex-wrap gap-2 p-3 bg-white/50 border border-glass-border rounded-xl min-h-[48px] items-center">
               {catList.length === 0 ? (
-                <span style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
-                  No categories created yet. Click "+ New Category" to add one.
+                <span className="text-xs text-muted">
+                  No categories created yet. Click &quot;+ New Category&quot; to add one.
                 </span>
               ) : (
                 catList.map((cat) => {
@@ -244,25 +217,11 @@ export const SongForm = ({
                       type="button"
                       onClick={() => toggleCategory(cat.id)}
                       disabled={loading}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '6px 12px',
-                        borderRadius: '20px',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                        border: selected
-                          ? '1px solid var(--primary)'
-                          : '1px solid var(--border)',
-                        background: selected
-                          ? 'rgba(30, 58, 138, 0.12)'
-                          : 'rgba(255, 255, 255, 0.8)',
-                        color: selected ? 'var(--primary)' : 'var(--foreground)',
-                        boxShadow: selected ? '0 2px 8px rgba(30, 58, 138, 0.15)' : 'none',
-                      }}
+                      className={`inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-semibold cursor-pointer transition-all border ${
+                        selected
+                          ? 'border-primary bg-primary/12 text-primary shadow-sm shadow-primary/20'
+                          : 'border-border bg-white/80 text-foreground'
+                      }`}
                     >
                       {selected && <Check size={14} style={{ strokeWidth: 3 }} />}
                       <span>{cat.name}</span>
@@ -271,13 +230,13 @@ export const SongForm = ({
                 })
               )}
             </div>
-            <span style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: '4px', display: 'block' }}>
+            <span className="text-xs text-muted mt-1 block">
               Select all categories that apply to this song.
             </span>
           </div>
 
           <div className="song-form-row-2col">
-            <div className="input-group" style={{ marginBottom: 0 }}>
+            <div className="input-group !mb-0">
               <label className="input-label" htmlFor="songComposer">Composer</label>
               <input
                 id="songComposer"
@@ -290,7 +249,7 @@ export const SongForm = ({
                 disabled={loading}
               />
             </div>
-            <div className="input-group" style={{ marginBottom: 0 }}>
+            <div className="input-group !mb-0">
               <label className="input-label" htmlFor="songArranger">Arranger</label>
               <input
                 id="songArranger"
@@ -305,28 +264,22 @@ export const SongForm = ({
             </div>
           </div>
 
-          <div className="input-group" style={{ marginBottom: 0 }}>
+          <div className="input-group !mb-0">
             <label className="input-label" htmlFor="songLyrics">
               ChordPro Lyrics
-              <span style={{ fontWeight: 400, color: 'var(--muted)', marginLeft: '8px', fontSize: '0.78rem' }}>
+              <span className="font-normal text-muted ml-2 text-xs">
                 — wrap chords in [brackets]: [G]Amazing [D]grace
               </span>
             </label>
             <textarea
               id="songLyrics"
               name="lyrics"
-              className="input-field"
+              className="input-field font-mono text-sm resize-y min-h-[200px]"
               placeholder={`{comment: Verse 1}\n[G]Amazing [D]grace how [Em]sweet the [C]sound\nThat [G]saved a wretch like [D]me`}
               value={lyrics}
               onChange={(e) => setLyrics(e.target.value)}
               disabled={loading}
               rows={16}
-              style={{
-                fontFamily: '"Courier New", Courier, monospace',
-                fontSize: '0.9rem',
-                resize: 'vertical',
-                minHeight: '200px',
-              }}
             />
           </div>
 
@@ -352,7 +305,7 @@ export const SongForm = ({
         {/* Live ChordPro Preview */}
         {showPreview && lyrics && (
           <div className="song-form-preview-box">
-            <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.06em' }}>
+            <p className="text-xs font-bold text-muted uppercase mb-3 tracking-wider">
               Live Preview
             </p>
             <ChordProRenderer lyrics={lyrics} fontSize={14} />

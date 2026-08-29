@@ -138,67 +138,24 @@ export const CustomGroupModal: React.FC<CustomGroupModalProps> = ({
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.72)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.2s ease',
-      }}
+      className="fixed inset-0 bg-black/75 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        style={{
-          width: '100%',
-          maxWidth: '680px',
-          maxHeight: '88vh',
-          background: '#ffffff',
-          borderRadius: '24px',
-          border: '1px solid rgba(11, 77, 36, 0.16)',
-          boxShadow: '0 30px 80px rgba(0, 0, 0, 0.45)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        }}
+        className="w-full max-w-[680px] max-h-[88vh] bg-white rounded-3xl border border-primary/16 shadow-2xl flex flex-col overflow-hidden animate-slideUpModal"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div
-          style={{
-            padding: '18px 24px',
-            borderBottom: '1px solid rgba(11, 77, 36, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #fbfaf6 0%, #f4efe4 100%)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, var(--primary) 0%, #15803d 100%)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+        <div className="py-4.5 px-6 border-b border-primary/10 flex items-center justify-between bg-gradient-to-br from-[#fbfaf6] to-[#f4efe4]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-green-700 text-white flex items-center justify-center">
               <Users size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#111c14' }}>
+              <h3 className="text-lg font-extrabold m-0 text-foreground">
                 Custom Groups & Committees
               </h3>
-              <p style={{ fontSize: '0.8rem', color: '#5c675e', margin: '2px 0 0' }}>
+              <p className="text-xs text-muted mt-0.5 mb-0">
                 Manage custom task groups (e.g. Uniform Committee, Music Team)
               </p>
             </div>
@@ -206,20 +163,7 @@ export const CustomGroupModal: React.FC<CustomGroupModalProps> = ({
 
           <button
             onClick={onClose}
-            className="btn btn-secondary"
-            style={{
-              width: '34px',
-              height: '34px',
-              padding: 0,
-              borderRadius: '50%',
-              minHeight: 'auto',
-              border: '1px solid rgba(11, 77, 36, 0.12)',
-              background: '#ffffff',
-              color: '#5c675e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="btn btn-secondary !w-[34px] !h-[34px] !p-0 !rounded-full !min-h-0 !border-primary/12 bg-white text-muted flex items-center justify-center cursor-pointer"
             aria-label="Close dialog"
           >
             <X size={18} />
@@ -227,117 +171,86 @@ export const CustomGroupModal: React.FC<CustomGroupModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+        <div className="flex-1 overflow-y-auto p-5 sm:py-5 sm:px-6">
           {isCreating || editingGroupId ? (
             /* Create / Edit Form */
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: '#111c14' }}>
+            <form onSubmit={handleSave} className="flex flex-col gap-4">
+              <div className="flex justify-between items-center">
+                <h4 className="text-base font-extrabold m-0 text-foreground">
                   {isCreating ? 'Create New Custom Group' : 'Edit Custom Group'}
                 </h4>
                 <button
                   type="button"
                   onClick={cancelForm}
-                  className="btn btn-secondary"
-                  style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                  className="btn btn-secondary !py-1 !px-2.5 text-xs"
                 >
                   Cancel
                 </button>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
-                  Group Name <span style={{ color: 'var(--error)' }}>*</span>
+                <label className="block text-xs font-bold mb-1.5 text-foreground">
+                  Group Name <span className="text-error">*</span>
                 </label>
                 <input
                   type="text"
-                  className="input-field"
+                  className="input-field w-full !py-2.5 !px-3.5 !rounded-xl bg-white text-foreground"
                   placeholder="e.g. Uniform Committee, Audio Team, Liturgy"
                   value={groupName}
                   onChange={(e) => setGroupName(e.target.value)}
                   required
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', background: '#ffffff', color: '#111c14' }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
+                <label className="block text-xs font-bold mb-1.5 text-foreground">
                   Description (Optional)
                 </label>
                 <input
                   type="text"
-                  className="input-field"
+                  className="input-field w-full !py-2.5 !px-3.5 !rounded-xl bg-white text-foreground"
                   placeholder="Purpose or responsibilities of this group"
                   value={groupDesc}
                   onChange={(e) => setGroupDesc(e.target.value)}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', background: '#ffffff', color: '#111c14' }}
                 />
               </div>
 
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <label style={{ fontSize: '0.82rem', fontWeight: 700 }}>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs font-bold text-foreground">
                     Group Members ({selectedMemberIds.length} Selected)
                   </label>
-                  <div style={{ position: 'relative', width: '200px' }}>
-                    <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#5c675e' }} />
+                  <div className="relative w-[200px]">
+                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted" />
                     <input
                       type="text"
                       placeholder="Search member..."
                       value={memberSearch}
                       onChange={(e) => setMemberSearch(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '6px 10px 6px 30px',
-                        fontSize: '0.78rem',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(0,0,0,0.12)',
-                        background: '#ffffff',
-                        color: '#111c14',
-                      }}
+                      className="w-full py-1.5 pr-2.5 pl-8 text-xs rounded-lg border border-black/12 bg-white text-foreground"
                     />
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    maxHeight: '220px',
-                    overflowY: 'auto',
-                    border: '1px solid rgba(11, 77, 36, 0.12)',
-                    borderRadius: '14px',
-                    padding: '8px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                    background: '#faf8f3',
-                  }}
-                >
+                <div className="max-h-[220px] overflow-y-auto border border-primary/12 rounded-2xl p-2 flex flex-col gap-1 bg-[#faf8f3]">
                   {filteredMembers.map((m) => {
                     const isSelected = selectedMemberIds.includes(m.id);
                     return (
                       <div
                         key={m.id}
                         onClick={() => toggleMember(m.id)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          borderRadius: '10px',
-                          background: isSelected ? 'rgba(11, 77, 36, 0.08)' : '#ffffff',
-                          border: isSelected ? '1px solid var(--primary)' : '1px solid rgba(0,0,0,0.06)',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                        }}
+                        className={`flex items-center justify-between py-2 px-3 rounded-xl cursor-pointer transition-all duration-150 ${
+                          isSelected ? 'bg-primary/8 border border-primary' : 'bg-white border border-black/6'
+                        }`}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div className="flex items-center gap-2.5">
                           <Avatar src={m.avatar_url} name={m.full_name} size="sm" border />
                           <div>
-                            <strong style={{ fontSize: '0.86rem', color: '#111c14', display: 'block' }}>
+                            <strong className="text-xs sm:text-sm text-foreground block">
                               {m.full_name}
                             </strong>
                             {m.voice_part && (
-                              <span style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: 600 }}>
+                              <span className="text-xs text-primary font-semibold">
                                 {m.voice_part}
                               </span>
                             )}
@@ -345,17 +258,9 @@ export const CustomGroupModal: React.FC<CustomGroupModalProps> = ({
                         </div>
 
                         <div
-                          style={{
-                            width: '22px',
-                            height: '22px',
-                            borderRadius: '6px',
-                            border: isSelected ? 'none' : '1.5px solid rgba(0,0,0,0.2)',
-                            background: isSelected ? 'var(--primary)' : 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#ffffff',
-                          }}
+                          className={`w-5.5 h-5.5 rounded-md flex items-center justify-center text-white ${
+                            isSelected ? 'bg-primary' : 'border border-black/20 bg-transparent'
+                          }`}
                         >
                           {isSelected && <Check size={14} />}
                         </div>
@@ -365,20 +270,18 @@ export const CustomGroupModal: React.FC<CustomGroupModalProps> = ({
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+              <div className="flex justify-end gap-2.5 mt-2">
                 <button
                   type="button"
                   onClick={cancelForm}
-                  className="btn btn-secondary"
-                  style={{ padding: '8px 16px' }}
+                  className="btn btn-secondary !py-2 !px-4 text-xs sm:text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !groupName.trim()}
-                  className="btn btn-primary"
-                  style={{ padding: '8px 20px', fontWeight: 700 }}
+                  className="btn btn-primary !py-2 !px-5 text-xs sm:text-sm font-bold"
                 >
                   {loading ? 'Saving...' : isCreating ? 'Create Group' : 'Save Changes'}
                 </button>
@@ -386,41 +289,31 @@ export const CustomGroupModal: React.FC<CustomGroupModalProps> = ({
             </form>
           ) : (
             /* Groups List */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#5c675e', textTransform: 'uppercase' }}>
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs sm:text-sm font-bold text-muted uppercase">
                   Existing Custom Groups ({groups.length})
                 </span>
                 <button
                   onClick={startCreate}
-                  className="btn btn-primary"
-                  style={{ padding: '6px 14px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  className="btn btn-primary !py-1.5 !px-3.5 text-xs inline-flex items-center gap-1.5"
                 >
                   <Plus size={14} /> New Group
                 </button>
               </div>
 
               {groups.length === 0 ? (
-                <div
-                  style={{
-                    padding: '36px 20px',
-                    textAlign: 'center',
-                    background: '#faf8f3',
-                    borderRadius: '16px',
-                    border: '1px dashed rgba(11, 77, 36, 0.16)',
-                  }}
-                >
-                  <Users size={32} style={{ color: 'var(--primary)', margin: '0 auto 8px', opacity: 0.6 }} />
-                  <h4 style={{ fontSize: '0.98rem', fontWeight: 800, margin: '0 0 4px', color: '#111c14' }}>
+                <div className="py-9 px-5 text-center bg-[#faf8f3] rounded-2xl border border-dashed border-primary/16">
+                  <Users size={32} className="text-primary mx-auto mb-2 opacity-60" />
+                  <h4 className="text-sm sm:text-base font-extrabold m-0 mb-1 text-foreground">
                     No custom groups yet
                   </h4>
-                  <p style={{ fontSize: '0.82rem', color: '#5c675e', maxWidth: '300px', margin: '0 auto 12px' }}>
+                  <p className="text-xs text-muted max-w-[300px] mx-auto mb-3">
                     Create custom committees to target entire teams with one click when delegating tasks.
                   </p>
                   <button
                     onClick={startCreate}
-                    className="btn btn-primary"
-                    style={{ padding: '7px 16px', fontSize: '0.82rem' }}
+                    className="btn btn-primary !py-1.5 !px-4 text-xs"
                   >
                     + Create First Group
                   </button>
@@ -429,50 +322,30 @@ export const CustomGroupModal: React.FC<CustomGroupModalProps> = ({
                 groups.map((g) => (
                   <div
                     key={g.id}
-                    style={{
-                      padding: '14px 16px',
-                      borderRadius: '14px',
-                      background: '#faf8f3',
-                      border: '1px solid rgba(11, 77, 36, 0.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '12px',
-                    }}
+                    className="py-3.5 px-4 rounded-2xl bg-[#faf8f3] border border-primary/10 flex items-center justify-between gap-3"
                   >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                        <strong style={{ fontSize: '0.96rem', color: '#111c14' }}>{g.name}</strong>
-                        <span
-                          style={{
-                            fontSize: '0.72rem',
-                            fontWeight: 700,
-                            padding: '2px 8px',
-                            borderRadius: '6px',
-                            background: 'rgba(11, 77, 36, 0.08)',
-                            color: 'var(--primary)',
-                          }}
-                        >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <strong className="text-sm sm:text-base text-foreground">{g.name}</strong>
+                        <span className="text-[0.72rem] font-bold py-0.5 px-2 rounded-md bg-primary/8 text-primary">
                           {g.member_count || 0} Members
                         </span>
                       </div>
                       {g.description && (
-                        <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#5c675e' }}>{g.description}</p>
+                        <p className="mt-0.5 mb-0 text-xs text-muted">{g.description}</p>
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', gap: '6px' }}>
+                    <div className="flex gap-1.5">
                       <button
                         onClick={() => startEdit(g)}
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 10px', fontSize: '0.76rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        className="btn btn-secondary !py-1.5 !px-2.5 text-xs inline-flex items-center gap-1"
                       >
                         <Edit2 size={13} /> Edit
                       </button>
                       <button
                         onClick={() => handleDelete(g)}
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 8px', fontSize: '0.76rem', color: 'var(--error)' }}
+                        className="btn btn-secondary !py-1.5 !px-2 text-xs !text-error"
                         title="Delete Group"
                       >
                         <Trash2 size={14} />

@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --font-sans: var(--font-outfit), 'Outfit', system-ui, -apple-system, sans-serif;
   --bg-gradient: radial-gradient(circle at 50% 0%, #fefdfa 0%, #f6f3e8 60%, #e8e2cf 100%);

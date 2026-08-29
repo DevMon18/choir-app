@@ -242,96 +242,37 @@ export const TaskTimelineModal: React.FC<TaskTimelineModalProps> = ({
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.72)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.2s ease',
-      }}
+      className="fixed inset-0 bg-black/75 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        style={{
-          width: '100%',
-          maxWidth: '680px',
-          maxHeight: '90vh',
-          background: '#ffffff',
-          borderRadius: '24px',
-          border: '1px solid rgba(11, 77, 36, 0.16)',
-          boxShadow: '0 30px 80px rgba(0, 0, 0, 0.45)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        }}
+        className="w-full max-w-[680px] max-h-[90vh] bg-white rounded-3xl border border-primary/16 shadow-2xl flex flex-col overflow-hidden animate-slideUpModal"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div
-          style={{
-            padding: '20px 26px',
-            borderBottom: '1px solid rgba(11, 77, 36, 0.1)',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #fbfaf6 0%, #f4efe4 100%)',
-            gap: '12px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, var(--primary) 0%, #15803d 100%)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(11, 77, 36, 0.2)',
-                flexShrink: 0,
-              }}
-            >
+        <div className="py-5 px-6 border-b border-primary/10 flex items-start justify-between bg-gradient-to-br from-[#fbfaf6] to-[#f4efe4] gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10.5 h-10.5 rounded-xl bg-gradient-to-br from-primary to-green-700 text-white flex items-center justify-center shadow-md shadow-primary/20 flex-shrink-0">
               <History size={22} />
             </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', flexWrap: 'wrap' }}>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                 <span
-                  style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    background: task.priority === 'urgent' ? 'rgba(239,68,68,0.12)' : task.priority === 'high' ? 'rgba(249,115,22,0.12)' : 'rgba(59,130,246,0.12)',
-                    color: task.priority === 'urgent' ? '#dc2626' : task.priority === 'high' ? '#ea580c' : '#2563eb',
-                  }}
+                  className={`text-[0.72rem] font-bold uppercase tracking-wider py-0.5 px-2 rounded-md ${
+                    task.priority === 'urgent'
+                      ? 'bg-red-500/12 text-red-600'
+                      : task.priority === 'high'
+                      ? 'bg-orange-500/12 text-orange-600'
+                      : 'bg-blue-500/12 text-blue-600'
+                  }`}
                 >
                   {task.priority} Priority
                 </span>
-                <span style={{ fontSize: '0.76rem', color: '#5c675e' }}>
+                <span className="text-xs text-muted">
                   Progress Timeline & Audit History
                 </span>
               </div>
-              <h2
-                style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 800,
-                  margin: 0,
-                  color: '#111c14',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+              <h2 className="text-lg sm:text-xl font-extrabold m-0 text-foreground truncate">
                 {task.title}
               </h2>
             </div>
@@ -339,22 +280,7 @@ export const TaskTimelineModal: React.FC<TaskTimelineModalProps> = ({
 
           <button
             onClick={onClose}
-            className="btn btn-secondary"
-            style={{
-              width: '34px',
-              height: '34px',
-              padding: 0,
-              borderRadius: '50%',
-              minHeight: 'auto',
-              border: '1px solid rgba(11, 77, 36, 0.12)',
-              background: '#ffffff',
-              color: '#5c675e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
+            className="btn btn-secondary !w-[34px] !h-[34px] !p-0 !rounded-full !min-h-0 !border-primary/12 bg-white text-muted flex items-center justify-center cursor-pointer flex-shrink-0"
             aria-label="Close timeline"
           >
             <X size={18} />
@@ -362,97 +288,64 @@ export const TaskTimelineModal: React.FC<TaskTimelineModalProps> = ({
         </div>
 
         {/* Milestone Rollup Banner */}
-        <div
-          style={{
-            padding: '14px 26px',
-            background: '#faf8f3',
-            borderBottom: '1px solid rgba(11, 77, 36, 0.08)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-          }}
-        >
+        <div className="py-3.5 px-6 bg-[#faf8f3] border-b border-primary/8 flex flex-col gap-2.5">
           {/* Stats Bar */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
-            <div style={{ padding: '8px 12px', borderRadius: '10px', background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.1)' }}>
-              <span style={{ fontSize: '0.72rem', color: '#5c675e', display: 'block', fontWeight: 600 }}>Delegates</span>
-              <strong style={{ fontSize: '1rem', color: '#111c14' }}>{total} Members</strong>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-2.5">
+            <div className="py-2 px-3 rounded-xl bg-white border border-primary/10">
+              <span className="text-xs text-muted block font-semibold">Delegates</span>
+              <strong className="text-base text-foreground">{total} Members</strong>
             </div>
-            <div style={{ padding: '8px 12px', borderRadius: '10px', background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.1)' }}>
-              <span style={{ fontSize: '0.72rem', color: '#5c675e', display: 'block', fontWeight: 600 }}>Completed</span>
-              <strong style={{ fontSize: '1rem', color: '#059669' }}>{completed}/{total} ({percent}%)</strong>
+            <div className="py-2 px-3 rounded-xl bg-white border border-primary/10">
+              <span className="text-xs text-muted block font-semibold">Completed</span>
+              <strong className="text-base text-emerald-600">{completed}/{total} ({percent}%)</strong>
             </div>
-            <div style={{ padding: '8px 12px', borderRadius: '10px', background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.1)' }}>
-              <span style={{ fontSize: '0.72rem', color: '#5c675e', display: 'block', fontWeight: 600 }}>In Progress</span>
-              <strong style={{ fontSize: '1rem', color: '#2563eb' }}>{inProgress} Active</strong>
+            <div className="py-2 px-3 rounded-xl bg-white border border-primary/10">
+              <span className="text-xs text-muted block font-semibold">In Progress</span>
+              <strong className="text-base text-blue-600">{inProgress} Active</strong>
             </div>
             {blocked > 0 && (
-              <div style={{ padding: '8px 12px', borderRadius: '10px', background: '#fef2f2', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
-                <span style={{ fontSize: '0.72rem', color: '#dc2626', display: 'block', fontWeight: 600 }}>Blockers</span>
-                <strong style={{ fontSize: '1rem', color: '#dc2626' }}>{blocked} Blocked</strong>
+              <div className="py-2 px-3 rounded-xl bg-red-50 border border-red-500/25">
+                <span className="text-xs text-red-600 block font-semibold">Blockers</span>
+                <strong className="text-base text-red-600">{blocked} Blocked</strong>
               </div>
             )}
           </div>
 
           {/* Progress Bar */}
-          <div style={{ height: '6px', width: '100%', background: 'rgba(0,0,0,0.06)', borderRadius: '999px', overflow: 'hidden' }}>
+          <div className="h-1.5 w-full bg-black/6 rounded-full overflow-hidden">
             <div
-              style={{
-                height: '100%',
-                width: `${percent}%`,
-                background: percent === 100 ? '#10b981' : 'linear-gradient(90deg, var(--primary), var(--accent))',
-                borderRadius: '999px',
-                transition: 'width 0.4s ease',
-              }}
+              className={`h-full rounded-full transition-all duration-400 ${
+                percent === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-primary to-accent'
+              }`}
+              style={{ width: `${percent}%` }}
             />
           </div>
         </div>
 
         {/* Timeline Sorting Controls */}
-        <div
-          style={{
-            padding: '8px 26px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            background: '#ffffff',
-            borderBottom: '1px solid rgba(0,0,0,0.04)',
-          }}
-        >
-          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#5c675e', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <div className="py-2 px-6 flex justify-between items-center bg-white border-b border-black/4">
+          <span className="text-xs font-bold text-muted uppercase tracking-wider">
             Milestones ({events.length})
           </span>
 
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div className="flex gap-1.5">
             <button
               onClick={() => setSortOrder('desc')}
-              style={{
-                padding: '3px 10px',
-                borderRadius: '12px',
-                fontSize: '0.74rem',
-                fontWeight: 600,
-                border: '1px solid',
-                borderColor: sortOrder === 'desc' ? 'var(--primary)' : 'rgba(0,0,0,0.1)',
-                background: sortOrder === 'desc' ? 'rgba(11, 77, 36, 0.08)' : '#ffffff',
-                color: sortOrder === 'desc' ? 'var(--primary)' : '#5c675e',
-                cursor: 'pointer',
-              }}
+              className={`py-0.5 px-2.5 rounded-full text-xs font-semibold border cursor-pointer ${
+                sortOrder === 'desc'
+                  ? 'border-primary bg-primary/8 text-primary'
+                  : 'border-black/10 bg-white text-muted'
+              }`}
             >
               Newest First
             </button>
             <button
               onClick={() => setSortOrder('asc')}
-              style={{
-                padding: '3px 10px',
-                borderRadius: '12px',
-                fontSize: '0.74rem',
-                fontWeight: 600,
-                border: '1px solid',
-                borderColor: sortOrder === 'asc' ? 'var(--primary)' : 'rgba(0,0,0,0.1)',
-                background: sortOrder === 'asc' ? 'rgba(11, 77, 36, 0.08)' : '#ffffff',
-                color: sortOrder === 'asc' ? 'var(--primary)' : '#5c675e',
-                cursor: 'pointer',
-              }}
+              className={`py-0.5 px-2.5 rounded-full text-xs font-semibold border cursor-pointer ${
+                sortOrder === 'asc'
+                  ? 'border-primary bg-primary/8 text-primary'
+                  : 'border-black/10 bg-white text-muted'
+              }`}
             >
               Oldest First
             </button>
@@ -460,105 +353,54 @@ export const TaskTimelineModal: React.FC<TaskTimelineModalProps> = ({
         </div>
 
         {/* Scrollable Timeline List */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '24px 26px',
-            background: '#ffffff',
-          }}
-        >
-          <div style={{ position: 'relative', paddingLeft: '32px' }}>
+        <div className="flex-1 overflow-y-auto py-6 px-6 bg-white">
+          <div className="relative pl-8">
             {/* Vertical Rail */}
-            <div
-              style={{
-                position: 'absolute',
-                left: '14px',
-                top: '12px',
-                bottom: '12px',
-                width: '2px',
-                background: 'linear-gradient(180deg, var(--primary) 0%, var(--accent) 50%, rgba(11, 77, 36, 0.2) 100%)',
-              }}
-            />
+            <div className="absolute left-3.5 top-3 bottom-3 w-0.5 bg-gradient-to-b from-primary via-accent to-primary/20" />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {events.map((ev, index) => {
+            <div className="flex flex-col gap-5">
+              {events.map((ev) => {
                 const colors = getEventColors(ev.type);
 
                 return (
-                  <div key={ev.id} style={{ position: 'relative' }}>
+                  <div key={ev.id} className="relative">
                     {/* Node Dot / Icon Badge */}
                     <div
+                      className="absolute -left-8 top-0 w-7.5 h-7.5 rounded-full bg-white flex items-center justify-center shadow-sm z-[2]"
                       style={{
-                        position: 'absolute',
-                        left: '-32px',
-                        top: '0px',
-                        width: '30px',
-                        height: '30px',
-                        borderRadius: '50%',
-                        background: '#ffffff',
                         border: `2px solid ${colors.color}`,
                         color: colors.color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                        zIndex: 2,
                       }}
                     >
                       {getEventIcon(ev.type)}
                     </div>
 
                     {/* Event Content Card */}
-                    <div
-                      style={{
-                        background: '#faf8f3',
-                        border: '1px solid rgba(11, 77, 36, 0.1)',
-                        borderRadius: '16px',
-                        padding: '14px 16px',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-                      }}
-                    >
+                    <div className="bg-[#faf8f3] border border-primary/10 rounded-2xl p-3.5 sm:py-3.5 sm:px-4 shadow-sm">
                       {/* Top Header */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
+                      <div className="flex justify-between items-start flex-wrap gap-2 mb-1.5">
                         <div>
-                          <strong style={{ fontSize: '0.92rem', color: '#111c14', display: 'block' }}>
+                          <strong className="text-xs sm:text-sm text-foreground block">
                             {ev.title}
                           </strong>
                           {ev.responsibility && (
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                fontSize: '0.74rem',
-                                fontWeight: 700,
-                                color: 'var(--primary)',
-                                background: 'rgba(11, 77, 36, 0.08)',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                marginTop: '4px',
-                              }}
-                            >
+                            <span className="inline-block text-xs font-bold text-primary bg-primary/8 py-0.5 px-2 rounded-md mt-1">
                               Responsibility: {ev.responsibility}
                             </span>
                           )}
                         </div>
 
-                        <div style={{ textAlign: 'right' }}>
-                          <span style={{ fontSize: '0.74rem', color: '#5c675e', fontWeight: 600, display: 'block' }}>
+                        <div className="text-right">
+                          <span className="text-xs text-muted font-semibold block">
                             {new Date(ev.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}{' '}
                             at {new Date(ev.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                           {ev.metaBadge && (
                             <span
+                              className="text-[0.68rem] font-bold py-px px-1.5 rounded mt-0.5 inline-block"
                               style={{
-                                fontSize: '0.68rem',
-                                fontWeight: 700,
-                                padding: '1px 6px',
-                                borderRadius: '4px',
                                 background: colors.bg,
                                 color: colors.color,
-                                marginTop: '2px',
-                                display: 'inline-block',
                               }}
                             >
                               {ev.metaBadge}
@@ -569,39 +411,27 @@ export const TaskTimelineModal: React.FC<TaskTimelineModalProps> = ({
 
                       {/* Notes / Details */}
                       {ev.note && (
-                        <div
-                          style={{
-                            padding: '8px 12px',
-                            background: '#ffffff',
-                            borderRadius: '10px',
-                            border: '1px solid rgba(11, 77, 36, 0.08)',
-                            fontSize: '0.86rem',
-                            color: '#111c14',
-                            marginTop: '6px',
-                            fontStyle: 'italic',
-                            lineHeight: 1.4,
-                          }}
-                        >
+                        <div className="py-2 px-3 bg-white rounded-xl border border-primary/8 text-xs sm:text-sm text-foreground mt-1.5 italic leading-normal">
                           &ldquo;{ev.note}&rdquo;
                         </div>
                       )}
 
                       {ev.subtitle && (
-                        <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#5c675e', lineHeight: 1.4 }}>
+                        <p className="mt-1 mb-0 text-xs text-muted leading-normal">
                           {ev.subtitle}
                         </p>
                       )}
 
                       {/* Performer Avatar Footer */}
                       {ev.performer && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                        <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-black/4">
                           <Avatar
                             src={ev.performer.avatar_url}
                             name={ev.performer.full_name}
                             size="sm"
                             border
                           />
-                          <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#111c14' }}>
+                          <span className="text-xs font-semibold text-foreground">
                             {ev.performer.full_name || 'Choir Member'}
                           </span>
                         </div>
@@ -615,19 +445,10 @@ export const TaskTimelineModal: React.FC<TaskTimelineModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div
-          style={{
-            padding: '14px 26px',
-            borderTop: '1px solid rgba(11, 77, 36, 0.1)',
-            background: 'linear-gradient(135deg, #fbfaf6 0%, #f4efe4 100%)',
-            display: 'flex',
-            justifyContent: 'flex-end',
-          }}
-        >
+        <div className="py-3.5 px-6 border-t border-primary/10 bg-gradient-to-br from-[#fbfaf6] to-[#f4efe4] flex justify-end">
           <button
             onClick={onClose}
-            className="btn btn-secondary"
-            style={{ padding: '8px 20px', fontSize: '0.88rem', borderRadius: '10px' }}
+            className="btn btn-secondary !py-2 !px-5 text-xs sm:text-sm !rounded-xl"
           >
             Close
           </button>

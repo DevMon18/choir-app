@@ -188,50 +188,32 @@ export const PhotoGallery: React.FC<Props> = ({
   };
 
   return (
-    <div style={{ marginTop: '16px' }}>
+    <div className="mt-4">
       {/* Gallery Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <h3 style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', margin: 0 }}>
+      <div className="flex justify-between items-center mb-3">
+        <div className="flex items-center gap-2.5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted m-0">
             PHOTO GALLERY ({photos.length}/8)
           </h3>
 
           {/* Grid View Page Controls */}
           {totalGridPages > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setGridPage((p) => Math.max(0, p - 1))}
                 disabled={gridPage === 0}
-                style={{
-                  background: 'none',
-                  border: '1px solid var(--border)',
-                  borderRadius: '6px',
-                  padding: '2px 6px',
-                  cursor: gridPage === 0 ? 'not-allowed' : 'pointer',
-                  opacity: gridPage === 0 ? 0.4 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
+                className="bg-transparent border border-border rounded-md p-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center hover:bg-black/5 transition-colors"
                 aria-label="Previous page"
               >
                 <ChevronLeft size={14} />
               </button>
-              <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
+              <span className="text-[11px] text-muted font-semibold">
                 {gridPage + 1}/{totalGridPages}
               </span>
               <button
                 onClick={() => setGridPage((p) => Math.min(totalGridPages - 1, p + 1))}
                 disabled={gridPage >= totalGridPages - 1}
-                style={{
-                  background: 'none',
-                  border: '1px solid var(--border)',
-                  borderRadius: '6px',
-                  padding: '2px 6px',
-                  cursor: gridPage >= totalGridPages - 1 ? 'not-allowed' : 'pointer',
-                  opacity: gridPage >= totalGridPages - 1 ? 0.4 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
+                className="bg-transparent border border-border rounded-md p-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center hover:bg-black/5 transition-colors"
                 aria-label="Next page"
               >
                 <ChevronRight size={14} />
@@ -242,15 +224,9 @@ export const PhotoGallery: React.FC<Props> = ({
 
         {isOwner && photos.length < 8 && (
           <label
-            className="btn btn-secondary"
-            style={{
-              padding: '6px 12px',
-              fontSize: '13px',
-              cursor: uploading ? 'wait' : 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
+            className={`btn btn-secondary !py-1.5 !px-3 text-xs inline-flex items-center gap-1.5 ${
+              uploading ? 'cursor-wait' : 'cursor-pointer'
+            }`}
           >
             <Camera size={14} />
             <span>{uploading ? 'Uploading...' : 'Add Photo'}</span>
@@ -259,24 +235,14 @@ export const PhotoGallery: React.FC<Props> = ({
               accept="image/*"
               disabled={uploading}
               onChange={handleFileChange}
-              style={{ display: 'none' }}
+              className="hidden"
             />
           </label>
         )}
       </div>
 
       {photos.length === 0 ? (
-        <div
-          style={{
-            padding: '24px',
-            borderRadius: '12px',
-            background: 'rgba(0,0,0,0.02)',
-            border: '1px dashed var(--glass-border)',
-            textAlign: 'center',
-            color: 'var(--muted)',
-            fontSize: '13px',
-          }}
-        >
+        <div className="p-6 rounded-xl bg-black/[0.02] border border-dashed border-glass-border text-center text-muted text-xs sm:text-sm">
           No photos in gallery yet.
         </div>
       ) : (
@@ -285,7 +251,7 @@ export const PhotoGallery: React.FC<Props> = ({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}
+          className="grid grid-cols-3 gap-2"
         >
           {visiblePhotos.map((p, idx) => {
             const actualIndex = gridPage * MAX_PER_PAGE + idx;
@@ -293,30 +259,13 @@ export const PhotoGallery: React.FC<Props> = ({
               <div
                 key={p.id}
                 onClick={() => setSelectedIndex(actualIndex)}
-                style={{
-                  position: 'relative',
-                  paddingTop: '100%',
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  background: 'rgba(0,0,0,0.05)',
-                  border: '1px solid var(--glass-border)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                }}
+                className="relative pt-[100%] rounded-xl overflow-hidden cursor-pointer bg-black/5 border border-glass-border shadow-sm group"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={p.publicUrl}
                   alt="Profile photo"
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    transition: 'transform 0.2s ease',
-                  }}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                 />
               </div>
             );
@@ -330,38 +279,19 @@ export const PhotoGallery: React.FC<Props> = ({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 999999,
-            background: 'rgba(0, 0, 0, 0.94)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            padding: '16px',
-            backdropFilter: 'blur(12px)',
-          }}
+          className="fixed inset-0 z-[999999] bg-black/95 flex flex-col justify-between p-4 backdrop-blur-xl animate-in fade-in duration-200"
           onClick={(e) => {
             if (e.target === e.currentTarget) setSelectedIndex(null);
           }}
         >
           {/* Top Control Bar ABOVE Image */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              zIndex: 100,
-              width: '100%',
-              padding: '4px 8px',
-            }}
-          >
-            <span style={{ color: '#ffffff', fontSize: '0.85rem', opacity: 0.85, fontWeight: 500 }}>
+          <div className="flex justify-between items-center z-[100] w-full py-1 px-2">
+            <span className="text-white/85 text-xs sm:text-sm font-medium">
               {selectedIndex! + 1} / {photos.length} · {new Date(selectedPhoto.created_at).toLocaleDateString()}
             </span>
 
             {/* Action Buttons ABOVE the image */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="flex items-center gap-2.5">
               {isOwner && (
                 <button
                   onClick={(e) => {
@@ -370,21 +300,7 @@ export const PhotoGallery: React.FC<Props> = ({
                   }}
                   disabled={deletingId === selectedPhoto.id}
                   title="Delete Photo"
-                  style={{
-                    background: 'rgba(239, 68, 68, 0.85)',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '8px 16px',
-                    fontSize: '0.85rem',
-                    borderRadius: '20px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
-                    transition: 'transform 0.15s ease',
-                  }}
+                  className="bg-red-500/85 hover:bg-red-600 text-white border-0 py-2 px-4 text-xs sm:text-sm rounded-full font-semibold cursor-pointer inline-flex items-center gap-1.5 shadow-lg shadow-red-500/30 transition-transform active:scale-95 disabled:opacity-50"
                 >
                   <Trash2 size={15} />
                   <span>{deletingId === selectedPhoto.id ? 'Deleting...' : 'Delete'}</span>
@@ -393,18 +309,7 @@ export const PhotoGallery: React.FC<Props> = ({
 
               <button
                 onClick={() => setSelectedIndex(null)}
-                style={{
-                  background: 'rgba(255,255,255,0.2)',
-                  border: 'none',
-                  color: '#fff',
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                className="bg-white/20 hover:bg-white/30 border-0 text-white w-9 h-9 rounded-full cursor-pointer flex items-center justify-center transition-colors"
                 aria-label="Close photo"
               >
                 <X size={20} />
@@ -414,7 +319,7 @@ export const PhotoGallery: React.FC<Props> = ({
 
           {/* Center Lightbox Photo Container */}
           <div
-            style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 0' }}
+            className="relative flex-1 flex items-center justify-center py-3"
             onClick={() => setSelectedIndex(null)}
           >
             {/* Previous Arrow Button */}
@@ -425,24 +330,7 @@ export const PhotoGallery: React.FC<Props> = ({
                   handlePrevPhoto();
                 }}
                 title="Previous photo"
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  zIndex: 100,
-                  background: 'rgba(0, 0, 0, 0.55)',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  color: '#ffffff',
-                  width: '46px',
-                  height: '46px',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backdropFilter: 'blur(4px)',
-                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-[100] bg-black/55 hover:bg-black/75 border border-white/25 text-white w-11 h-11 rounded-full cursor-pointer flex items-center justify-center backdrop-blur-sm transition-all"
               >
                 <ChevronLeft size={24} />
               </button>
@@ -453,13 +341,7 @@ export const PhotoGallery: React.FC<Props> = ({
               src={selectedPhoto.publicUrl}
               alt="Full view"
               onClick={(e) => e.stopPropagation()}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '84vh',
-                objectFit: 'contain',
-                borderRadius: '8px',
-                boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
-              }}
+              className="max-w-full max-h-[84vh] object-contain rounded-lg shadow-2xl"
             />
 
             {/* Next Arrow Button */}
@@ -470,24 +352,7 @@ export const PhotoGallery: React.FC<Props> = ({
                   handleNextPhoto();
                 }}
                 title="Next photo"
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  zIndex: 100,
-                  background: 'rgba(0, 0, 0, 0.55)',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  color: '#ffffff',
-                  width: '46px',
-                  height: '46px',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backdropFilter: 'blur(4px)',
-                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-[100] bg-black/55 hover:bg-black/75 border border-white/25 text-white w-11 h-11 rounded-full cursor-pointer flex items-center justify-center backdrop-blur-sm transition-all"
               >
                 <ChevronRight size={24} />
               </button>

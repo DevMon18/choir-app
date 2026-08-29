@@ -61,29 +61,17 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
     : [];
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+    <div ref={containerRef} className="flex flex-col min-h-screen relative">
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
 
       <Navbar profile={currentUserProfile} />
 
-      <main style={{ flex: 1, padding: '40px 20px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+      <main className="flex-1 py-10 px-5 max-w-[800px] mx-auto w-full">
         {/* Back navigation with Next.js prefetching */}
         <Link
           href="/repertoire"
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--primary)',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            marginBottom: '24px',
-            padding: '4px 0',
-          }}
+          className="bg-transparent border-0 text-primary font-semibold text-sm no-underline inline-flex items-center gap-1.5 mb-6 py-1 hover:underline"
         >
           <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -92,26 +80,15 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
         </Link>
 
         {/* Header card info */}
-        <div className="glass-container anim-header" style={{ padding: '30px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+        <div className="glass-container anim-header !p-7 mb-6">
+          <div className="flex justify-between items-start flex-wrap gap-4">
             <div>
               {tags.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+                <div className="flex flex-wrap gap-1.5 mb-3">
                   {tags.map((t) => (
                     <span
                       key={t.id}
-                      style={{
-                        display: 'inline-block',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
-                        color: 'var(--accent)',
-                        background: 'rgba(180,83,9,0.06)',
-                        padding: '3px 10px',
-                        borderRadius: '99px',
-                        border: '1px solid rgba(180,83,9,0.2)',
-                      }}
+                      className="inline-block text-[0.72rem] font-bold uppercase tracking-wider text-accent bg-[#b45309]/6 py-0.5 px-2.5 rounded-full border border-[#b45309]/20"
                     >
                       {t.name}
                     </span>
@@ -119,19 +96,19 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
                 </div>
               )}
 
-              <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary)', lineHeight: 1.2 }}>
+              <h1 className="text-3xl font-bold text-primary leading-tight m-0">
                 {song.title}
               </h1>
               
-              <div style={{ display: 'flex', gap: '16px', marginTop: '8px', flexWrap: 'wrap' }}>
+              <div className="flex gap-4 mt-2 flex-wrap">
                 {song.composer && (
-                  <p style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-                    Composer: <strong style={{ color: 'var(--foreground)' }}>{song.composer}</strong>
+                  <p className="text-sm text-muted m-0">
+                    Composer: <strong className="text-foreground">{song.composer}</strong>
                   </p>
                 )}
                 {song.arranger && (
-                  <p style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-                    Arranger: <strong style={{ color: 'var(--foreground)' }}>{song.arranger}</strong>
+                  <p className="text-sm text-muted m-0">
+                    Arranger: <strong className="text-foreground">{song.arranger}</strong>
                   </p>
                 )}
               </div>
@@ -163,7 +140,7 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
         </div>
 
         {/* Song Lyrics Pane */}
-        <div className="glass-container anim-lyrics" style={{ padding: '40px', overflowX: 'auto' }}>
+        <div className="glass-container anim-lyrics !p-10 overflow-x-auto">
           {song.lyrics ? (
             <ChordProRenderer
               lyrics={song.lyrics}
@@ -173,7 +150,7 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
               showChords={showChords}
             />
           ) : (
-            <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 0' }}>
+            <div className="text-center text-muted py-10">
               No lyrics or ChordPro formatting has been entered for this song yet.
             </div>
           )}

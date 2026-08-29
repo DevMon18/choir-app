@@ -101,16 +101,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <div
-      className="anim-card"
+      className="anim-card p-5 sm:p-5.5 rounded-2xl bg-white border border-primary/12 shadow-card flex flex-col gap-3 relative"
       style={{
-        padding: '20px 22px',
-        borderRadius: '18px',
-        background: '#ffffff',
-        border: '1px solid rgba(11, 77, 36, 0.12)',
-        boxShadow: '0 4px 20px rgba(11, 77, 36, 0.06)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
         borderLeft: assignment.status === 'completed'
           ? '4px solid var(--success, #0b6623)'
           : assignment.status === 'blocked'
@@ -118,25 +110,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           : isOverdue
           ? '4px solid var(--warning, #b45309)'
           : '4px solid var(--primary)',
-        position: 'relative',
       }}
     >
       {/* Top Meta Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Priority Pill */}
           <span
-            style={{
-              padding: '2px 8px',
-              borderRadius: '6px',
-              fontSize: '0.74rem',
-              fontWeight: 700,
-              background: priority.bg,
-              color: priority.color,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
+            className="py-0.5 px-2 rounded-md text-xs font-bold inline-flex items-center gap-1"
+            style={{ background: priority.bg, color: priority.color }}
           >
             {priority.icon}
             {priority.label}
@@ -144,36 +126,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
           {/* Status Badge */}
           <span
-            style={{
-              padding: '2px 8px',
-              borderRadius: '6px',
-              fontSize: '0.74rem',
-              fontWeight: 600,
-              background: status.bg,
-              color: status.color,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
+            className="py-0.5 px-2 rounded-md text-xs font-semibold inline-flex items-center gap-1"
+            style={{ background: status.bg, color: status.color }}
           >
             {status.icon}
             {status.label}
           </span>
 
           {hasPendingReassignment && (
-            <span
-              style={{
-                padding: '2px 8px',
-                borderRadius: '6px',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                background: 'rgba(197,160,89,0.18)',
-                color: 'var(--accent)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
+            <span className="py-0.5 px-2 rounded-md text-xs font-semibold bg-amber-500/18 text-accent inline-flex items-center gap-1">
               <RefreshCw size={11} /> Reassignment Pending
             </span>
           )}
@@ -182,14 +143,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         {/* Due Date Indicator */}
         {dueInfo.label && (
           <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              fontSize: '0.78rem',
-              fontWeight: isOverdue || dueInfo.isDueSoon ? 700 : 500,
-              color: isOverdue ? 'var(--error, #dc2626)' : dueInfo.isDueSoon ? '#ea580c' : 'var(--muted)',
-            }}
+            className={`inline-flex items-center gap-1 text-xs ${
+              isOverdue
+                ? 'text-error font-bold'
+                : dueInfo.isDueSoon
+                ? 'text-orange-600 font-bold'
+                : 'text-muted font-medium'
+            }`}
           >
             {isOverdue ? <AlertTriangle size={14} /> : <Clock size={14} />}
             <span>{dueInfo.label}</span>
@@ -199,14 +159,14 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
       {/* Main Task Title & Responsibility */}
       <div>
-        <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>
+        <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">
           Task: {task.title}
         </div>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--foreground)', margin: '0 0 6px 0', lineHeight: 1.3 }}>
+        <h3 className="text-lg font-bold text-foreground m-0 mb-1.5 leading-snug">
           {assignment.responsibility}
         </h3>
         {task.description && (
-          <p style={{ fontSize: '0.86rem', color: 'var(--muted)', margin: '0 0 8px 0', lineHeight: 1.4 }}>
+          <p className="text-sm text-muted m-0 mb-2 leading-relaxed">
             {task.description}
           </p>
         )}
@@ -214,20 +174,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
       {/* Completion Note Card */}
       {assignment.status === 'completed' && assignment.completion_comment && (
-        <div
-          style={{
-            padding: '10px 14px',
-            borderRadius: '12px',
-            background: 'rgba(11, 77, 36, 0.06)',
-            border: '1px solid rgba(11, 77, 36, 0.18)',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '8px',
-          }}
-        >
-          <CheckCircle2 size={16} style={{ color: 'var(--success, #0b6623)', marginTop: '2px', flexShrink: 0 }} />
-          <div style={{ fontSize: '0.82rem', color: 'var(--foreground)' }}>
-            <strong style={{ color: 'var(--success, #0b6623)' }}>Completion Note: </strong>
+        <div className="py-2.5 px-3.5 rounded-xl bg-primary/6 border border-primary/18 flex items-start gap-2">
+          <CheckCircle2 size={16} className="text-success mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-foreground">
+            <strong className="text-success">Completion Note: </strong>
             {assignment.completion_comment}
           </div>
         </div>
@@ -235,20 +185,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
       {/* "Can't Complete" Alert Box */}
       {assignment.status === 'blocked' && assignment.blocker_reason && (
-        <div
-          style={{
-            padding: '10px 14px',
-            borderRadius: '12px',
-            background: 'rgba(249, 115, 22, 0.08)',
-            border: '1px solid rgba(249, 115, 22, 0.25)',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '8px',
-          }}
-        >
-          <AlertTriangle size={16} style={{ color: '#ea580c', marginTop: '2px', flexShrink: 0 }} />
-          <div style={{ fontSize: '0.82rem', color: 'var(--foreground)' }}>
-            <strong style={{ color: '#ea580c' }}>Can&apos;t Complete: </strong>
+        <div className="py-2.5 px-3.5 rounded-xl bg-orange-500/8 border border-orange-500/25 flex items-start gap-2">
+          <AlertTriangle size={16} className="text-orange-600 mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-foreground">
+            <strong className="text-orange-600">Can&apos;t Complete: </strong>
             {assignment.blocker_reason}
           </div>
         </div>
@@ -256,41 +196,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
       {/* Related Entity Links */}
       {(task.related_song || task.related_sequence) && (
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="flex gap-2 flex-wrap">
           {task.related_song && (
             <Link
               href={`/repertoire/${task.related_song.id}`}
-              style={{
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '3px 8px',
-                borderRadius: '8px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                background: 'rgba(30,58,138,0.08)',
-                color: 'var(--primary)',
-              }}
+              className="no-underline inline-flex items-center gap-1.25 py-0.75 px-2 rounded-lg text-xs font-semibold bg-primary/8 text-primary hover:bg-primary/15 transition-colors"
             >
               <Music size={12} /> Song: {task.related_song.title}
             </Link>
           )}
           {task.related_sequence && (
             <Link
-              href={`/calendar`}
-              style={{
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '3px 8px',
-                borderRadius: '8px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                background: 'rgba(197,160,89,0.12)',
-                color: 'var(--accent)',
-              }}
+              href="/calendar"
+              className="no-underline inline-flex items-center gap-1.25 py-0.75 px-2 rounded-lg text-xs font-semibold bg-accent/12 text-accent hover:bg-accent/20 transition-colors"
             >
               <Mic size={12} /> Mass: {task.related_sequence.title}
             </Link>
@@ -299,25 +217,14 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       )}
 
       {/* Action Toolbar */}
-      <div
-        style={{
-          borderTop: '1px solid var(--glass-border)',
-          paddingTop: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '10px',
-        }}
-      >
+      <div className="border-t border-glass-border pt-3 flex items-center justify-between flex-wrap gap-2.5">
         {/* Left Status Change Button */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="flex gap-2 flex-wrap">
           {assignment.status === 'pending' && (
             <button
               onClick={() => handleStatusToggle('in_progress')}
               disabled={loading}
-              className="btn btn-secondary"
-              style={{ padding: '7px 14px', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              className="btn btn-secondary !py-1.75 !px-3.5 text-xs inline-flex items-center gap-1.5"
             >
               <PlayCircle size={15} /> Start Work
             </button>
@@ -327,17 +234,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             <button
               onClick={() => onOpenComplete(assignment)}
               disabled={loading}
-              className="btn btn-primary"
-              style={{
-                padding: '7px 14px',
-                fontSize: '0.82rem',
-                background: 'linear-gradient(135deg, var(--primary, #0b4d24) 0%, #15803d 100%)',
-                color: '#ffffff',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 2px 8px rgba(11, 77, 36, 0.2)',
-              }}
+              className="btn btn-primary !py-1.75 !px-3.5 text-xs bg-gradient-to-br from-primary to-emerald-700 text-white inline-flex items-center gap-1.5 shadow-sm"
             >
               <CheckCircle2 size={15} /> Complete Task
             </button>
@@ -347,8 +244,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             <button
               onClick={() => handleStatusToggle('in_progress')}
               disabled={loading}
-              className="btn btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+              className="btn btn-secondary !py-1.5 !px-3 text-xs"
             >
               Reopen Task
             </button>
@@ -358,8 +254,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             <button
               onClick={() => handleStatusToggle('in_progress')}
               disabled={loading}
-              className="btn btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+              className="btn btn-secondary !py-1.5 !px-3 text-xs"
             >
               Resume Work
             </button>
@@ -367,13 +262,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Secondary Context / Request Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div className="flex items-center gap-1.5">
           {assignment.status !== 'completed' && (
             <>
               <button
                 onClick={() => onOpenBlocker(assignment)}
-                className="btn btn-secondary"
-                style={{ padding: '6px 10px', fontSize: '0.78rem', color: '#ea580c', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                className="btn btn-secondary !py-1.5 !px-2.5 text-xs text-orange-600 inline-flex items-center gap-1"
                 title="Can't Complete"
               >
                 <AlertTriangle size={14} /> Can&apos;t Complete
@@ -381,8 +275,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
               <button
                 onClick={() => onOpenReassign(assignment)}
-                className="btn btn-secondary"
-                style={{ padding: '6px 10px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                className="btn btn-secondary !py-1.5 !px-2.5 text-xs inline-flex items-center gap-1"
                 title="Request Reassignment"
               >
                 <RefreshCw size={14} /> Reassign
@@ -392,8 +285,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
           <button
             onClick={() => onOpenComments(assignment)}
-            className="btn btn-secondary"
-            style={{ padding: '6px 10px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+            className="btn btn-secondary !py-1.5 !px-2.5 text-xs inline-flex items-center gap-1.25"
             title="Comments & History"
           >
             <MessageSquare size={14} />

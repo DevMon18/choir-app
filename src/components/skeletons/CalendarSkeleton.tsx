@@ -2,59 +2,28 @@ import React from 'react';
 
 export const CalendarSkeleton = () => {
   return (
-    <div
-      className="skeleton-glass-card"
-      style={{
-        padding: '24px',
-        maxWidth: '1240px',
-        margin: '0 auto',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-      }}
-    >
+    <div className="skeleton-glass-card p-6 max-w-[1240px] mx-auto w-full flex flex-col gap-5">
       {/* Calendar Header Controls Skeleton */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '12px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div className="skeleton-text" style={{ width: '160px', height: '26px' }} />
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <div className="skeleton-pill" style={{ width: '32px', height: '32px' }} />
-            <div className="skeleton-pill" style={{ width: '32px', height: '32px' }} />
+      <div className="flex justify-between items-center flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="skeleton-text w-40 h-[26px]" />
+          <div className="flex gap-1">
+            <div className="skeleton-pill w-8 h-8" />
+            <div className="skeleton-pill w-8 h-8" />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <div className="skeleton-pill" style={{ width: '90px', height: '36px' }} />
-          <div className="skeleton-pill" style={{ width: '130px', height: '36px' }} />
+        <div className="flex gap-2">
+          <div className="skeleton-pill w-[90px] h-9" />
+          <div className="skeleton-pill w-[130px] h-9" />
         </div>
       </div>
 
       {/* Days of week headers */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: '8px',
-          textAlign: 'center',
-        }}
-      >
+      <div className="grid grid-cols-7 gap-2 text-center">
         {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day) => (
           <div
             key={day}
-            style={{
-              padding: '8px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              color: 'var(--muted)',
-            }}
+            className="p-2 text-xs font-bold text-muted"
           >
             {day}
           </div>
@@ -62,32 +31,17 @@ export const CalendarSkeleton = () => {
       </div>
 
       {/* Month Grid Skeleton */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: '8px',
-        }}
-      >
+      <div className="grid grid-cols-7 gap-2">
         {Array.from({ length: 35 }).map((_, i) => {
           const hasEvent = i % 5 === 1 || i % 7 === 3 || i === 14 || i === 22;
           return (
             <div
               key={i}
-              style={{
-                height: '85px',
-                borderRadius: '12px',
-                background: 'rgba(255, 255, 255, 0.45)',
-                border: '1px solid rgba(0, 0, 0, 0.04)',
-                padding: '8px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-              }}
+              className="h-[85px] rounded-xl bg-white/45 border border-black/5 p-2 flex flex-col justify-between"
             >
-              <div className="skeleton-text" style={{ width: '18px', height: '12px' }} />
+              <div className="skeleton-text w-[18px] h-3" />
               {hasEvent && (
-                <div className="skeleton-pill" style={{ width: '100%', height: '20px' }} />
+                <div className="skeleton-pill w-full h-5" />
               )}
             </div>
           );

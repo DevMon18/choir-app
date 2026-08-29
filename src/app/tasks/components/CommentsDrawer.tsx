@@ -124,94 +124,26 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.72)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.2s ease',
-      }}
+      className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 animate-fade-in"
       onClick={onClose}
     >
       <div
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          height: '100%',
-          maxHeight: '88vh',
-          background: '#ffffff',
-          borderRadius: '24px',
-          border: '1px solid rgba(11, 77, 36, 0.16)',
-          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.4)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        }}
+        className="w-full max-w-[560px] h-full max-h-[88vh] bg-white rounded-3xl border border-primary/16 shadow-2xl flex flex-col overflow-hidden animate-modal-scale"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div
-          style={{
-            padding: '18px 24px',
-            borderBottom: '1px solid rgba(11, 77, 36, 0.1)',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #fbfaf6 0%, #f4efe4 100%)',
-            gap: '12px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, var(--primary) 0%, #15803d 100%)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(11, 77, 36, 0.2)',
-                flexShrink: 0,
-              }}
-            >
+        <div className="py-4.5 px-6 border-b border-primary/10 flex items-start justify-between bg-gradient-to-br from-amber-50/40 to-amber-100/30 gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10.5 h-10.5 rounded-xl bg-gradient-to-br from-primary to-emerald-700 text-white flex items-center justify-center shadow-md flex-shrink-0">
               <MessageSquare size={20} />
             </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                <span
-                  style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    color: 'var(--primary)',
-                    background: 'rgba(11, 77, 36, 0.08)',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                  }}
-                >
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-[0.72rem] font-bold uppercase tracking-wider text-primary bg-primary/8 py-0.5 px-1.5 rounded">
                   Task: {taskTitle}
                 </span>
               </div>
-              <h3
-                style={{
-                  fontSize: '1.12rem',
-                  fontWeight: 800,
-                  margin: 0,
-                  color: '#111c14',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+              <h3 className="text-lg font-extrabold m-0 text-foreground truncate">
                 {responsibility}
               </h3>
             </div>
@@ -219,22 +151,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
 
           <button
             onClick={onClose}
-            className="btn btn-secondary"
-            style={{
-              width: '34px',
-              height: '34px',
-              padding: 0,
-              borderRadius: '50%',
-              minHeight: 'auto',
-              border: '1px solid rgba(11, 77, 36, 0.12)',
-              background: '#ffffff',
-              color: '#5c675e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
+            className="btn btn-secondary !w-8.5 !h-8.5 !p-0 !rounded-full !min-h-0 border border-primary/12 bg-white text-muted flex items-center justify-center cursor-pointer flex-shrink-0"
             aria-label="Close dialog"
           >
             <X size={18} />
@@ -242,112 +159,47 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
         </div>
 
         {/* Tab Toggle Segmented Bar */}
-        <div
-          style={{
-            display: 'flex',
-            borderBottom: '1px solid rgba(11, 77, 36, 0.08)',
-            padding: '10px 20px',
-            background: '#faf8f3',
-            gap: '8px',
-          }}
-        >
+        <div className="flex border-b border-primary/8 py-2.5 px-5 bg-amber-50/30 gap-2">
           <button
             onClick={() => setActiveTab('comments')}
-            style={{
-              flex: 1,
-              padding: '8px 16px',
-              borderRadius: '12px',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              border: '1px solid',
-              borderColor: activeTab === 'comments' ? 'var(--primary)' : 'rgba(11, 77, 36, 0.1)',
-              background: activeTab === 'comments' ? 'var(--primary)' : '#ffffff',
-              color: activeTab === 'comments' ? '#ffffff' : '#5c675e',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              boxShadow: activeTab === 'comments' ? '0 3px 10px rgba(11, 77, 36, 0.2)' : 'none',
-              transition: 'all 0.2s ease',
-            }}
+            className={`flex-1 py-2 px-4 rounded-xl text-sm font-bold cursor-pointer border inline-flex items-center justify-center gap-1.5 transition-all ${
+              activeTab === 'comments'
+                ? 'border-primary bg-primary text-white shadow-md'
+                : 'border-primary/10 bg-white text-muted hover:bg-black/5'
+            }`}
           >
             <MessageSquare size={15} /> Discussion ({comments.length})
           </button>
 
           <button
             onClick={() => setActiveTab('history')}
-            style={{
-              flex: 1,
-              padding: '8px 16px',
-              borderRadius: '12px',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              border: '1px solid',
-              borderColor: activeTab === 'history' ? 'var(--primary)' : 'rgba(11, 77, 36, 0.1)',
-              background: activeTab === 'history' ? 'var(--primary)' : '#ffffff',
-              color: activeTab === 'history' ? '#ffffff' : '#5c675e',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              boxShadow: activeTab === 'history' ? '0 3px 10px rgba(11, 77, 36, 0.2)' : 'none',
-              transition: 'all 0.2s ease',
-            }}
+            className={`flex-1 py-2 px-4 rounded-xl text-sm font-bold cursor-pointer border inline-flex items-center justify-center gap-1.5 transition-all ${
+              activeTab === 'history'
+                ? 'border-primary bg-primary text-white shadow-md'
+                : 'border-primary/10 bg-white text-muted hover:bg-black/5'
+            }`}
           >
             <History size={15} /> Audit Trail ({history.length})
           </button>
         </div>
 
         {/* Content Body */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '20px 24px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            background: '#ffffff',
-          }}
-        >
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-3 bg-white">
           {activeTab === 'comments' ? (
             comments.length === 0 ? (
-              <div
-                style={{
-                  margin: 'auto 0',
-                  padding: '36px 20px',
-                  textAlign: 'center',
-                  background: '#faf8f3',
-                  borderRadius: '18px',
-                  border: '1px dashed rgba(11, 77, 36, 0.16)',
-                }}
-              >
-                <div
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    background: 'rgba(11, 77, 36, 0.08)',
-                    color: 'var(--primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 12px',
-                  }}
-                >
+              <div className="my-auto py-9 px-5 text-center bg-amber-50/30 rounded-2xl border border-dashed border-primary/16">
+                <div className="w-12 h-12 rounded-full bg-primary/8 text-primary flex items-center justify-center mx-auto mb-3">
                   <MessageSquare size={22} />
                 </div>
-                <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#111c14', margin: '0 0 4px' }}>
+                <h4 className="text-base font-extrabold text-foreground m-0 mb-1">
                   No messages yet
                 </h4>
-                <p style={{ fontSize: '0.84rem', color: '#5c675e', maxWidth: '320px', margin: '0 auto' }}>
+                <p className="text-sm text-muted max-w-[320px] mx-auto">
                   Ask questions, post updates, or clarify details with the Choir Director.
                 </p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="flex flex-col gap-3">
                 {comments.map((c) => {
                   const isMe = c.author_id === currentUserId;
                   const isDirector = ['super_admin', 'director'].includes(c.author?.role || '');
@@ -355,12 +207,7 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
                   return (
                     <div
                       key={c.id}
-                      style={{
-                        display: 'flex',
-                        gap: '10px',
-                        alignItems: 'flex-start',
-                        flexDirection: isMe ? 'row-reverse' : 'row',
-                      }}
+                      className={`flex gap-2.5 items-start ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
                     >
                       <Avatar
                         src={c.author?.avatar_url}
@@ -369,61 +216,35 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
                         border
                       />
                       <div
-                        style={{
-                          maxWidth: '82%',
-                          background: isMe
-                            ? 'linear-gradient(135deg, var(--primary) 0%, #15803d 100%)'
-                            : '#faf8f3',
-                          color: isMe ? '#ffffff' : '#111c14',
-                          padding: '12px 14px',
-                          borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                          border: isMe ? 'none' : '1px solid rgba(11, 77, 36, 0.1)',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-                        }}
+                        className={`max-w-[82%] p-3 sm:py-3 sm:px-3.5 ${
+                          isMe
+                            ? 'bg-gradient-to-br from-primary to-emerald-700 text-white rounded-2xl rounded-br-sm shadow-sm'
+                            : 'bg-amber-50/40 text-foreground rounded-2xl rounded-bl-sm border border-primary/10 shadow-xs'
+                        }`}
                       >
                         <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            marginBottom: '4px',
-                            justifyContent: isMe ? 'flex-end' : 'flex-start',
-                          }}
+                          className={`flex items-center gap-1.5 mb-1 ${isMe ? 'justify-end' : 'justify-start'}`}
                         >
-                          <strong style={{ fontSize: '0.82rem', color: isMe ? '#ffffff' : '#111c14' }}>
+                          <strong className={`text-xs ${isMe ? 'text-white' : 'text-foreground'}`}>
                             {isMe ? 'You' : c.author?.full_name || 'Member'}
                           </strong>
                           {isDirector && (
                             <span
-                              style={{
-                                fontSize: '0.68rem',
-                                padding: '1px 5px',
-                                borderRadius: '4px',
-                                background: isMe ? 'rgba(255,255,255,0.2)' : 'rgba(197, 160, 89, 0.2)',
-                                color: isMe ? '#ffffff' : 'var(--accent)',
-                                fontWeight: 700,
-                              }}
+                              className={`text-[0.68rem] py-0.25 px-1.25 rounded font-bold ${
+                                isMe ? 'bg-white/20 text-white' : 'bg-accent/20 text-accent'
+                              }`}
                             >
                               Director
                             </span>
                           )}
                           <span
-                            style={{
-                              fontSize: '0.7rem',
-                              color: isMe ? 'rgba(255,255,255,0.75)' : '#5c675e',
-                            }}
+                            className={`text-[0.7rem] ${isMe ? 'text-white/75' : 'text-muted'}`}
                           >
                             {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <p
-                          style={{
-                            margin: 0,
-                            fontSize: '0.88rem',
-                            wordBreak: 'break-word',
-                            lineHeight: 1.45,
-                            color: isMe ? '#ffffff' : '#111c14',
-                          }}
+                          className={`m-0 text-sm break-words leading-relaxed ${isMe ? 'text-white' : 'text-foreground'}`}
                         >
                           {c.content}
                         </p>
@@ -436,94 +257,37 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
             )
           ) : (
             history.length === 0 ? (
-              <div
-                style={{
-                  margin: 'auto 0',
-                  padding: '36px 20px',
-                  textAlign: 'center',
-                  background: '#faf8f3',
-                  borderRadius: '18px',
-                  border: '1px dashed rgba(11, 77, 36, 0.16)',
-                }}
-              >
-                <div
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    background: 'rgba(11, 77, 36, 0.08)',
-                    color: 'var(--primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 12px',
-                  }}
-                >
+              <div className="my-auto py-9 px-5 text-center bg-amber-50/30 rounded-2xl border border-dashed border-primary/16">
+                <div className="w-12 h-12 rounded-full bg-primary/8 text-primary flex items-center justify-center mx-auto mb-3">
                   <Clock size={22} />
                 </div>
-                <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#111c14', margin: '0 0 4px' }}>
+                <h4 className="text-base font-extrabold text-foreground m-0 mb-1">
                   No history records yet
                 </h4>
-                <p style={{ fontSize: '0.84rem', color: '#5c675e', margin: 0 }}>
+                <p className="text-sm text-muted m-0">
                   Actions and status updates will be timestamped here.
                 </p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="flex flex-col gap-2.5">
                 {history.map((h) => (
                   <div
                     key={h.id}
-                    style={{
-                      display: 'flex',
-                      gap: '12px',
-                      padding: '12px 14px',
-                      borderRadius: '14px',
-                      background: '#faf8f3',
-                      border: '1px solid rgba(11, 77, 36, 0.1)',
-                      alignItems: 'flex-start',
-                    }}
+                    className="flex gap-3 py-3 px-3.5 rounded-xl bg-amber-50/30 border border-primary/10 items-start"
                   >
-                    <div
-                      style={{
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '8px',
-                        background: 'rgba(11, 77, 36, 0.08)',
-                        color: 'var(--primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        marginTop: '2px',
-                      }}
-                    >
+                    <div className="w-7 h-7 rounded-lg bg-primary/8 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
                       <History size={15} />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#111c14' }}>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-foreground">
                         {h.action}
                       </div>
                       {h.note && (
-                        <div
-                          style={{
-                            fontSize: '0.82rem',
-                            color: '#5c675e',
-                            marginTop: '2px',
-                            fontStyle: 'italic',
-                          }}
-                        >
+                        <div className="text-xs text-muted mt-0.5 italic">
                           &ldquo;{h.note}&rdquo;
                         </div>
                       )}
-                      <span
-                        style={{
-                          fontSize: '0.72rem',
-                          color: '#5c675e',
-                          marginTop: '4px',
-                          display: 'block',
-                          fontWeight: 500,
-                        }}
-                      >
+                      <span className="text-xs text-muted mt-1 block font-medium">
                         {new Date(h.created_at).toLocaleString([], {
                           month: 'short',
                           day: 'numeric',
@@ -543,46 +307,19 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({
         {activeTab === 'comments' && (
           <form
             onSubmit={handleSendComment}
-            style={{
-              padding: '14px 20px',
-              borderTop: '1px solid rgba(11, 77, 36, 0.1)',
-              display: 'flex',
-              gap: '10px',
-              alignItems: 'center',
-              background: 'linear-gradient(135deg, #fbfaf6 0%, #f4efe4 100%)',
-            }}
+            className="py-3.5 px-5 border-t border-primary/10 flex gap-2.5 items-center bg-gradient-to-br from-amber-50/40 to-amber-100/30"
           >
             <input
               type="text"
-              className="input-field"
+              className="input-field flex-1 py-2.75 px-4 rounded-full text-sm bg-white border-[1.5px] border-primary/18 text-foreground"
               placeholder="Write a message or update..."
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '11px 16px',
-                borderRadius: '24px',
-                fontSize: '0.9rem',
-                background: '#ffffff',
-                border: '1.5px solid rgba(11, 77, 36, 0.18)',
-                color: '#111c14',
-              }}
             />
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary !px-5 !rounded-full !min-h-[44px] inline-flex items-center justify-center gap-1.5 font-bold shadow-md"
               disabled={loading || !newComment.trim()}
-              style={{
-                padding: '0 20px',
-                borderRadius: '24px',
-                minHeight: '44px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                fontWeight: 700,
-                boxShadow: '0 4px 12px rgba(11, 77, 36, 0.25)',
-              }}
               aria-label="Send comment"
             >
               <Send size={15} />

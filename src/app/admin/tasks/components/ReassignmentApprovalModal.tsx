@@ -99,65 +99,24 @@ export const ReassignmentApprovalModal: React.FC<ReassignmentApprovalModalProps>
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.72)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.2s ease',
-      }}
+      className="fixed inset-0 bg-black/75 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        style={{
-          width: '100%',
-          maxWidth: '540px',
-          background: '#ffffff',
-          borderRadius: '24px',
-          border: '1px solid rgba(197, 160, 89, 0.25)',
-          boxShadow: '0 25px 70px rgba(0,0,0,0.4)',
-          overflow: 'hidden',
-          animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        }}
+        className="w-full max-w-[540px] bg-white rounded-3xl border border-accent/25 shadow-2xl overflow-hidden animate-slideUpModal"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div
-          style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid rgba(197, 160, 89, 0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #fdfbf7 0%, #f7f1e5 100%)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                background: 'rgba(197, 160, 89, 0.2)',
-                color: 'var(--accent)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(197, 160, 89, 0.15)',
-              }}
-            >
+        <div className="py-5 px-6 border-b border-accent/15 flex items-center justify-between bg-gradient-to-br from-[#fdfbf7] to-[#f7f1e5]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-accent/20 text-accent flex items-center justify-center shadow-sm">
               <RefreshCw size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#111c14' }}>
+              <h3 className="text-lg font-extrabold m-0 text-foreground">
                 Review Reassignment Request
               </h3>
-              <span style={{ fontSize: '0.8rem', color: '#5c675e', fontWeight: 500 }}>
+              <span className="text-xs text-muted font-medium">
                 Requested by {request.requester?.full_name}
               </span>
             </div>
@@ -165,21 +124,7 @@ export const ReassignmentApprovalModal: React.FC<ReassignmentApprovalModalProps>
 
           <button
             onClick={onClose}
-            className="btn btn-secondary"
-            style={{
-              width: '34px',
-              height: '34px',
-              padding: 0,
-              borderRadius: '50%',
-              minHeight: 'auto',
-              border: '1px solid rgba(197, 160, 89, 0.2)',
-              background: '#ffffff',
-              color: '#5c675e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
+            className="btn btn-secondary !w-[34px] !h-[34px] !p-0 !rounded-full !min-h-0 !border-accent/20 bg-white text-muted flex items-center justify-center cursor-pointer"
             aria-label="Close"
           >
             <X size={18} />
@@ -187,51 +132,33 @@ export const ReassignmentApprovalModal: React.FC<ReassignmentApprovalModalProps>
         </div>
 
         {/* Content */}
-        <div style={{ padding: '24px', background: '#ffffff' }}>
+        <div className="p-6 bg-white">
           {/* Responsibility & Reason Box */}
-          <div
-            style={{
-              padding: '14px 16px',
-              borderRadius: '14px',
-              background: '#faf8f3',
-              border: '1px solid rgba(11, 77, 36, 0.12)',
-              marginBottom: '18px',
-            }}
-          >
-            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#5c675e', textTransform: 'uppercase', marginBottom: '2px' }}>
+          <div className="py-3.5 px-4 rounded-2xl bg-[#faf8f3] border border-primary/12 mb-4.5">
+            <div className="text-xs font-bold text-muted uppercase mb-0.5">
               Responsibility
             </div>
-            <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#111c14', marginBottom: '10px' }}>
+            <div className="text-base font-extrabold text-foreground mb-2.5">
               {request.assignment?.responsibility}
             </div>
 
-            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#5c675e', textTransform: 'uppercase', marginBottom: '2px' }}>
+            <div className="text-xs font-bold text-muted uppercase mb-0.5">
               Member&apos;s Reason
             </div>
-            <p style={{ margin: 0, fontSize: '0.88rem', color: '#111c14', lineHeight: 1.45, fontStyle: 'italic' }}>
+            <p className="m-0 text-sm text-foreground leading-relaxed italic">
               &ldquo;{request.reason}&rdquo;
             </p>
           </div>
 
           {/* New Assignee Selection */}
-          <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '0.86rem', fontWeight: 700, color: '#111c14', marginBottom: '6px' }}>
-              Reassign To Member <span style={{ color: 'var(--error)' }}>*</span>
+          <div className="mb-4.5">
+            <label className="block text-sm font-bold text-foreground mb-1.5">
+              Reassign To Member <span className="text-error">*</span>
             </label>
             <select
-              className="input-field"
+              className="input-field w-full !rounded-xl !py-2.5 !px-3.5 text-sm cursor-pointer bg-white border-primary/20 text-foreground"
               value={selectedMemberId}
               onChange={(e) => setSelectedMemberId(e.target.value)}
-              style={{
-                width: '100%',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                background: '#ffffff',
-                border: '1.5px solid rgba(11, 77, 36, 0.16)',
-                color: '#111c14',
-              }}
             >
               <option value="">-- Select Member to delegate to --</option>
               {members.map((m) => (
@@ -243,53 +170,35 @@ export const ReassignmentApprovalModal: React.FC<ReassignmentApprovalModalProps>
           </div>
 
           {/* Director Review Note */}
-          <div style={{ marginBottom: '22px' }}>
-            <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#111c14', marginBottom: '6px' }}>
+          <div className="mb-5.5">
+            <label className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
               Director Note / Feedback (Optional)
             </label>
             <textarea
-              className="input-field"
+              className="input-field w-full !rounded-xl !py-2.5 !px-3.5 text-sm bg-white border-primary/20 text-foreground"
               rows={2}
               placeholder="e.g. Approved and reassigned to Pedro. Thanks for letting us know early."
               value={reviewNote}
               onChange={(e) => setReviewNote(e.target.value)}
-              style={{
-                width: '100%',
-                borderRadius: '12px',
-                padding: '10px 14px',
-                fontSize: '0.88rem',
-                background: '#ffffff',
-                border: '1.5px solid rgba(11, 77, 36, 0.16)',
-                color: '#111c14',
-              }}
             />
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          <div className="flex gap-2.5 justify-between items-center pt-3 border-t border-black/6">
             <button
               type="button"
               onClick={handleReject}
-              className="btn btn-secondary"
-              style={{
-                padding: '9px 16px',
-                fontSize: '0.86rem',
-                borderRadius: '10px',
-                color: 'var(--error)',
-                borderColor: 'rgba(239,68,68,0.3)',
-                fontWeight: 600,
-              }}
+              className="btn btn-secondary !py-2 !px-4 text-xs sm:text-sm !rounded-xl !text-error !border-error/30 font-semibold"
               disabled={loading}
             >
               Decline Request
             </button>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div className="flex gap-2.5">
               <button
                 type="button"
                 onClick={onClose}
-                className="btn btn-secondary"
-                style={{ padding: '9px 16px', fontSize: '0.86rem', borderRadius: '10px' }}
+                className="btn btn-secondary !py-2 !px-4 text-xs sm:text-sm !rounded-xl"
                 disabled={loading}
               >
                 Cancel
@@ -297,17 +206,7 @@ export const ReassignmentApprovalModal: React.FC<ReassignmentApprovalModalProps>
               <button
                 type="button"
                 onClick={handleApprove}
-                className="btn btn-primary"
-                style={{
-                  padding: '9px 20px',
-                  fontSize: '0.86rem',
-                  borderRadius: '10px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: 700,
-                  boxShadow: '0 4px 12px rgba(11, 77, 36, 0.25)',
-                }}
+                className="btn btn-primary !py-2 !px-5 text-xs sm:text-sm !rounded-xl inline-flex items-center gap-1.5 font-bold shadow-md shadow-primary/25"
                 disabled={loading || !selectedMemberId}
               >
                 <CheckCircle2 size={16} /> Approve & Reassign

@@ -110,36 +110,25 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
   const isOfficer = isUserOfficer(currentUserProfile.role);
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      <div className="bg-orb bg-orb-1" style={{ width: '500px', height: '500px' }}></div>
-      <div className="bg-orb bg-orb-2" style={{ width: '400px', height: '400px' }}></div>
+    <div ref={containerRef} className="flex flex-col min-h-screen relative">
+      <div className="bg-orb bg-orb-1 w-[500px] h-[500px]" />
+      <div className="bg-orb bg-orb-2 w-[400px] h-[400px]" />
 
       <Navbar profile={currentUserProfile} />
 
-      <main className="admin-content-full" style={{ maxWidth: '960px', margin: '0 auto', width: '100%', padding: '20px' }}>
+      <main className="admin-content-full max-w-[960px] mx-auto w-full p-5">
         {/* Header Title & Admin Switch Link */}
-        <div className="anim-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '14px' }}>
+        <div className="anim-header flex justify-between items-start mb-5 flex-wrap gap-3.5">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, var(--primary) 0%, #15803d 100%)',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-700 text-white flex items-center justify-center shadow-md">
                 <ListTodo size={22} />
               </div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>
+              <h1 className="text-2xl sm:text-[1.75rem] font-extrabold text-foreground m-0">
                 My Tasks & Responsibilities
               </h1>
             </div>
-            <p style={{ color: 'var(--muted)', fontSize: '0.88rem', margin: '4px 0 0 50px' }}>
+            <p className="text-muted text-sm mt-1 ml-0 sm:ml-12.5">
               View and track responsibilities assigned to you by Choir Officers.
             </p>
           </div>
@@ -147,8 +136,7 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
           {isOfficer && (
             <Link
               href="/admin/tasks"
-              className="btn btn-primary"
-              style={{ padding: '8px 16px', fontSize: '0.86rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              className="btn btn-primary !py-2 !px-4 text-sm inline-flex items-center gap-1.5"
             >
               <Settings size={15} /> Manage All Tasks →
             </Link>
@@ -156,94 +144,56 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
         </div>
 
         {/* Status Pill Tabs & Search Filter Bar */}
-        <div className="anim-card" style={{ padding: '12px 16px', borderRadius: '18px', background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.12)', boxShadow: '0 4px 16px rgba(11, 77, 36, 0.05)', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div className="anim-card py-3 px-4 rounded-2xl bg-white border border-primary/12 shadow-sm mb-5">
+          <div className="flex justify-between items-center flex-wrap gap-3">
             {/* Filter Tabs */}
-            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px', WebkitOverflowScrolling: 'touch', maxWidth: '100%' }}>
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5 max-w-full">
               <button
                 onClick={() => setActiveTab('active')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '20px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: activeTab === 'active' ? 'var(--primary)' : 'transparent',
-                  color: activeTab === 'active' ? '#fff' : 'var(--muted)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
+                className={`py-1.5 px-3.5 rounded-full text-xs font-semibold border-0 cursor-pointer inline-flex items-center gap-1.5 transition-all ${
+                  activeTab === 'active' ? 'bg-primary text-white' : 'bg-transparent text-muted hover:bg-black/5'
+                }`}
               >
                 <PlayCircle size={14} /> Active ({counts.active})
               </button>
 
               <button
                 onClick={() => setActiveTab('blocked')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '20px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: activeTab === 'blocked' ? '#ea580c' : 'transparent',
-                  color: activeTab === 'blocked' ? '#fff' : 'var(--muted)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
+                className={`py-1.5 px-3.5 rounded-full text-xs font-semibold border-0 cursor-pointer inline-flex items-center gap-1.5 transition-all ${
+                  activeTab === 'blocked' ? 'bg-orange-600 text-white' : 'bg-transparent text-muted hover:bg-black/5'
+                }`}
               >
                 <AlertTriangle size={14} /> Can&apos;t Complete ({counts.blocked})
               </button>
 
               <button
                 onClick={() => setActiveTab('completed')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '20px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: activeTab === 'completed' ? '#10b981' : 'transparent',
-                  color: activeTab === 'completed' ? '#fff' : 'var(--muted)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
+                className={`py-1.5 px-3.5 rounded-full text-xs font-semibold border-0 cursor-pointer inline-flex items-center gap-1.5 transition-all ${
+                  activeTab === 'completed' ? 'bg-emerald-500 text-white' : 'bg-transparent text-muted hover:bg-black/5'
+                }`}
               >
                 <CheckCircle2 size={14} /> Completed ({counts.completed})
               </button>
 
               <button
                 onClick={() => setActiveTab('all')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '20px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: activeTab === 'all' ? 'rgba(0,0,0,0.08)' : 'transparent',
-                  color: activeTab === 'all' ? 'var(--foreground)' : 'var(--muted)',
-                }}
+                className={`py-1.5 px-3.5 rounded-full text-xs font-semibold border-0 cursor-pointer transition-all ${
+                  activeTab === 'all' ? 'bg-black/8 text-foreground' : 'bg-transparent text-muted hover:bg-black/5'
+                }`}
               >
                 All ({counts.all})
               </button>
             </div>
 
             {/* Search Input */}
-            <div style={{ position: 'relative', minWidth: '220px', flex: 1, maxWidth: '320px' }}>
-              <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
+            <div className="relative min-w-[220px] flex-1 max-w-[320px]">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search tasks or responsibilities..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-field"
-                style={{ width: '100%', paddingLeft: '34px', paddingRight: '12px', height: '36px', fontSize: '0.84rem', borderRadius: '18px' }}
+                className="input-field w-full pl-8.5 pr-3 h-9 text-xs sm:text-sm !rounded-full"
               />
             </div>
           </div>
@@ -251,26 +201,14 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
 
         {/* Task Cards List */}
         {filteredAssignments.length === 0 ? (
-          <div className="glass-container anim-card" style={{ padding: '40px 20px', textAlign: 'center', borderRadius: '20px' }}>
-            <div
-              style={{
-                width: '56px',
-                height: '56px',
-                borderRadius: '50%',
-                background: 'rgba(11,77,36,0.08)',
-                color: 'var(--primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 14px',
-              }}
-            >
+          <div className="glass-container anim-card py-10 px-5 text-center rounded-2xl">
+            <div className="w-14 h-14 rounded-full bg-primary/8 text-primary flex items-center justify-center mx-auto mb-3.5">
               <Sparkles size={28} />
             </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 6px', color: 'var(--foreground)' }}>
+            <h3 className="text-xl font-bold mb-1.5 text-foreground">
               {activeTab === 'active' ? 'You are all caught up!' : 'No tasks found'}
             </h3>
-            <p style={{ fontSize: '0.88rem', color: 'var(--muted)', maxWidth: '420px', margin: '0 auto 16px' }}>
+            <p className="text-sm text-muted max-w-[420px] mx-auto mb-4">
               {activeTab === 'active'
                 ? 'You currently have no active responsibilities assigned. Check back later or review your completed tasks.'
                 : activeTab === 'blocked'
@@ -283,15 +221,14 @@ export const MyTasksClient: React.FC<MyTasksClientProps> = ({
                   setActiveTab('all');
                   setSearchQuery('');
                 }}
-                className="btn btn-secondary"
-                style={{ padding: '8px 16px', fontSize: '0.84rem' }}
+                className="btn btn-secondary !py-2 !px-4 text-xs sm:text-sm"
               >
                 View All Tasks
               </button>
             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="flex flex-col gap-3.5">
             {filteredAssignments.map((assignment) => (
               <TaskCard
                 key={assignment.id}

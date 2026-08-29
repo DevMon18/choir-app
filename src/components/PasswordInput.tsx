@@ -13,26 +13,21 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     const inputId = id || props.name || 'password-input';
 
     return (
-      <div style={{ width: '100%' }}>
+      <div className="w-full">
         {label && (
           <label className="input-label" htmlFor={inputId}>
             {label}
           </label>
         )}
-        <div style={{ position: 'relative', width: '100%' }}>
+        <div className="relative w-full">
           <input
             {...props}
             ref={ref}
             id={inputId}
             disabled={disabled}
             type={showPassword ? 'text' : 'password'}
-            className={`input-field ${className}`}
-            style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              paddingRight: '44px',
-              ...style,
-            }}
+            className={`input-field w-full pr-11 ${className}`}
+            style={style}
           />
           <button
             type="button"
@@ -40,38 +35,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             aria-label={showPassword ? 'Hide password' : 'Show password'}
             title={showPassword ? 'Hide password' : 'Show password'}
             disabled={disabled}
-            style={{
-              position: 'absolute',
-              right: '8px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              border: 'none',
-              background: 'transparent',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--muted)',
-              cursor: disabled ? 'not-allowed' : 'pointer',
-              opacity: disabled ? 0.5 : 0.8,
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-            onMouseEnter={(e) => {
-              if (!disabled) {
-                e.currentTarget.style.background = 'rgba(11, 77, 36, 0.08)';
-                e.currentTarget.style.color = 'var(--primary)';
-                e.currentTarget.style.opacity = '1';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!disabled) {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--muted)';
-                e.currentTarget.style.opacity = '0.8';
-              }
-            }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg border-0 bg-transparent flex items-center justify-center text-muted cursor-pointer transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {showPassword ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -87,7 +51,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           </button>
         </div>
         {error && (
-          <span style={{ fontSize: '0.8rem', color: 'var(--error)', marginTop: '4px', display: 'block' }}>
+          <span className="text-xs text-error mt-1 block">
             {error}
           </span>
         )}

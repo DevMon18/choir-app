@@ -367,18 +367,18 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      <div className="bg-orb bg-orb-1" style={{ width: '450px', height: '450px' }} />
-      <div className="bg-orb bg-orb-2" style={{ width: '400px', height: '400px' }} />
+    <div className="flex flex-col min-h-screen relative">
+      <div className="bg-orb bg-orb-1 w-[450px] h-[450px]" />
+      <div className="bg-orb bg-orb-2 w-[400px] h-[400px]" />
 
       <Navbar profile={currentUserProfile} />
 
-      <main style={{ flex: 1, maxWidth: '800px', margin: '0 auto', width: '100%', padding: '24px 16px 120px' }}>
+      <main className="flex-1 max-w-[800px] mx-auto w-full py-6 px-4 pb-[120px]">
         {/* Back Link */}
-        <div style={{ marginBottom: '18px' }}>
+        <div className="mb-4.5">
           <Link
             href="/dashboard"
-            style={{ fontSize: '0.9rem', color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
+            className="text-sm text-muted inline-flex items-center gap-1.5 font-semibold no-underline hover:text-foreground"
           >
             ← Back to Dashboard
           </Link>
@@ -386,21 +386,17 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
 
         {/* Status Header Banner if submitted or verified */}
         {isSubmitted && (
-          <div
-            className="alert alert-info"
-            style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}
-          >
+          <div className="alert alert-info mb-6 flex justify-between items-center flex-wrap gap-3">
             <div>
-              <strong style={{ fontSize: '1rem' }}>✅ Signature Submitted</strong>
-              <p style={{ margin: '2px 0 0', fontSize: '0.88rem' }}>
+              <strong className="text-base">✅ Signature Submitted</strong>
+              <p className="mt-0.5 mb-0 text-xs sm:text-sm">
                 Your signature has been submitted and is pending admin verification.
               </p>
             </div>
             <button
               onClick={() => setShowRetractConfirm(true)}
               disabled={retracting}
-              className="btn btn-secondary"
-              style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+              className="btn btn-secondary text-xs !py-1.5 !px-3.5"
             >
               {retracting ? 'Retracting…' : 'Retract & Re-sign'}
             </button>
@@ -408,27 +404,27 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
         )}
 
         {isVerified && (
-          <div className="alert alert-success" style={{ marginBottom: '24px' }}>
-            <strong style={{ fontSize: '1rem' }}>🎉 Signature Verified!</strong>
-            <p style={{ margin: '2px 0 0', fontSize: '0.88rem' }}>
+          <div className="alert alert-success mb-6">
+            <strong className="text-base">🎉 Signature Verified!</strong>
+            <p className="mt-0.5 mb-0 text-xs sm:text-sm">
               This waiver has been verified by the choir director. No further action is required.
             </p>
           </div>
         )}
 
         {/* Document Header Card */}
-        <div className="glass-container" style={{ padding: '24px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="glass-container p-6 mb-6">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <span className="badge" style={{ background: 'rgba(197,160,89,0.18)', color: 'var(--accent)', fontWeight: 700, fontSize: '0.75rem', marginBottom: '8px' }}>
+              <span className="badge bg-primary/15 text-accent font-bold text-xs mb-2">
                 {DOC_TYPE_LABELS[doc.type] || doc.type}
               </span>
-              <h1 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--primary)', margin: '4px 0 0' }}>
+              <h1 className="text-xl sm:text-[1.6rem] font-bold text-primary mt-1 mb-0">
                 {doc.title}
               </h1>
             </div>
             {doc.expires_at && (
-              <span style={{ fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 500 }}>
+              <span className="text-xs text-muted font-medium">
                 Expires: {new Date(doc.expires_at).toLocaleDateString()}
               </span>
             )}
@@ -436,11 +432,11 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
         </div>
 
         {/* PDF Document Viewer Container */}
-        <div style={{ marginBottom: '28px' }}>
+        <div className="mb-7">
           {pdfSignedUrl ? (
             <PdfCanvasViewer url={pdfSignedUrl} title={doc.title} height="420px" />
           ) : (
-            <div className="glass-container" style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
+            <div className="glass-container p-10 text-center text-muted">
               PDF preview unavailable. Please proceed to sign below.
             </div>
           )}
@@ -448,32 +444,32 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
 
         {/* Form Error Banner */}
         {errorMsg && (
-          <div className="alert alert-error" style={{ marginBottom: '20px' }}>
+          <div className="alert alert-error mb-5">
             {errorMsg}
           </div>
         )}
 
         {/* Signing Form (Disabled if verified or submitted without retracting) */}
         {!isVerified && !isSubmitted && (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-7">
             {/* Section 1: Signer Printed Name */}
-            <div className="glass-container" style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: '0 0 14px' }}>
+            <div className="glass-container p-6">
+              <h3 className="text-base sm:text-[1.1rem] font-bold text-primary m-0 mb-3.5">
                 1. Signer Information
               </h3>
 
-              <div style={{ background: 'rgba(30,58,138,0.06)', borderRadius: '10px', padding: '10px 14px', marginBottom: '14px', border: '1px solid var(--border)' }}>
-                <span style={{ fontSize: '0.78rem', color: 'var(--muted)', fontWeight: 600 }}>Choir Member Account</span>
-                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>
+              <div className="bg-blue-900/6 rounded-xl p-2.5 px-3.5 mb-3.5 border border-border">
+                <span className="text-[0.78rem] text-muted font-semibold">Choir Member Account</span>
+                <div className="text-sm sm:text-[0.95rem] font-bold text-foreground">
                   👤 {currentUserProfile.full_name}
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label className="input-label" htmlFor="signer-printed-name" style={{ display: 'block', margin: 0, fontWeight: 700 }}>
+              <div className="flex flex-col gap-1.5">
+                <label className="input-label block m-0 font-bold" htmlFor="signer-printed-name">
                   Parent / Legal Guardian / Signer Printed Name *
                 </label>
-                <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '0 0 4px' }}>
+                <p className="text-xs text-muted m-0 mb-1">
                   Please type the full name of the Parent or Legal Guardian (if signing for an underage member), or your own full name if 18+.
                 </p>
                 <input
@@ -487,16 +483,15 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                 />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '14px' }}>
-                <label className="input-label" htmlFor="signer-relationship" style={{ display: 'block', margin: 0, fontWeight: 700 }}>
+              <div className="flex flex-col gap-1.5 mt-3.5">
+                <label className="input-label block m-0 font-bold" htmlFor="signer-relationship">
                   Relationship to Member *
                 </label>
                 <select
                   id="signer-relationship"
-                  className="input-field"
+                  className="input-field cursor-pointer"
                   value={signerRelationship}
                   onChange={(e) => setSignerRelationship(e.target.value)}
-                  style={{ cursor: 'pointer' }}
                   required
                 >
                   <option value="Parent / Guardian">Parent / Guardian</option>
@@ -510,17 +505,17 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
             </div>
 
             {/* Section 2: Multi-Dependent / Sibling Input Form */}
-            <div className="glass-container" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+            <div className="glass-container p-6">
+              <div className="flex justify-between items-center mb-1">
+                <h3 className="text-base sm:text-[1.1rem] font-bold text-primary m-0">
                   2. Siblings &amp; Additional Family Members
                 </h3>
               </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '0 0 14px' }}>
-                Signing for siblings or family members who don't have separate accounts? Add their full names below so this waiver covers them as participants.
+              <p className="text-xs text-muted m-0 mb-3.5">
+                Signing for siblings or family members who don&apos;t have separate accounts? Add their full names below so this waiver covers them as participants.
               </p>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+              <div className="flex items-center gap-2.5 mb-3.5">
                 <input
                   type="checkbox"
                   id="hasDependents"
@@ -531,30 +526,28 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                       setDependents(['']);
                     }
                   }}
-                  style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                  className="w-4.5 h-4.5 accent-primary cursor-pointer"
                 />
-                <label htmlFor="hasDependents" style={{ fontSize: '0.925rem', fontWeight: 600, color: 'var(--foreground)', cursor: 'pointer' }}>
+                <label htmlFor="hasDependents" className="text-xs sm:text-[0.925rem] font-semibold text-foreground cursor-pointer">
                   Are you signing on behalf of siblings, dependents, or family members?
                 </label>
               </div>
 
               {hasDependents && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
+                <div className="flex flex-col gap-3 mt-2.5">
                   {dependents.map((dep, idx) => (
-                    <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div key={idx} className="flex gap-2 items-center">
                       <input
                         type="text"
-                        className="input-field"
+                        className="input-field flex-1"
                         placeholder={`Sibling / Family Member #${idx + 1} Full Name`}
                         value={dep}
                         onChange={(e) => handleUpdateDependent(idx, e.target.value)}
-                        style={{ flex: 1 }}
                       />
                       <button
                         type="button"
                         onClick={() => handleRemoveDependent(idx)}
-                        className="btn btn-secondary"
-                        style={{ padding: '10px 14px', color: 'var(--error)', borderColor: 'var(--error)' }}
+                        className="btn btn-secondary !p-2.5 px-3.5 !text-error !border-error"
                         aria-label="Remove family member"
                       >
                         ✕
@@ -565,8 +558,7 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                   <button
                     type="button"
                     onClick={handleAddDependent}
-                    className="btn btn-secondary"
-                    style={{ alignSelf: 'flex-start', fontSize: '0.85rem', marginTop: '4px' }}
+                    className="btn btn-secondary self-start text-xs sm:text-[0.85rem] mt-1"
                   >
                     + Add Sibling / Family Member
                   </button>
@@ -575,17 +567,17 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
             </div>
 
             {/* Section 3: Medical Authorization */}
-            <div className="glass-container" style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: '0 0 4px' }}>
+            <div className="glass-container p-6">
+              <h3 className="text-base sm:text-[1.1rem] font-bold text-primary m-0 mb-1">
                 3. Medical Authorization
               </h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '0 0 14px' }}>
+              <p className="text-xs text-muted m-0 mb-3.5">
                 Please provide any emergency medical details or check the box if none apply.
               </p>
 
               {/* Allergies / Conditions */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
-                <label className="input-label" htmlFor="known-allergies" style={{ display: 'block', margin: 0, fontWeight: 700 }}>
+              <div className="flex flex-col gap-2 mb-4.5">
+                <label className="input-label block m-0 font-bold" htmlFor="known-allergies">
                   Allergies / Medical Conditions
                 </label>
                 {!noAllergies && (
@@ -601,7 +593,7 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                     placeholder="e.g. Peanut allergy, Asthma, Diabetes"
                   />
                 )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                <div className="flex items-center gap-2 mt-0.5">
                   <input
                     type="checkbox"
                     id="noAllergies"
@@ -610,17 +602,22 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                       setNoAllergies(e.target.checked);
                       if (e.target.checked) setKnownAllergies('');
                     }}
-                    style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                    className="w-4.5 h-4.5 accent-primary cursor-pointer"
                   />
-                  <label htmlFor="noAllergies" style={{ fontSize: '0.875rem', fontWeight: noAllergies ? 700 : 500, color: noAllergies ? 'var(--primary)' : 'var(--foreground)', cursor: 'pointer' }}>
+                  <label
+                    htmlFor="noAllergies"
+                    className={`text-xs sm:text-sm cursor-pointer ${
+                      noAllergies ? 'font-bold text-primary' : 'font-medium text-foreground'
+                    }`}
+                  >
                     [ ✓ ] No known allergies or medical conditions
                   </label>
                 </div>
               </div>
 
               {/* Current Medications */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label className="input-label" htmlFor="current-medications" style={{ display: 'block', margin: 0, fontWeight: 700 }}>
+              <div className="flex flex-col gap-2">
+                <label className="input-label block m-0 font-bold" htmlFor="current-medications">
                   Current Medications
                 </label>
                 {!noMedications && (
@@ -636,7 +633,7 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                     placeholder="e.g. Inhaler as needed, Allergy medicine"
                   />
                 )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                <div className="flex items-center gap-2 mt-0.5">
                   <input
                     type="checkbox"
                     id="noMedications"
@@ -645,9 +642,14 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                       setNoMedications(e.target.checked);
                       if (e.target.checked) setCurrentMedications('');
                     }}
-                    style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                    className="w-4.5 h-4.5 accent-primary cursor-pointer"
                   />
-                  <label htmlFor="noMedications" style={{ fontSize: '0.875rem', fontWeight: noMedications ? 700 : 500, color: noMedications ? 'var(--primary)' : 'var(--foreground)', cursor: 'pointer' }}>
+                  <label
+                    htmlFor="noMedications"
+                    className={`text-xs sm:text-sm cursor-pointer ${
+                      noMedications ? 'font-bold text-primary' : 'font-medium text-foreground'
+                    }`}
+                  >
                     [ ✓ ] No current routine medications
                   </label>
                 </div>
@@ -655,21 +657,20 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
             </div>
 
             {/* Section 4: Signature Pad Canvas */}
-            <div className="glass-container" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div className="glass-container p-6">
+              <div className="flex justify-between items-center mb-2.5">
                 <div>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+                  <h3 className="text-base sm:text-[1.1rem] font-bold text-primary m-0">
                     4. Digital Signature *
                   </h3>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '2px 0 0' }}>
+                  <p className="text-xs text-muted m-0 mt-0.5">
                     Draw your signature inside the box below.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={clearCanvas}
-                  className="btn btn-secondary"
-                  style={{ fontSize: '0.78rem', padding: '6px 12px' }}
+                  className="btn btn-secondary text-xs !py-1.5 !px-3"
                 >
                   Clear Signature
                 </button>
@@ -677,15 +678,9 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
 
               {/* Canvas Box with touch-action: none for mobile WebView */}
               <div
-                style={{
-                  touchAction: 'none',
-                  borderRadius: '12px',
-                  border: `2px dashed ${hasSignature ? 'var(--primary)' : 'var(--glass-border)'}`,
-                  background: '#ffffff',
-                  boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.03)',
-                  overflow: 'hidden',
-                  position: 'relative',
-                }}
+                className={`touch-none rounded-xl border-2 border-dashed bg-white shadow-inner overflow-hidden relative ${
+                  hasSignature ? 'border-primary' : 'border-glass-border'
+                }`}
               >
                 <canvas
                   ref={canvasRef}
@@ -696,28 +691,10 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={stopDrawing}
-                  style={{
-                    width: '100%',
-                    height: '180px',
-                    display: 'block',
-                    cursor: 'crosshair',
-                    touchAction: 'none',
-                  }}
+                  className="w-full h-[180px] block cursor-crosshair touch-none"
                 />
                 {!hasSignature && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      pointerEvents: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#a1a1aa',
-                      fontSize: '0.9rem',
-                      fontStyle: 'italic',
-                    }}
-                  >
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-zinc-400 text-xs sm:text-sm italic">
                     Draw signature here with finger or mouse
                   </div>
                 )}
@@ -725,11 +702,11 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
             </div>
 
             {/* Section 5: Selfie Photo Capture */}
-            <div className="glass-container" style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: '0 0 4px' }}>
+            <div className="glass-container p-6">
+              <h3 className="text-base sm:text-[1.1rem] font-bold text-primary m-0 mb-1">
                 5. Selfie Verification Photo *
               </h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '0 0 14px' }}>
+              <p className="text-xs text-muted m-0 mb-3.5">
                 Take a quick photo of yourself to verify identity for choir records.
               </p>
 
@@ -739,7 +716,7 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                 accept="image/*"
                 capture="user"
                 onChange={handleSelfieChange}
-                style={{ display: 'none' }}
+                className="hidden"
                 id="selfie-camera-input"
               />
 
@@ -747,41 +724,29 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
                 <button
                   type="button"
                   onClick={() => selfieInputRef.current?.click()}
-                  className="btn btn-secondary"
-                  style={{
-                    width: '100%',
-                    padding: '24px',
-                    borderRadius: '12px',
-                    border: '2px dashed var(--glass-border)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: 'rgba(255,255,255,0.4)',
-                  }}
+                  className="btn btn-secondary w-full p-6 rounded-xl border-2 border-dashed border-glass-border flex flex-col items-center gap-2 bg-white/40"
                 >
-                  <span style={{ fontSize: '2rem' }}>📸</span>
-                  <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--primary)' }}>
+                  <span className="text-3xl">📸</span>
+                  <span className="font-bold text-sm sm:text-base text-primary">
                     Take Selfie Photo
                   </span>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+                  <span className="text-xs text-muted">
                     Opens front camera on mobile devices
                   </span>
                 </button>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px', borderRadius: '12px', background: 'rgba(11,77,36,0.06)', border: '1px solid rgba(11,77,36,0.15)' }}>
-                  <div style={{ width: '80px', height: '80px', borderRadius: '10px', overflow: 'hidden', position: 'relative', flexShrink: 0, border: '2px solid var(--primary)' }}>
-                    <Image src={selfiePreviewUrl} alt="Selfie preview" fill style={{ objectFit: 'cover' }} />
+                <div className="flex items-center gap-4 p-3 rounded-xl bg-primary/6 border border-primary/15">
+                  <div className="w-20 h-20 rounded-xl overflow-hidden relative shrink-0 border-2 border-primary">
+                    <Image src={selfiePreviewUrl} alt="Selfie preview" fill className="object-cover" />
                   </div>
                   <div>
-                    <p style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--primary)', margin: 0 }}>
+                    <p className="font-bold text-xs sm:text-sm text-primary m-0">
                       ✓ Selfie Captured
                     </p>
                     <button
                       type="button"
                       onClick={() => selfieInputRef.current?.click()}
-                      className="btn btn-secondary"
-                      style={{ fontSize: '0.78rem', padding: '4px 10px', marginTop: '8px' }}
+                      className="btn btn-secondary text-xs !py-1 !px-2.5 mt-2"
                     >
                       Retake Photo
                     </button>
@@ -791,19 +756,11 @@ export const SignClient = ({ data, currentUserProfile }: Props) => {
             </div>
 
             {/* Final Submit Button */}
-            <div style={{ marginTop: '8px' }}>
+            <div className="mt-2">
               <button
                 type="submit"
                 disabled={submitting || !hasSignature || !selfieFile}
-                className="btn btn-primary"
-                style={{
-                  width: '100%',
-                  minHeight: '52px',
-                  fontSize: '1.05rem',
-                  fontWeight: 700,
-                  borderRadius: '12px',
-                  boxShadow: '0 8px 24px rgba(11,77,36,0.3)',
-                }}
+                className="btn btn-primary w-full min-h-[52px] text-base font-bold rounded-xl shadow-[0_8px_24px_rgba(11,77,36,0.3)]"
               >
                 {submitting ? 'Submitting & Uploading…' : 'Submit & Sign Waiver'}
               </button>

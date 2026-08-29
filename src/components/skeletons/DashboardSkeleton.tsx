@@ -2,81 +2,53 @@ import React from 'react';
 
 export const DashboardSkeleton = () => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1240px', margin: '0 auto', width: '100%' }}>
+    <div className="flex flex-col gap-6 max-w-[1240px] mx-auto w-full">
       {/* Hero Welcome Banner Skeleton */}
-      <div
-        className="skeleton-glass-card"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '24px 28px',
-          minHeight: '110px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div className="skeleton-circle" style={{ width: '56px', height: '56px' }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div className="skeleton-text" style={{ width: '220px', height: '22px' }} />
-            <div className="skeleton-text" style={{ width: '140px', height: '14px' }} />
+      <div className="skeleton-glass-card flex items-center justify-between p-6 sm:px-7 min-h-[110px]">
+        <div className="flex items-center gap-4">
+          <div className="skeleton-circle w-14 h-14" />
+          <div className="flex flex-col gap-2">
+            <div className="skeleton-text w-56 h-[22px]" />
+            <div className="skeleton-text w-36 h-3.5" />
           </div>
         </div>
-        <div className="skeleton-pill" style={{ width: '110px', height: '36px' }} />
+        <div className="skeleton-pill w-28 h-9" />
       </div>
 
       {/* 4 Stat Cards Grid Skeleton */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '16px',
-        }}
-      >
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="skeleton-glass-card"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '20px',
-              height: '110px',
-            }}
+            className="skeleton-glass-card flex items-center justify-between p-5 h-[110px]"
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div className="skeleton-text" style={{ width: '80px', height: '12px' }} />
-              <div className="skeleton-text" style={{ width: '60px', height: '28px' }} />
+            <div className="flex flex-col gap-2">
+              <div className="skeleton-text w-20 h-3" />
+              <div className="skeleton-text w-16 h-7" />
             </div>
-            <div className="skeleton-circle" style={{ width: '44px', height: '44px' }} />
+            <div className="skeleton-circle w-11 h-11" />
           </div>
         ))}
       </div>
 
       {/* Content Columns Skeleton */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-          gap: '20px',
-        }}
-      >
-        <div className="skeleton-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minHeight: '240px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="skeleton-text" style={{ width: '150px', height: '18px' }} />
-            <div className="skeleton-pill" style={{ width: '70px', height: '24px' }} />
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-5">
+        <div className="skeleton-glass-card flex flex-col gap-4 min-h-[240px]">
+          <div className="flex justify-between items-center">
+            <div className="skeleton-text w-36 h-[18px]" />
+            <div className="skeleton-pill w-[70px] h-6" />
           </div>
-          <div className="skeleton-box" style={{ height: '70px', width: '100%' }} />
-          <div className="skeleton-box" style={{ height: '70px', width: '100%' }} />
+          <div className="skeleton-box h-[70px] w-full" />
+          <div className="skeleton-box h-[70px] w-full" />
         </div>
 
-        <div className="skeleton-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minHeight: '240px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="skeleton-text" style={{ width: '160px', height: '18px' }} />
-            <div className="skeleton-pill" style={{ width: '70px', height: '24px' }} />
+        <div className="skeleton-glass-card flex flex-col gap-4 min-h-[240px]">
+          <div className="flex justify-between items-center">
+            <div className="skeleton-text w-40 h-[18px]" />
+            <div className="skeleton-pill w-[70px] h-6" />
           </div>
-          <div className="skeleton-box" style={{ height: '70px', width: '100%' }} />
-          <div className="skeleton-box" style={{ height: '70px', width: '100%' }} />
+          <div className="skeleton-box h-[70px] w-full" />
+          <div className="skeleton-box h-[70px] w-full" />
         </div>
       </div>
     </div>

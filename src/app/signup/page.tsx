@@ -95,23 +95,23 @@ const SignupPage = () => {
   };
 
   return (
-    <main className="auth-page">
-      <div className="bg-orb bg-orb-1"></div>
-      <div className="bg-orb bg-orb-2"></div>
+    <main className="auth-page min-h-screen flex items-center justify-center p-4 relative">
+      <div className="bg-orb bg-orb-1 w-[450px] h-[450px]" />
+      <div className="bg-orb bg-orb-2 w-[400px] h-[400px]" />
 
       <div
         ref={cardRef}
-        className="auth-card glass-container"
+        className="auth-card glass-container max-w-[440px] w-full p-8 sm:p-10 rounded-2xl bg-white/80 border border-glass-border shadow-xl"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="auth-header stagger-item">
-          <h1 className="auth-title">Join the Choir</h1>
-          <p className="auth-subtitle">Request access to the Choir Collective platform</p>
+        <div className="auth-header stagger-item text-center mb-6">
+          <h1 className="auth-title text-2xl sm:text-3xl font-bold text-foreground">Join the Choir</h1>
+          <p className="auth-subtitle text-muted text-xs sm:text-sm mt-1">Request access to the Choir Collective platform</p>
         </div>
 
         {error && (
-          <div className="alert alert-error stagger-item">
+          <div className="alert alert-error stagger-item mb-4">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
@@ -120,7 +120,7 @@ const SignupPage = () => {
         )}
 
         {success && (
-          <div className="alert alert-success stagger-item">
+          <div className="alert alert-success stagger-item mb-4">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
@@ -128,17 +128,10 @@ const SignupPage = () => {
           </div>
         )}
 
-        <div className="stagger-item" style={{ marginBottom: '1.25rem' }}>
+        <div className="stagger-item mb-5">
           <button
             type="button"
-            className={`btn btn-secondary form-submit-btn ${googleLoading ? 'btn-disabled' : ''}`}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-            }}
+            className={`btn btn-secondary form-submit-btn w-full flex items-center justify-center gap-2.5 !p-3 text-base font-semibold ${googleLoading ? 'btn-disabled' : ''}`}
             onClick={handleGoogleSignup}
             disabled={googleLoading || loading}
           >
@@ -160,29 +153,18 @@ const SignupPage = () => {
                 d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.45 2.02.97 4.96l2.91 2.26C4.6 5.05 6.62 3.58 9 3.58z"
               />
             </svg>
-            {googleLoading ? 'Connecting to Google...' : 'Sign up with Google'}
+            <span>{googleLoading ? 'Connecting to Google...' : 'Sign up with Google'}</span>
           </button>
         </div>
 
-        <div
-          className="divider stagger-item"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            textAlign: 'center',
-            margin: '1.25rem 0',
-            color: 'var(--muted)',
-            fontSize: '0.8rem',
-            fontWeight: '600'
-          }}
-        >
-          <div style={{ flex: 1, borderBottom: '1px solid var(--glass-border)' }}></div>
-          <span style={{ padding: '0 10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>OR</span>
-          <div style={{ flex: 1, borderBottom: '1px solid var(--glass-border)' }}></div>
+        <div className="divider stagger-item flex items-center text-center my-5 text-muted text-xs font-semibold">
+          <div className="flex-1 border-b border-glass-border" />
+          <span className="px-2.5 uppercase tracking-wider">OR</span>
+          <div className="flex-1 border-b border-glass-border" />
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="input-group stagger-item">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="input-group stagger-item !mb-0">
             <label className="input-label" htmlFor="fullName">Full Name</label>
             <input
               className="input-field"
@@ -195,7 +177,7 @@ const SignupPage = () => {
             />
           </div>
 
-          <div className="input-group stagger-item">
+          <div className="input-group stagger-item !mb-0">
             <label className="input-label" htmlFor="email">Email Address</label>
             <input
               className="input-field"
@@ -208,7 +190,7 @@ const SignupPage = () => {
             />
           </div>
 
-          <div className="input-group stagger-item">
+          <div className="input-group stagger-item !mb-0">
             <PasswordInput
               label="Password"
               id="password"
@@ -221,16 +203,16 @@ const SignupPage = () => {
 
           <button
             type="submit"
-            className={`btn btn-primary form-submit-btn stagger-item ${loading ? 'btn-disabled' : ''}`}
+            className={`btn btn-primary form-submit-btn stagger-item !p-3 text-base font-semibold ${loading ? 'btn-disabled' : ''}`}
             disabled={loading}
           >
             {loading ? 'Submitting request...' : 'Submit Request'}
           </button>
         </form>
 
-        <div className="auth-footer stagger-item">
+        <div className="auth-footer stagger-item mt-6 text-center text-xs sm:text-sm text-muted">
           Already have an account?{' '}
-          <Link href="/login" className="auth-link">
+          <Link href="/login" className="auth-link text-primary font-semibold hover:underline">
             Sign in instead
           </Link>
         </div>

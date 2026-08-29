@@ -264,68 +264,24 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   const modalContent = (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.72)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.2s ease',
-      }}
+      className="fixed inset-0 bg-black/75 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        style={{
-          width: '100%',
-          maxWidth: '740px',
-          maxHeight: '92vh',
-          background: '#ffffff',
-          borderRadius: '24px',
-          border: '1px solid rgba(11, 77, 36, 0.16)',
-          boxShadow: '0 30px 80px rgba(0, 0, 0, 0.45)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        }}
+        className="w-full max-w-[740px] max-h-[92vh] bg-white rounded-3xl border border-primary/16 shadow-2xl flex flex-col overflow-hidden animate-slideUpModal"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Sticky Header */}
-        <div
-          style={{
-            padding: '20px 26px',
-            borderBottom: '1px solid rgba(11, 77, 36, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #fbfaf6 0%, #f4efe4 100%)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, var(--primary) 0%, #15803d 100%)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(11, 77, 36, 0.2)',
-              }}
-            >
+        <div className="py-5 px-6 border-b border-primary/10 flex items-center justify-between bg-gradient-to-br from-[#fbfaf6] to-[#f4efe4]">
+          <div className="flex items-center gap-3">
+            <div className="w-10.5 h-10.5 rounded-xl bg-gradient-to-br from-primary to-green-700 text-white flex items-center justify-center shadow-md shadow-primary/20">
               <ListTodo size={22} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#111c14' }}>
+              <h2 className="text-lg sm:text-xl font-extrabold m-0 text-foreground">
                 Create New Choir Task
               </h2>
-              <p style={{ fontSize: '0.82rem', color: '#5c675e', margin: '2px 0 0' }}>
+              <p className="text-xs text-muted mt-0.5 mb-0">
                 Target individual delegates, voice sections, or custom committees
               </p>
             </div>
@@ -333,21 +289,7 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
           <button
             onClick={onClose}
-            className="btn btn-secondary"
-            style={{
-              width: '36px',
-              height: '36px',
-              padding: 0,
-              borderRadius: '50%',
-              minHeight: 'auto',
-              border: '1px solid rgba(11, 77, 36, 0.12)',
-              background: '#ffffff',
-              color: '#5c675e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
+            className="btn btn-secondary !w-9 !h-9 !p-0 !rounded-full !min-h-0 !border-primary/12 bg-white text-muted flex items-center justify-center cursor-pointer"
             aria-label="Close modal"
           >
             <X size={18} />
@@ -355,16 +297,16 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: '24px 26px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
           {/* Main Task Information */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="flex flex-col gap-3.5">
             <div>
-              <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, color: '#111c14', marginBottom: '6px' }}>
-                Task Title <span style={{ color: 'var(--error)' }}>*</span>
+              <label className="block text-xs sm:text-sm font-bold text-foreground mb-1.5">
+                Task Title <span className="text-error">*</span>
               </label>
               <input
                 type="text"
-                className="input-field"
+                className="input-field w-full !rounded-xl !py-3 !px-4 text-sm sm:text-[0.94rem] bg-white border-[1.5px] border-primary/18 text-foreground"
                 placeholder="e.g. Easter Vigil Rehearsal Prep, Recollection Materials, Sunday Sound Setup"
                 value={title}
                 onChange={(e) => {
@@ -373,52 +315,21 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                 }}
                 required
                 autoFocus
-                style={{
-                  width: '100%',
-                  borderRadius: '12px',
-                  padding: '12px 16px',
-                  fontSize: '0.94rem',
-                  background: '#ffffff',
-                  border: '1.5px solid rgba(11, 77, 36, 0.18)',
-                  color: '#111c14',
-                }}
               />
 
               {/* Duplicate Detection Alert Banner */}
               {isDuplicatePromptVisible && bestMatch && (
-                <div
-                  style={{
-                    marginTop: '10px',
-                    padding: '14px 16px',
-                    borderRadius: '14px',
-                    background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-                    border: '1.5px solid rgba(37, 99, 235, 0.3)',
-                    boxShadow: '0 4px 16px rgba(37, 99, 235, 0.1)',
-                    animation: 'fadeIn 0.2s ease',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                      <div
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '8px',
-                          background: '#2563eb',
-                          color: '#ffffff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
+                <div className="mt-2.5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border-[1.5px] border-blue-600/30 shadow-md shadow-blue-600/10 animate-fadeIn">
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
                         <GitMerge size={16} />
                       </div>
                       <div>
-                        <strong style={{ fontSize: '0.88rem', color: '#1e3a8a', display: 'block' }}>
+                        <strong className="text-xs sm:text-sm text-blue-900 block">
                           Similar Existing Task Found: &ldquo;{bestMatch.task.title}&rdquo;
                         </strong>
-                        <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#3b82f6' }}>
+                        <p className="mt-0.5 mb-0 text-xs text-blue-600">
                           This task already exists with <strong>{bestMatch.task.assignments?.length || 0} assignees</strong>.
                           You can combine your members directly into this existing task instead of creating a duplicate.
                         </p>
@@ -428,32 +339,19 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setDismissedDuplicateId(bestMatch.task.id)}
-                      style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '2px' }}
+                      className="bg-transparent border-none text-slate-500 cursor-pointer p-0.5"
                       title="Dismiss & keep as separate task"
                     >
                       <X size={15} />
                     </button>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
+                  <div className="flex items-center gap-2.5 mt-3 flex-wrap">
                     <button
                       type="button"
                       onClick={() => handleCombineIntoExisting(bestMatch.task)}
                       disabled={loading}
-                      style={{
-                        padding: '7px 14px',
-                        borderRadius: '10px',
-                        background: '#2563eb',
-                        border: 'none',
-                        color: '#ffffff',
-                        fontSize: '0.82rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
-                      }}
+                      className="py-1.5 px-3.5 rounded-xl bg-blue-600 border-none text-white text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm shadow-blue-600/30"
                     >
                       <GitMerge size={14} /> Combine with &ldquo;{bestMatch.task.title}&rdquo;
                     </button>
@@ -461,16 +359,7 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setDismissedDuplicateId(bestMatch.task.id)}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '10px',
-                        background: '#ffffff',
-                        border: '1px solid rgba(37, 99, 235, 0.25)',
-                        color: '#1e3a8a',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
+                      className="py-1.5 px-3 rounded-xl bg-white border border-blue-600/25 text-blue-900 text-xs font-semibold cursor-pointer"
                     >
                       Keep as Separate Task
                     </button>
@@ -480,47 +369,28 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#5c675e', marginBottom: '6px' }}>
+              <label className="block text-xs sm:text-sm font-semibold text-muted mb-1.5">
                 Description (Optional)
               </label>
               <textarea
-                className="input-field"
+                className="input-field w-full !rounded-xl !py-2.5 !px-3.5 text-xs sm:text-sm bg-white border-[1.5px] border-primary/18 text-foreground leading-normal"
                 rows={2}
                 placeholder="Add general instructions or background notes for the task..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                style={{
-                  width: '100%',
-                  borderRadius: '12px',
-                  padding: '10px 14px',
-                  fontSize: '0.88rem',
-                  background: '#ffffff',
-                  border: '1.5px solid rgba(11, 77, 36, 0.18)',
-                  color: '#111c14',
-                  lineHeight: 1.4,
-                }}
               />
             </div>
 
             {/* Priority & Deadline Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
               <div>
-                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#111c14', marginBottom: '6px' }}>
+                <label className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
                   Priority
                 </label>
                 <select
-                  className="input-field"
+                  className="input-field w-full !rounded-xl !py-2.5 !px-3.5 text-xs sm:text-sm bg-white border-[1.5px] border-primary/18 text-foreground"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as TaskPriority)}
-                  style={{
-                    width: '100%',
-                    borderRadius: '12px',
-                    padding: '10px 14px',
-                    fontSize: '0.88rem',
-                    background: '#ffffff',
-                    border: '1.5px solid rgba(11, 77, 36, 0.18)',
-                    color: '#111c14',
-                  }}
                 >
                   <option value="normal">Normal Priority</option>
                   <option value="high">High Priority</option>
@@ -530,46 +400,28 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#111c14', marginBottom: '6px' }}>
+                <label className="block text-xs sm:text-sm font-semibold text-foreground mb-1.5">
                   Overall Due Date
                 </label>
                 <input
                   type="date"
-                  className="input-field"
+                  className="input-field w-full !rounded-xl !py-2.5 !px-3.5 text-xs sm:text-sm bg-white border-[1.5px] border-primary/18 text-foreground"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  style={{
-                    width: '100%',
-                    borderRadius: '12px',
-                    padding: '9px 14px',
-                    fontSize: '0.88rem',
-                    background: '#ffffff',
-                    border: '1.5px solid rgba(11, 77, 36, 0.18)',
-                    color: '#111c14',
-                  }}
                 />
               </div>
             </div>
 
             {/* Related Entities (Song / Sequence) */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
               <div>
-                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#5c675e', marginBottom: '6px' }}>
+                <label className="block text-xs sm:text-sm font-semibold text-muted mb-1.5">
                   Related Song (Optional)
                 </label>
                 <select
-                  className="input-field"
+                  className="input-field w-full !rounded-xl !py-2.5 !px-3.5 text-xs sm:text-sm bg-white border-[1.5px] border-primary/18 text-foreground"
                   value={relatedSongId}
                   onChange={(e) => setRelatedSongId(e.target.value)}
-                  style={{
-                    width: '100%',
-                    borderRadius: '12px',
-                    padding: '10px 14px',
-                    fontSize: '0.88rem',
-                    background: '#ffffff',
-                    border: '1.5px solid rgba(11, 77, 36, 0.18)',
-                    color: '#111c14',
-                  }}
                 >
                   <option value="">-- None --</option>
                   {songs.map((s) => (
@@ -581,22 +433,13 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#5c675e', marginBottom: '6px' }}>
+                <label className="block text-xs sm:text-sm font-semibold text-muted mb-1.5">
                   Related Mass Sequence (Optional)
                 </label>
                 <select
-                  className="input-field"
+                  className="input-field w-full !rounded-xl !py-2.5 !px-3.5 text-xs sm:text-sm bg-white border-[1.5px] border-primary/18 text-foreground"
                   value={relatedSequenceId}
                   onChange={(e) => setRelatedSequenceId(e.target.value)}
-                  style={{
-                    width: '100%',
-                    borderRadius: '12px',
-                    padding: '10px 14px',
-                    fontSize: '0.88rem',
-                    background: '#ffffff',
-                    border: '1.5px solid rgba(11, 77, 36, 0.18)',
-                    color: '#111c14',
-                  }}
                 >
                   <option value="">-- None --</option>
                   {sequences.map((sq) => (
@@ -610,91 +453,59 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           </div>
 
           {/* Audience & Delegation Section */}
-          <div
-            style={{
-              borderTop: '1px solid rgba(11, 77, 36, 0.12)',
-              paddingTop: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-            }}
-          >
+          <div className="border-t border-primary/12 pt-4.5 flex flex-col gap-3.5">
             <div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#111c14' }}>
+              <h3 className="text-base font-extrabold m-0 text-foreground">
                 Task Audience & Delegation
               </h3>
-              <p style={{ fontSize: '0.78rem', color: '#5c675e', margin: '2px 0 0' }}>
+              <p className="text-xs text-muted mt-0.5 mb-0">
                 Choose who will be assigned to execute this task
               </p>
             </div>
 
             {/* Audience Mode Segmented Switcher */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-2">
               <button
                 type="button"
                 onClick={() => setAudienceType('individual')}
-                style={{
-                  padding: '8px 10px',
-                  borderRadius: '10px',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  border: '1px solid',
-                  borderColor: audienceType === 'individual' ? 'var(--primary)' : 'rgba(0,0,0,0.1)',
-                  background: audienceType === 'individual' ? 'rgba(11, 77, 36, 0.08)' : '#ffffff',
-                  color: audienceType === 'individual' ? 'var(--primary)' : '#5c675e',
-                  cursor: 'pointer',
-                }}
+                className={`py-2 px-2.5 rounded-xl text-xs font-bold border cursor-pointer ${
+                  audienceType === 'individual'
+                    ? 'border-primary bg-primary/8 text-primary'
+                    : 'border-black/10 bg-white text-muted'
+                }`}
               >
                 Individual Roles
               </button>
               <button
                 type="button"
                 onClick={() => setAudienceType('system_group')}
-                style={{
-                  padding: '8px 10px',
-                  borderRadius: '10px',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  border: '1px solid',
-                  borderColor: audienceType === 'system_group' ? 'var(--primary)' : 'rgba(0,0,0,0.1)',
-                  background: audienceType === 'system_group' ? 'rgba(11, 77, 36, 0.08)' : '#ffffff',
-                  color: audienceType === 'system_group' ? 'var(--primary)' : '#5c675e',
-                  cursor: 'pointer',
-                }}
+                className={`py-2 px-2.5 rounded-xl text-xs font-bold border cursor-pointer ${
+                  audienceType === 'system_group'
+                    ? 'border-primary bg-primary/8 text-primary'
+                    : 'border-black/10 bg-white text-muted'
+                }`}
               >
                 System Group
               </button>
               <button
                 type="button"
                 onClick={() => setAudienceType('custom_group')}
-                style={{
-                  padding: '8px 10px',
-                  borderRadius: '10px',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  border: '1px solid',
-                  borderColor: audienceType === 'custom_group' ? 'var(--primary)' : 'rgba(0,0,0,0.1)',
-                  background: audienceType === 'custom_group' ? 'rgba(11, 77, 36, 0.08)' : '#ffffff',
-                  color: audienceType === 'custom_group' ? 'var(--primary)' : '#5c675e',
-                  cursor: 'pointer',
-                }}
+                className={`py-2 px-2.5 rounded-xl text-xs font-bold border cursor-pointer ${
+                  audienceType === 'custom_group'
+                    ? 'border-primary bg-primary/8 text-primary'
+                    : 'border-black/10 bg-white text-muted'
+                }`}
               >
                 Custom Group
               </button>
               <button
                 type="button"
                 onClick={() => setAudienceType('all')}
-                style={{
-                  padding: '8px 10px',
-                  borderRadius: '10px',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  border: '1px solid',
-                  borderColor: audienceType === 'all' ? 'var(--primary)' : 'rgba(0,0,0,0.1)',
-                  background: audienceType === 'all' ? 'rgba(11, 77, 36, 0.08)' : '#ffffff',
-                  color: audienceType === 'all' ? 'var(--primary)' : '#5c675e',
-                  cursor: 'pointer',
-                }}
+                className={`py-2 px-2.5 rounded-xl text-xs font-bold border cursor-pointer ${
+                  audienceType === 'all'
+                    ? 'border-primary bg-primary/8 text-primary'
+                    : 'border-black/10 bg-white text-muted'
+                }`}
               >
                 All Members
               </button>
@@ -702,27 +513,16 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
             {/* Group Configuration Area */}
             {audienceType !== 'individual' && (
-              <div
-                style={{
-                  padding: '16px',
-                  borderRadius: '16px',
-                  background: '#faf8f3',
-                  border: '1px solid rgba(11, 77, 36, 0.14)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                }}
-              >
+              <div className="p-4 rounded-2xl bg-[#faf8f3] border border-primary/14 flex flex-col gap-3">
                 {audienceType === 'system_group' && (
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">
                       Select Fixed System Category
                     </label>
                     <select
-                      className="input-field"
+                      className="input-field w-full !py-2.5 !px-3.5 !rounded-xl bg-white text-foreground"
                       value={systemGroup}
                       onChange={(e) => setSystemGroup(e.target.value as SystemGroupKey)}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', background: '#ffffff', color: '#111c14' }}
                     >
                       <option value="officers">Officers (Director, Secretary, Treasurer)</option>
                       <option value="soprano">Soprano Section</option>
@@ -735,23 +535,15 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
                 {audienceType === 'custom_group' && (
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <label style={{ fontSize: '0.82rem', fontWeight: 700 }}>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="text-xs font-bold text-foreground">
                         Select Custom Group / Committee
                       </label>
                       {onOpenGroupManager && (
                         <button
                           type="button"
                           onClick={onOpenGroupManager}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--primary)',
-                            fontSize: '0.78rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            textDecoration: 'underline',
-                          }}
+                          className="bg-transparent border-none text-primary text-xs font-bold cursor-pointer underline"
                         >
                           + Manage Groups
                         </button>
@@ -759,15 +551,14 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                     </div>
 
                     {customGroups.length === 0 ? (
-                      <div style={{ padding: '12px', background: '#ffffff', borderRadius: '10px', fontSize: '0.84rem', color: '#5c675e' }}>
+                      <div className="p-3 bg-white rounded-xl text-xs text-muted">
                         No custom groups available. Click &quot;Manage Groups&quot; to create one.
                       </div>
                     ) : (
                       <select
-                        className="input-field"
+                        className="input-field w-full !py-2.5 !px-3.5 !rounded-xl bg-white text-foreground"
                         value={customGroupId}
                         onChange={(e) => setCustomGroupId(e.target.value)}
-                        style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', background: '#ffffff', color: '#111c14' }}
                       >
                         {customGroups.map((cg) => (
                           <option key={cg.id} value={cg.id}>
@@ -780,24 +571,23 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                 )}
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
+                  <label className="block text-xs font-bold mb-1.5 text-foreground">
                     Common Responsibility Description
                   </label>
                   <input
                     type="text"
-                    className="input-field"
+                    className="input-field w-full !py-2.5 !px-3.5 !rounded-xl bg-white text-foreground"
                     placeholder="e.g. Practice voice parts, Attend uniform fitting session, etc."
                     value={commonResponsibility}
                     onChange={(e) => setCommonResponsibility(e.target.value)}
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', background: '#ffffff', color: '#111c14' }}
                   />
                 </div>
 
                 {/* Audience Resolution Counter */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#111c14' }}>
-                  <UserCheck size={16} style={{ color: 'var(--primary)' }} />
+                <div className="flex items-center gap-2 text-xs text-foreground">
+                  <UserCheck size={16} className="text-primary" />
                   <span>
-                    Will generate <strong style={{ color: 'var(--primary)' }}>{resolvedTargetMembers.length} individual assignment(s)</strong>.
+                    Will generate <strong className="text-primary">{resolvedTargetMembers.length} individual assignment(s)</strong>.
                   </span>
                 </div>
               </div>
@@ -805,32 +595,22 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
             {/* Individual Delegation Builder */}
             {audienceType === 'individual' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="flex flex-col gap-2.5">
                 {responsibilities.map((row, idx) => (
                   <div
                     key={idx}
-                    style={{
-                      padding: '12px 14px',
-                      borderRadius: '14px',
-                      background: '#faf8f3',
-                      border: '1.5px solid rgba(11, 77, 36, 0.12)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      flexWrap: 'wrap',
-                    }}
+                    className="p-3 sm:py-3 sm:px-3.5 rounded-2xl bg-[#faf8f3] border-[1.5px] border-primary/12 flex items-center gap-2.5 flex-wrap"
                   >
                     {/* Member Select */}
-                    <div style={{ flex: '1 1 200px', minWidth: '180px' }}>
-                      <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#5c675e', marginBottom: '4px' }}>
-                        Member <span style={{ color: 'var(--error)' }}>*</span>
+                    <div className="flex-[1_1_200px] min-w-[180px]">
+                      <label className="block text-xs font-bold text-muted mb-1">
+                        Member <span className="text-error">*</span>
                       </label>
                       <select
-                        className="input-field"
+                        className="input-field w-full !py-2 !px-2.5 text-xs sm:text-[0.84rem] bg-white text-foreground"
                         value={row.member_id}
                         onChange={(e) => handleUpdateResponsibility(idx, 'member_id', e.target.value)}
                         required
-                        style={{ width: '100%', padding: '8px 10px', fontSize: '0.84rem', background: '#ffffff', color: '#111c14' }}
                       >
                         <option value="">-- Choose Member --</option>
                         {members.map((m) => (
@@ -842,32 +622,30 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                     </div>
 
                     {/* Specific Responsibility */}
-                    <div style={{ flex: '2 1 240px', minWidth: '200px' }}>
-                      <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#5c675e', marginBottom: '4px' }}>
-                        Responsibility / Deliverable <span style={{ color: 'var(--error)' }}>*</span>
+                    <div className="flex-[2_1_240px] min-w-[200px]">
+                      <label className="block text-xs font-bold text-muted mb-1">
+                        Responsibility / Deliverable <span className="text-error">*</span>
                       </label>
                       <input
                         type="text"
-                        className="input-field"
+                        className="input-field w-full !py-2 !px-2.5 text-xs sm:text-[0.84rem] bg-white text-foreground"
                         placeholder="e.g. Design the LOGO, Lead Tenor Section"
                         value={row.responsibility}
                         onChange={(e) => handleUpdateResponsibility(idx, 'responsibility', e.target.value)}
                         required
-                        style={{ width: '100%', padding: '8px 10px', fontSize: '0.84rem', background: '#ffffff', color: '#111c14' }}
                       />
                     </div>
 
                     {/* Due date override */}
-                    <div style={{ flex: '1 1 140px', minWidth: '130px' }}>
-                      <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#5c675e', marginBottom: '4px' }}>
+                    <div className="flex-[1_1_140px] min-w-[130px]">
+                      <label className="block text-xs font-bold text-muted mb-1">
                         Due (Optional)
                       </label>
                       <input
                         type="date"
-                        className="input-field"
+                        className="input-field w-full !py-1.5 !px-2 text-xs bg-white text-foreground"
                         value={row.due_date || ''}
                         onChange={(e) => handleUpdateResponsibility(idx, 'due_date', e.target.value)}
-                        style={{ width: '100%', padding: '7px 8px', fontSize: '0.82rem', background: '#ffffff', color: '#111c14' }}
                       />
                     </div>
 
@@ -875,13 +653,7 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleRemoveResponsibilityRow(idx)}
-                      className="btn btn-secondary"
-                      style={{
-                        padding: '6px',
-                        minHeight: '34px',
-                        color: 'var(--error)',
-                        alignSelf: 'flex-end',
-                      }}
+                      className="btn btn-secondary !p-1.5 !min-h-[34px] !text-error self-end"
                       title="Remove responsibility"
                     >
                       <Trash2 size={16} />
@@ -892,15 +664,7 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                 <button
                   type="button"
                   onClick={handleAddResponsibilityRow}
-                  className="btn btn-secondary"
-                  style={{
-                    padding: '8px 14px',
-                    fontSize: '0.82rem',
-                    alignSelf: 'flex-start',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
+                  className="btn btn-secondary !py-2 !px-3.5 text-xs self-start inline-flex items-center gap-1.5"
                 >
                   <Plus size={14} /> Add Another Responsibility
                 </button>
@@ -909,38 +673,18 @@ export const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           </div>
 
           {/* Sticky Footer Action Bar */}
-          <div
-            style={{
-              paddingTop: '16px',
-              borderTop: '1px solid rgba(11, 77, 36, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: '12px',
-            }}
-          >
+          <div className="pt-4 border-t border-primary/10 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-secondary"
-              style={{ padding: '10px 20px', fontSize: '0.9rem', borderRadius: '12px' }}
+              className="btn btn-secondary !py-2.5 !px-5 text-sm !rounded-xl"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn btn-primary"
-              style={{
-                padding: '10px 26px',
-                fontSize: '0.92rem',
-                borderRadius: '12px',
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 14px rgba(11, 77, 36, 0.3)',
-              }}
+              className="btn btn-primary !py-2.5 !px-6.5 text-sm !rounded-xl font-bold inline-flex items-center gap-2 shadow-md shadow-primary/30"
               disabled={loading}
             >
               <Plus size={18} />

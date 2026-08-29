@@ -393,30 +393,11 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
   const isAdminRole = ['super_admin', 'director', 'secretary'].includes(currentUserProfile.role);
 
   return (
-    <div className="glass-container" style={{ padding: '20px 26px', marginBottom: '24px' }}>
+    <div className="glass-container !py-5 !px-6 mb-6">
       {/* Top Bar Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '12px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'rgba(11, 77, 36, 0.08)',
-              color: 'var(--primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+      <div className="flex justify-between items-center flex-wrap gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="w-9 h-9 rounded-full bg-primary/8 text-primary flex items-center justify-center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18V5l12-2v13" />
               <circle cx="6" cy="18" r="3" />
@@ -425,42 +406,24 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
           </div>
 
           <div>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+            <h2 className="text-[1.1rem] font-bold text-primary m-0">
               Practice Audio Recordings
             </h2>
-            <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '2px 0 0 0' }}>
+            <p className="text-xs text-muted mt-0.5 m-0">
               Reference tracks for your song voicing.
             </p>
           </div>
 
-          <span
-            style={{
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              background: 'rgba(11, 77, 36, 0.08)',
-              color: 'var(--primary)',
-              padding: '2px 10px',
-              borderRadius: '99px',
-            }}
-          >
+          <span className="text-xs font-bold bg-primary/8 text-primary py-0.5 px-2.5 rounded-full">
             {recordings.length} {recordings.length === 1 ? 'Track' : 'Tracks'}
           </span>
         </div>
 
         {/* Top Action Buttons: "+ Add Recording", "History", and Minimize/Maximize Toggle */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="flex gap-2 items-center flex-wrap">
           <button
             onClick={handleOpenHistory}
-            className="btn btn-secondary"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              fontSize: '0.82rem',
-              fontWeight: 600,
-              borderRadius: '10px',
-            }}
+            className="btn btn-secondary inline-flex items-center gap-1.5 !py-2 !px-3 text-xs font-semibold !rounded-xl"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
@@ -471,16 +434,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="btn btn-primary"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 14px',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              borderRadius: '10px',
-            }}
+            className="btn btn-primary inline-flex items-center gap-1.5 !py-2 !px-3.5 text-sm font-semibold !rounded-xl"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" />
@@ -493,16 +447,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             title={isCollapsed ? 'Maximize / Show tracks' : 'Minimize / Hide tracks'}
-            className="btn btn-secondary"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              fontSize: '0.82rem',
-              fontWeight: 600,
-              borderRadius: '10px',
-            }}
+            className="btn btn-secondary inline-flex items-center gap-1.5 !py-2 !px-3 text-xs font-semibold !rounded-xl"
           >
             <svg
               width="15"
@@ -513,10 +458,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{
-                transform: isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
-                transition: 'transform 0.25s ease',
-              }}
+              className={`transition-transform duration-200 ${isCollapsed ? 'rotate-0' : 'rotate-180'}`}
             >
               <polyline points="6 9 12 15 18 9" />
             </svg>
@@ -527,23 +469,15 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
 
       {/* Combined Practice Recordings List (Collapsible / Default Minimized) */}
       {!isCollapsed && (
-        <div style={{ marginTop: '16px', animation: 'fadeIn 0.2s ease' }}>
+        <div className="mt-4 animate-fade-in">
           {recordings.length === 0 ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: '20px 16px',
-                background: 'rgba(255, 255, 255, 0.3)',
-                borderRadius: '12px',
-                border: '1px dashed var(--border-color, rgba(0,0,0,0.15))',
-              }}
-            >
-              <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: 0 }}>
+            <div className="text-center py-5 px-4 bg-white/30 rounded-xl border border-dashed border-black/15">
+              <p className="text-sm text-muted m-0">
                 No practice recordings yet. Click <strong>&quot;+ Add Recording&quot;</strong> above to record or upload a reference track for your voice part!
               </p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="flex flex-col gap-3">
               {recordings.map((recording) => {
                 const canDelete = currentUserProfile.id === recording.uploaded_by || isAdminRole;
                 const voicePartName = recording.voice_part || 'Member';
@@ -554,49 +488,25 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                 return (
                   <div
                     key={recording.id}
-                    style={{
-                      background: 'var(--glass-bg, #fff)',
-                      border: '1px solid var(--glass-border, rgba(255,255,255,0.4))',
-                      borderRadius: '14px',
-                      padding: '14px 18px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                    }}
+                    className="bg-glass-bg border border-glass-border rounded-xl py-3.5 px-4.5 shadow-sm"
                   >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        gap: '12px',
-                        marginBottom: '10px',
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <div className="flex justify-between items-center gap-3 mb-2.5 flex-wrap">
+                      <div className="flex items-center gap-2.5 flex-wrap">
                         {/* Prominent Voicing / Label Badge */}
                         <span
-                          style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 800,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.04em',
-                            color: '#ffffff',
-                            backgroundColor: badgeBgColor,
-                            padding: '3px 10px',
-                            borderRadius: '99px',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                          }}
+                          className="text-xs font-extrabold uppercase tracking-wider text-white py-1 px-2.5 rounded-full shadow-sm"
+                          style={{ backgroundColor: badgeBgColor }}
                         >
                           {badgeLabel}
                         </span>
 
                         {/* Uploader Name */}
-                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--foreground)' }}>
+                        <span className="font-bold text-sm text-foreground">
                           Recorded by {recording.uploader_name || 'Choir Member'}
                         </span>
 
                         {/* Date */}
-                        <span style={{ fontSize: '0.76rem', color: 'var(--muted)' }}>
+                        <span className="text-xs text-muted">
                           ({new Date(recording.created_at).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',
@@ -611,17 +521,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                         <button
                           onClick={() => setDeletingId(recording.id)}
                           title="Delete recording"
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--muted)',
-                            cursor: 'pointer',
-                            padding: '4px',
-                            borderRadius: '6px',
-                            transition: 'color 0.2s ease',
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.color = '#dc2626')}
-                          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--muted)')}
+                          className="bg-transparent border-0 text-muted cursor-pointer p-1 rounded-md transition-colors hover:text-error"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="3 6 5 6 21 6" />
@@ -637,7 +537,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                     <audio
                       controls
                       src={recording.file_url}
-                      style={{ width: '100%', height: '38px', borderRadius: '8px' }}
+                      className="w-full h-9.5 rounded-lg"
                     />
                   </div>
                 );
@@ -650,50 +550,20 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
       {/* HIGH CONTRAST PORTAL POP-UP MODAL: Add Practice Recording */}
       {mounted && isAddModalOpen && createPortal(
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.75)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 99999999,
-            padding: '20px',
-            animation: 'fadeIn 0.2s ease',
-          }}
+          className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-[99999999] p-5 animate-fade-in"
           onClick={closeAddModal}
         >
           <div
-            style={{
-              background: '#ffffff',
-              border: '1px solid #cbd5e1',
-              borderRadius: '20px',
-              padding: '28px',
-              maxWidth: '520px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              color: '#0f172a',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.55)',
-              animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            }}
+            className="bg-white border border-slate-300 rounded-2xl p-7 max-w-[520px] w-full max-h-[90vh] overflow-y-auto text-slate-900 shadow-2xl animate-modal-scale"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px',
-              }}
-            >
+            <div className="flex justify-between items-center mb-5">
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                <h3 className="text-xl font-bold text-slate-900 m-0">
                   Add Practice Recording
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: '#475569', margin: '4px 0 0 0' }}>
+                <p className="text-sm text-slate-600 mt-1 m-0">
                   Auto-tagged as <strong>{currentUserProfile.voice_part || 'Member'}</strong>
                 </p>
               </div>
@@ -701,15 +571,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
               <button
                 onClick={closeAddModal}
                 disabled={isUploading}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.6rem',
-                  color: '#64748b',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  lineHeight: 1,
-                }}
+                className="bg-transparent border-0 text-2xl text-slate-500 cursor-pointer p-1 leading-none hover:text-slate-900"
               >
                 &times;
               </button>
@@ -717,46 +579,26 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
 
             {/* Enhanced Mobile Microphone Permission Guidance Banner */}
             {micError && (
-              <div
-                style={{
-                  background: '#fff1f2',
-                  border: '1px solid #fecdd3',
-                  borderRadius: '12px',
-                  padding: '14px',
-                  marginBottom: '18px',
-                  color: '#9f1239',
-                  fontSize: '0.86rem',
-                  lineHeight: 1.5,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}>
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 mb-4.5 text-rose-800 text-sm leading-relaxed">
+                <div className="flex items-start gap-2.5">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2" className="flex-shrink-0 mt-0.5">
                     <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
-                  <div style={{ flex: 1 }}>
-                    <strong style={{ color: '#881337', display: 'block', marginBottom: '4px' }}>
+                  <div className="flex-1">
+                    <strong className="text-rose-950 block mb-1">
                       Microphone Access Denied
                     </strong>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '0.82rem' }}>
+                    <p className="m-0 mb-2 text-xs">
                       On Mobile / Android: Go to <strong>Settings &gt; Apps &gt; Choir Collective &gt; Permissions &gt; Microphone</strong> and select <strong>Allow</strong>.
                     </p>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div className="flex gap-2 flex-wrap items-center">
                       <button
                         onClick={startRecording}
-                        style={{
-                          background: '#e11d48',
-                          color: '#ffffff',
-                          border: 'none',
-                          padding: '6px 12px',
-                          borderRadius: '6px',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                        }}
+                        className="bg-rose-600 text-white border-0 py-1.5 px-3 rounded-md text-xs font-bold cursor-pointer hover:bg-rose-700"
                       >
                         Retry Microphone
                       </button>
-                      <span style={{ fontSize: '0.78rem', color: '#881337' }}>
+                      <span className="text-xs text-rose-950">
                         or use <strong>Upload Audio File</strong> below!
                       </span>
                     </div>
@@ -766,20 +608,12 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
             )}
 
             {/* Presets & Custom Label Selector */}
-            <div style={{ marginBottom: '20px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  color: '#1e293b',
-                  marginBottom: '8px',
-                }}
-              >
+            <div className="mb-5">
+              <label className="block text-sm font-bold text-slate-800 mb-2">
                 Select Voicing / Label
               </label>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+              <div className="flex flex-wrap gap-1.5 mb-3">
                 {PRESET_VOICING_LABELS.map((labelPreset) => {
                   const isSelected = !isCustomMode && selectedPreset === labelPreset;
                   return (
@@ -791,17 +625,11 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                         setIsCustomMode(false);
                       }}
                       disabled={isRecording || isUploading}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '8px',
-                        fontSize: '0.78rem',
-                        fontWeight: 700,
-                        border: isSelected ? '2px solid #0b4d24' : '1px solid #cbd5e1',
-                        background: isSelected ? '#0b4d24' : '#f8fafc',
-                        color: isSelected ? '#ffffff' : '#334155',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
+                      className={`py-1.5 px-3 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-2 border-primary bg-primary text-white'
+                          : 'border border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                      }`}
                     >
                       {labelPreset}
                     </button>
@@ -812,16 +640,11 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                   type="button"
                   onClick={() => setIsCustomMode(true)}
                   disabled={isRecording || isUploading}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '8px',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    border: isCustomMode ? '2px solid #0b4d24' : '1px solid #cbd5e1',
-                    background: isCustomMode ? '#0b4d24' : '#f8fafc',
-                    color: isCustomMode ? '#ffffff' : '#334155',
-                    cursor: 'pointer',
-                  }}
+                  className={`py-1.5 px-3 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                    isCustomMode
+                      ? 'border-2 border-primary bg-primary text-white'
+                      : 'border border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
                   Custom Note...
                 </button>
@@ -834,36 +657,13 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                   value={customLabel}
                   onChange={(e) => setCustomLabel(e.target.value)}
                   disabled={isRecording || isUploading}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
-                    background: '#ffffff',
-                    fontSize: '0.9rem',
-                    color: '#0f172a',
-                    outline: 'none',
-                  }}
+                  className="w-full py-2.5 px-3.5 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 outline-none focus:border-primary"
                 />
               )}
 
               {/* Overwrite Warning Banner if voicing already exists */}
               {willOverwrite && (
-                <div
-                  style={{
-                    marginTop: '8px',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: '#fffbeb',
-                    border: '1px solid #fde68a',
-                    color: '#92400e',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
+                <div className="mt-2 py-2 px-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center gap-1.5">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
@@ -876,47 +676,17 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
 
             {/* Live Recording State Controls */}
             {isRecording ? (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  borderRadius: '12px',
-                  padding: '14px 18px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div
-                    style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      background: '#dc2626',
-                      animation: 'pulse 1s infinite ease-in-out',
-                    }}
-                  />
-                  <span style={{ fontWeight: 700, color: '#991b1b', fontSize: '0.92rem' }}>
+              <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl py-3.5 px-4.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-3 h-3 rounded-full bg-red-600 animate-pulse" />
+                  <span className="font-bold text-red-800 text-sm">
                     Recording... {formatTime(recordingSeconds)}
                   </span>
                 </div>
 
                 <button
                   onClick={stopRecording}
-                  style={{
-                    background: '#dc2626',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    padding: '8px 16px',
-                    borderRadius: '99px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '0.85rem',
-                  }}
+                  className="bg-red-600 text-white font-bold py-2 px-4 rounded-full border-0 cursor-pointer flex items-center gap-1.5 text-sm hover:bg-red-700"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="6" y="6" width="12" height="12" rx="2" />
@@ -926,35 +696,18 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
               </div>
             ) : recordedAudioUrl ? (
               /* Recorded Take Preview State */
-              <div
-                style={{
-                  background: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  marginBottom: '12px',
-                }}
-              >
-                <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#166534', marginBottom: '10px' }}>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-3">
+                <p className="text-sm font-bold text-emerald-800 mb-2.5">
                   Preview Take ({formatTime(recordingSeconds)})
                 </p>
                 
-                <audio controls src={recordedAudioUrl} style={{ width: '100%', marginBottom: '14px' }} />
+                <audio controls src={recordedAudioUrl} className="w-full mb-3.5" />
 
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <div className="flex gap-2.5 justify-end">
                   <button
                     onClick={discardRecording}
                     disabled={isUploading}
-                    style={{
-                      background: '#ffffff',
-                      border: '1px solid #cbd5e1',
-                      color: '#0f172a',
-                      fontWeight: 700,
-                      padding: '10px 18px',
-                      borderRadius: '8px',
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                    }}
+                    className="bg-white border border-slate-300 text-slate-900 font-bold py-2.5 px-4.5 rounded-lg text-sm cursor-pointer hover:bg-slate-50"
                   >
                     Discard
                   </button>
@@ -962,17 +715,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                   <button
                     onClick={handleSaveRecording}
                     disabled={isUploading}
-                    style={{
-                      background: '#0b4d24',
-                      border: 'none',
-                      color: '#ffffff',
-                      fontWeight: 700,
-                      padding: '10px 20px',
-                      borderRadius: '8px',
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(11, 77, 36, 0.3)',
-                    }}
+                    className="bg-primary border-0 text-white font-bold py-2.5 px-5 rounded-lg text-sm cursor-pointer shadow-[0_4px_12px_rgba(11,77,36,0.3)] hover:bg-primary-hover"
                   >
                     {isUploading ? 'Saving...' : 'Save & Upload'}
                   </button>
@@ -980,26 +723,11 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
               </div>
             ) : (
               /* Idle Action Buttons inside Modal: Record Mic OR Upload File */
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="flex flex-col gap-3">
                 <button
                   onClick={startRecording}
                   disabled={isUploading}
-                  style={{
-                    width: '100%',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    padding: '14px',
-                    fontSize: '0.95rem',
-                    fontWeight: 700,
-                    color: '#ffffff',
-                    background: '#0b4d24',
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(11, 77, 36, 0.25)',
-                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 p-3.5 text-sm font-bold text-white bg-primary border-0 rounded-xl cursor-pointer shadow-[0_4px_12px_rgba(11,77,36,0.25)] hover:bg-primary-hover"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
@@ -1009,27 +737,14 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                   Record Microphone Audio
                 </button>
 
-                <div style={{ textAlign: 'center', fontSize: '0.82rem', fontWeight: 600, color: '#64748b', margin: '2px 0' }}>
+                <div className="text-center text-xs font-semibold text-slate-500 my-0.5">
                   &mdash; or upload an existing audio file &mdash;
                 </div>
 
                 <label
-                  style={{
-                    width: '100%',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    padding: '14px',
-                    fontSize: '0.95rem',
-                    fontWeight: 700,
-                    color: '#0f172a',
-                    background: '#ffffff',
-                    border: '2px solid #0f172a',
-                    borderRadius: '12px',
-                    cursor: isUploading ? 'not-allowed' : 'pointer',
-                    opacity: isUploading ? 0.6 : 1,
-                  }}
+                  className={`w-full inline-flex items-center justify-center gap-2 p-3.5 text-sm font-bold text-slate-900 bg-white border-2 border-slate-900 rounded-xl ${
+                    isUploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-slate-50'
+                  }`}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -1043,7 +758,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                     accept="audio/*"
                     onChange={handleFileSelect}
                     disabled={isUploading}
-                    style={{ display: 'none' }}
+                    className="hidden"
                   />
                 </label>
               </div>
@@ -1056,85 +771,44 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
       {/* EDIT HISTORY PORTAL POP-UP MODAL */}
       {mounted && isHistoryModalOpen && createPortal(
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.75)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 99999999,
-            padding: '20px',
-            animation: 'fadeIn 0.2s ease',
-          }}
+          className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-[99999999] p-5 animate-fade-in"
           onClick={() => setIsHistoryModalOpen(false)}
         >
           <div
-            style={{
-              background: '#ffffff',
-              border: '1px solid #cbd5e1',
-              borderRadius: '20px',
-              padding: '28px',
-              maxWidth: '560px',
-              width: '100%',
-              maxHeight: '85vh',
-              display: 'flex',
-              flexDirection: 'column',
-              color: '#0f172a',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.55)',
-              animation: 'slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            }}
+            className="bg-white border border-slate-300 rounded-2xl p-7 max-w-[560px] w-full max-h-[85vh] flex flex-col text-slate-900 shadow-2xl animate-modal-scale"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '16px',
-                paddingBottom: '12px',
-                borderBottom: '1px solid #e2e8f0',
-              }}
-            >
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                <h3 className="text-xl font-bold text-slate-900 m-0">
                   Practice Tracks Edit History
                 </h3>
-                <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                <p className="text-xs text-slate-500 mt-1 m-0">
                   Audit log of practice recording uploads and overwrites.
                 </p>
               </div>
 
               <button
                 onClick={() => setIsHistoryModalOpen(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.6rem',
-                  color: '#64748b',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  lineHeight: 1,
-                }}
+                className="bg-transparent border-0 text-2xl text-slate-500 cursor-pointer p-1 leading-none hover:text-slate-900"
               >
                 &times;
               </button>
             </div>
 
             {/* History Body List */}
-            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
+            <div className="flex-1 overflow-y-auto pr-1">
               {isLoadingHistory ? (
-                <div style={{ textAlign: 'center', padding: '30px 0', color: '#64748b' }}>
+                <div className="text-center py-7 text-slate-500 text-sm">
                   Loading edit history...
                 </div>
               ) : historyItems.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '30px 0', color: '#64748b', fontSize: '0.9rem' }}>
+                <div className="text-center py-7 text-slate-500 text-sm">
                   No history recorded yet for this song.
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="flex flex-col gap-2.5">
                   {historyItems.map((item) => {
                     const isOverwrite = item.action_type === 'OVERWROTE';
                     const isDelete = item.action_type === 'DELETED';
@@ -1144,46 +818,30 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                     return (
                       <div
                         key={item.id}
-                        style={{
-                          background: '#f8fafc',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '12px',
-                          padding: '12px 16px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          gap: '12px',
-                        }}
+                        className="bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 flex justify-between items-center gap-3"
                       >
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-bold text-sm text-slate-900">
                               {item.uploader_name || 'Choir Member'}
                             </span>
 
                             <span
-                              style={{
-                                fontSize: '0.68rem',
-                                fontWeight: 800,
-                                padding: '2px 8px',
-                                borderRadius: '99px',
-                                background: badgeBg,
-                                color: badgeText,
-                                textTransform: 'uppercase',
-                              }}
+                              className="text-[0.68rem] font-extrabold py-0.5 px-2 rounded-full uppercase"
+                              style={{ background: badgeBg, color: badgeText }}
                             >
                               {item.action_type}
                             </span>
                           </div>
 
                           {item.voicing_label && (
-                            <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155', margin: 0 }}>
+                            <p className="text-xs font-semibold text-slate-700 m-0">
                               Voicing: <strong>{item.voicing_label}</strong>
                             </p>
                           )}
                         </div>
 
-                        <span style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                        <span className="text-xs text-slate-500 whitespace-nowrap">
                           {new Date(item.created_at).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',
@@ -1199,17 +857,8 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
             </div>
 
             {/* Modal Footer (Clear History for Super Admin & Director) */}
-            <div
-              style={{
-                marginTop: '20px',
-                paddingTop: '12px',
-                borderTop: '1px solid #e2e8f0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+            <div className="mt-5 pt-3 border-t border-slate-200 flex justify-between items-center">
+              <span className="text-xs text-slate-500">
                 {isSuperAdminOrDirector
                   ? 'As a Director or Super Admin, you can clear this log.'
                   : 'Only Directors and Super Admins can clear edit history.'}
@@ -1218,16 +867,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
               {isSuperAdminOrDirector && historyItems.length > 0 && (
                 <button
                   onClick={() => setIsConfirmingClearHistory(true)}
-                  style={{
-                    background: '#ef4444',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '8px 14px',
-                    borderRadius: '8px',
-                    fontWeight: 700,
-                    fontSize: '0.82rem',
-                    cursor: 'pointer',
-                  }}
+                  className="bg-red-500 text-white border-0 py-2 px-3.5 rounded-lg font-bold text-xs cursor-pointer hover:bg-red-600"
                 >
                   Clear History
                 </button>

@@ -27,38 +27,17 @@ export const ActionCenterBanner: React.FC<ActionCenterBannerProps> = ({
   if (!hasItems) return null;
 
   return (
-    <div
-      className="glass-container anim-card"
-      style={{
-        padding: '16px 20px',
-        borderRadius: '18px',
-        background: 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(249,115,22,0.08) 100%)',
-        border: '1px solid rgba(249,115,22,0.25)',
-        marginBottom: '22px',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '8px',
-              background: 'rgba(249,115,22,0.18)',
-              color: '#ea580c',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+    <div className="glass-container anim-card p-4 sm:py-4 sm:px-5 rounded-[18px] bg-gradient-to-br from-red-500/6 to-orange-500/8 border border-orange-500/25 mb-[22px] shadow-sm">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-600 flex items-center justify-center">
             <AlertTriangle size={16} />
           </div>
-          <h2 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, color: 'var(--foreground)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <h2 className="text-xs sm:text-[0.95rem] font-extrabold m-0 text-foreground uppercase tracking-wider">
             Officer Action Center ({pendingRequests.length + blockedAssignments.length + overdueCount})
           </h2>
         </div>
-        <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+        <span className="text-xs text-muted">
           Items requiring officer review or intervention
         </span>
       </div>
@@ -66,76 +45,44 @@ export const ActionCenterBanner: React.FC<ActionCenterBannerProps> = ({
       {overdueCount > 0 && (
         <div
           onClick={() => onSelectTab && onSelectTab('overdue')}
-          style={{
-            padding: '10px 14px',
-            borderRadius: '10px',
-            background: 'rgba(239,68,68,0.1)',
-            border: '1px solid rgba(239,68,68,0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '10px',
-            cursor: onSelectTab ? 'pointer' : 'default',
-          }}
+          className={`py-2.5 px-3.5 rounded-xl bg-red-500/10 border border-red-500/25 flex items-center justify-between mb-2.5 ${onSelectTab ? 'cursor-pointer' : 'cursor-default'}`}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Clock size={16} style={{ color: '#dc2626' }} />
-            <strong style={{ fontSize: '0.86rem', color: '#dc2626' }}>
+          <div className="flex items-center gap-2">
+            <Clock size={16} className="text-red-600" />
+            <strong className="text-xs sm:text-sm text-red-600">
               {overdueCount} Task Assignment(s) Overdue Past Deadline
             </strong>
           </div>
-          <span style={{ fontSize: '0.76rem', color: '#dc2626', fontWeight: 700 }}>
+          <span className="text-xs text-red-600 font-bold">
             View Overdue Tasks →
           </span>
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-2.5">
         {/* Reassignment Requests */}
         {pendingRequests.map((req) => (
           <div
             key={req.id}
-            style={{
-              padding: '12px 14px',
-              borderRadius: '12px',
-              background: '#ffffff',
-              border: '1px solid rgba(11, 77, 36, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-            }}
+            className="py-3 px-3.5 rounded-xl bg-white border border-primary/10 flex items-center justify-between gap-2.5"
           >
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                <span
-                  style={{
-                    padding: '1px 6px',
-                    borderRadius: '4px',
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    background: 'rgba(197,160,89,0.2)',
-                    color: 'var(--accent)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
+            <div className="overflow-hidden">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="py-px px-1.5 rounded text-[0.7rem] font-bold bg-accent/20 text-accent inline-flex items-center gap-1">
                   <RefreshCw size={11} /> Reassignment
                 </span>
-                <strong style={{ fontSize: '0.86rem', color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <strong className="text-xs sm:text-sm text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
                   {req.requester?.full_name}
                 </strong>
               </div>
-              <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <p className="m-0 text-xs text-muted whitespace-nowrap overflow-hidden text-ellipsis">
                 &ldquo;{req.reason}&rdquo;
               </p>
             </div>
 
             <button
               onClick={() => onReviewRequest(req)}
-              className="btn btn-primary"
-              style={{ padding: '6px 12px', fontSize: '0.76rem', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+              className="btn btn-primary !py-1.5 !px-3 text-xs flex-shrink-0 inline-flex items-center gap-1"
             >
               Review <ArrowRight size={13} />
             </button>
@@ -146,47 +93,25 @@ export const ActionCenterBanner: React.FC<ActionCenterBannerProps> = ({
         {blockedAssignments.map((assignment) => (
           <div
             key={assignment.id}
-            style={{
-              padding: '12px 14px',
-              borderRadius: '12px',
-              background: '#ffffff',
-              border: '1px solid rgba(249, 115, 22, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-            }}
+            className="py-3 px-3.5 rounded-xl bg-white border border-orange-500/25 flex items-center justify-between gap-2.5"
           >
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                <span
-                  style={{
-                    padding: '1px 6px',
-                    borderRadius: '4px',
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    background: 'rgba(249,115,22,0.18)',
-                    color: '#ea580c',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
+            <div className="overflow-hidden">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="py-px px-1.5 rounded text-[0.7rem] font-bold bg-orange-500/20 text-orange-600 inline-flex items-center gap-1">
                   <AlertTriangle size={11} /> Can&apos;t Complete
                 </span>
-                <strong style={{ fontSize: '0.86rem', color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <strong className="text-xs sm:text-sm text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
                   {assignment.member?.full_name}
                 </strong>
               </div>
-              <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <p className="m-0 text-xs text-muted whitespace-nowrap overflow-hidden text-ellipsis">
                 {assignment.blocker_reason || assignment.responsibility}
               </p>
             </div>
 
             <button
               onClick={() => onResolveBlocker(assignment)}
-              className="btn btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '0.76rem', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+              className="btn btn-secondary !py-1.5 !px-3 text-xs flex-shrink-0 inline-flex items-center gap-1"
             >
               <CheckCircle2 size={13} /> Resolve
             </button>

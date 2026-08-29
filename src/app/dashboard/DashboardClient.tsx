@@ -217,30 +217,28 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
   };
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      <div className="bg-orb bg-orb-1" style={{ width: '600px', height: '600px' }}></div>
-      <div className="bg-orb bg-orb-2" style={{ width: '500px', height: '500px' }}></div>
+    <div ref={containerRef} className="flex flex-col min-h-screen relative">
+      <div className="bg-orb bg-orb-1 w-[600px] h-[600px]"></div>
+      <div className="bg-orb bg-orb-2 w-[500px] h-[500px]"></div>
 
       <Navbar profile={profile} />
 
-      <main style={{ flex: 1, padding: '24px 16px 120px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <main className="flex-1 pt-6 px-4 pb-[120px] max-w-[800px] mx-auto w-full">
+        <div className="flex flex-col gap-5">
 
           {/* Web Push Prompt */}
           <PushNotificationManager />
 
           {/* ── Facebook/Instagram Style Profile Header Card ── */}
-          <div className="glass-container anim-header" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="glass-container anim-header !p-0 overflow-hidden">
             {/* Cover Banner */}
-            <div style={{
-              height: '160px',
-              background: coverUrl
-                ? 'none'
-                : 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 50%, var(--accent) 100%)',
-              backgroundColor: 'var(--primary)',
-              position: 'relative',
-              overflow: 'hidden',
-            }}>
+            <div
+              className={`h-40 relative overflow-hidden bg-primary ${
+                coverUrl
+                  ? ''
+                  : 'bg-gradient-to-br from-primary via-[#1e3a8a] to-accent'
+              }`}
+            >
               {coverUrl && (
                 <Image
                   src={coverUrl}
@@ -249,11 +247,9 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                   priority
                   fetchPriority="high"
                   sizes="(max-width: 800px) 100vw, 800px"
+                  className={`object-cover z-0 ${repositioningCover ? '' : 'transition-[object-position] duration-150 ease-out'}`}
                   style={{
-                    objectFit: 'cover',
                     objectPosition: `center ${repositioningCover ? tempPosition : coverPosition}`,
-                    transition: repositioningCover ? 'none' : 'object-position 0.15s ease',
-                    zIndex: 0,
                   }}
                 />
               )}
@@ -262,30 +258,18 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                 ref={coverInputRef}
                 onChange={handleCoverUpload}
                 accept="image/*"
-                style={{ display: 'none' }}
+                className="hidden"
               />
 
               {/* Cover Action Buttons */}
-              <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '8px', zIndex: 5 }}>
+              <div className="absolute top-3 right-3 flex gap-2 z-[5]">
                 {coverUrl && !repositioningCover && (
                   <button
                     onClick={() => {
                       setTempPosition(coverPosition);
                       setRepositioningCover(true);
                     }}
-                    className="btn btn-secondary"
-                    style={{
-                      padding: '6px 12px',
-                      fontSize: '0.78rem',
-                      background: 'rgba(255,255,255,0.85)',
-                      backdropFilter: 'blur(8px)',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                      border: 'none',
-                      borderRadius: '20px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px'
-                    }}
+                    className="btn btn-secondary !py-1.5 !px-3 text-xs bg-white/85 backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.15)] !border-none !rounded-full inline-flex items-center gap-1.5"
                   >
                     <Move size={14} /> Reposition
                   </button>
@@ -295,19 +279,7 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                   <button
                     onClick={() => coverInputRef.current?.click()}
                     disabled={uploadingCover}
-                    className="btn btn-secondary"
-                    style={{
-                      padding: '6px 12px',
-                      fontSize: '0.78rem',
-                      background: 'rgba(255,255,255,0.85)',
-                      backdropFilter: 'blur(8px)',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                      border: 'none',
-                      borderRadius: '20px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px'
-                    }}
+                    className="btn btn-secondary !py-1.5 !px-3 text-xs bg-white/85 backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.15)] !border-none !rounded-full inline-flex items-center gap-1.5"
                   >
                     <Camera size={14} /> {uploadingCover ? 'Uploading...' : 'Change Cover'}
                   </button>
@@ -316,40 +288,25 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
 
               {/* Cover Reposition Control Overlay Bar */}
               {repositioningCover && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 'auto 0 0 0',
-                    background: 'rgba(0, 0, 0, 0.75)',
-                    backdropFilter: 'blur(6px)',
-                    padding: '10px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    color: '#fff',
-                    zIndex: 10
-                  }}
-                >
-                  <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>Adjust Position:</span>
+                <div className="absolute inset-x-0 bottom-0 bg-black/75 backdrop-blur-sm py-2.5 px-4 flex items-center justify-between gap-3 text-white z-10">
+                  <span className="text-xs font-semibold">Adjust Position:</span>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, maxWidth: '240px' }}>
+                  <div className="flex items-center gap-2 flex-1 max-w-[240px]">
                     <input
                       type="range"
                       min="0"
                       max="100"
                       value={parseInt(tempPosition) || 50}
                       onChange={(e) => setTempPosition(`${e.target.value}%`)}
-                      style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--accent)' }}
+                      className="w-full cursor-pointer accent-accent"
                     />
-                    <span style={{ fontSize: '0.75rem', width: '36px', textAlign: 'right' }}>{tempPosition}</span>
+                    <span className="text-xs w-9 text-right">{tempPosition}</span>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                  <div className="flex gap-1.5">
                     <button
                       onClick={() => handleSaveCoverPosition(tempPosition)}
-                      className="btn btn-primary"
-                      style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '12px' }}
+                      className="btn btn-primary !py-1 !px-2.5 text-xs !rounded-xl"
                     >
                       Save
                     </button>
@@ -358,8 +315,7 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                         setTempPosition(coverPosition);
                         setRepositioningCover(false);
                       }}
-                      className="btn btn-secondary"
-                      style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '12px', color: '#fff', background: 'rgba(255,255,255,0.2)' }}
+                      className="btn btn-secondary !py-1 !px-2.5 text-xs !rounded-xl !text-white !bg-white/20"
                     >
                       Cancel
                     </button>
@@ -369,9 +325,9 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
             </div>
 
             {/* Profile Content Container */}
-            <div style={{ padding: '0 20px 20px', position: 'relative' }}>
+            <div className="px-5 pb-5 relative">
               {/* Avatar Row */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '-44px', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
+              <div className="flex justify-between items-end -mt-11 mb-3.5 flex-wrap gap-3">
                 <Avatar
                   src={profile.avatar_url}
                   name={profile.full_name}
@@ -382,14 +338,14 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                 />
 
                 {/* Profile Quick Action Buttons */}
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <Link href="/tasks" className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <div className="flex gap-2 flex-wrap">
+                  <Link href="/tasks" className="btn btn-secondary !py-2 !px-3.5 text-sm inline-flex items-center gap-1.5">
                     📋 Tasks
                   </Link>
-                  <Link href="/messages" className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Link href="/messages" className="btn btn-secondary !py-2 !px-3.5 text-sm inline-flex items-center gap-1.5">
                     💬 Messages
                   </Link>
-                  <Link href="/profile" className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Link href="/profile" className="btn btn-secondary !py-2 !px-3.5 text-sm inline-flex items-center gap-1.5">
                     ⚙ Edit Profile
                   </Link>
                 </div>
@@ -397,31 +353,31 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
 
               {/* Name & Badges */}
               <div>
-                <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--foreground)', margin: '0 0 4px 0' }}>
+                <h1 className="text-xl font-bold text-foreground mb-1">
                   {profile.full_name}
                 </h1>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+                <div className="flex items-center gap-2 flex-wrap mt-1.5">
                   {profile.voice_part && (
-                    <span className="badge" style={{ background: 'rgba(30,58,138,0.1)', color: 'var(--primary)', fontWeight: 600, fontSize: '0.8rem' }}>
+                    <span className="badge !bg-primary/10 !text-primary font-semibold text-xs">
                       🎵 {profile.voice_part}
                     </span>
                   )}
-                  <span className="badge" style={{ background: 'rgba(197,160,89,0.15)', color: 'var(--accent)', fontWeight: 700, fontSize: '0.78rem', textTransform: 'capitalize' }}>
+                  <span className="badge !bg-accent/15 !text-accent font-bold text-xs capitalize">
                     {profile.role.replace('_', ' ')}
                   </span>
                 </div>
 
                 {/* Interests Section */}
-                <div style={{ marginTop: '16px', borderTop: '1px solid var(--glass-border)', paddingTop: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)' }}>
-                      ✨ Musical Interests & Hobbies
+                <div className="mt-4 border-t border-glass-border pt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                      ✨ Musical Interests &amp; Hobbies
                     </span>
                     {!addingInterest && (
                       <button
                         onClick={() => setAddingInterest(true)}
-                        style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                        className="bg-transparent border-0 text-primary text-xs font-semibold cursor-pointer p-0 hover:underline"
                       >
                         + Add Interest
                       </button>
@@ -429,7 +385,7 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                   </div>
 
                   {addingInterest && (
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+                    <div className="flex gap-1.5 mb-2.5">
                       <input
                         type="text"
                         placeholder="e.g. Sacred Music, Sight Reading, Guitar"
@@ -438,20 +394,18 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') handleAddInterest(newInterestInput);
                         }}
-                        style={{ flex: 1, padding: '6px 12px', fontSize: '0.85rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--foreground)' }}
+                        className="flex-1 py-1.5 px-3 text-sm rounded-lg border border-border bg-card text-foreground focus:outline-none focus:border-primary"
                         autoFocus
                       />
                       <button
                         onClick={() => handleAddInterest(newInterestInput)}
-                        className="btn btn-primary"
-                        style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                        className="btn btn-primary !py-1.5 !px-3 text-sm"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => setAddingInterest(false)}
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                        className="btn btn-secondary !py-1.5 !px-3 text-sm"
                       >
                         Cancel
                       </button>
@@ -460,21 +414,12 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
 
                   {/* Interest Suggestions if empty */}
                   {interests.length === 0 && !addingInterest && (
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                    <div className="flex gap-1.5 flex-wrap mt-1">
                       {['Sacred Music', 'A Cappella', 'Sight Reading', 'Youth Choir', 'Liturgical Dance', 'Organ & Piano'].map((sug) => (
                         <button
                           key={sug}
                           onClick={() => handleAddInterest(sug)}
-                          style={{
-                            background: 'rgba(30,58,138,0.05)',
-                            border: '1px stroke var(--border)',
-                            borderRadius: '16px',
-                            padding: '4px 10px',
-                            fontSize: '0.78rem',
-                            color: 'var(--primary)',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
+                          className="bg-[#1e3a8a]/5 border border-border rounded-full py-1 px-2.5 text-xs text-primary cursor-pointer transition-all hover:bg-[#1e3a8a]/10"
                         >
                           + {sug}
                         </button>
@@ -484,27 +429,16 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
 
                   {/* Render Interest Badges */}
                   {interests.length > 0 && (
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                    <div className="flex gap-1.5 flex-wrap mt-1">
                       {interests.map((interest) => (
                         <span
                           key={interest}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            background: 'rgba(30,58,138,0.08)',
-                            border: '1px solid rgba(30,58,138,0.15)',
-                            color: 'var(--primary)',
-                            borderRadius: '16px',
-                            padding: '4px 10px',
-                            fontSize: '0.8rem',
-                            fontWeight: 600
-                          }}
+                          className="inline-flex items-center gap-1 bg-[#1e3a8a]/8 border border-[#1e3a8a]/15 text-primary rounded-full py-1 px-2.5 text-xs font-semibold"
                         >
                           ✨ {interest}
                           <button
                             onClick={() => handleRemoveInterest(interest)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '0.85rem', padding: '0 0 0 4px', lineHeight: 1 }}
+                            className="bg-transparent border-0 cursor-pointer text-muted text-sm pl-1 leading-none hover:text-foreground"
                             aria-label={`Remove ${interest}`}
                           >
                             &times;
@@ -520,9 +454,9 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
 
           {/* ── Active Announcements Social Feed (Elevated Top Priority) ── */}
           {activeVisibleAnnouncements.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--foreground)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-foreground m-0 flex items-center gap-2">
                   📢 Choir Announcements ({activeVisibleAnnouncements.length})
                 </h2>
               </div>
@@ -532,65 +466,49 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                 return (
                   <div
                     key={ann.id}
-                    className="glass-container anim-card"
-                    style={{
-                      position: 'relative',
-                      padding: '20px',
-                      borderRadius: '16px',
-                      borderLeft: isUrgent ? '6px solid var(--error)' : '6px solid var(--primary)',
-                      background: isUrgent
-                        ? 'linear-gradient(135deg, rgba(159,28,28,0.08) 0%, rgba(197,160,89,0.1) 100%)'
-                        : 'var(--glass-bg)',
-                      boxShadow: isUrgent ? '0 4px 20px rgba(220,38,38,0.15)' : undefined,
-                    }}
+                    className={`glass-container anim-card relative p-5 rounded-2xl ${
+                      isUrgent
+                        ? 'border-l-[6px] border-l-error bg-gradient-to-br from-error/8 to-accent/10 shadow-[0_4px_20px_rgba(220,38,38,0.15)]'
+                        : 'border-l-[6px] border-l-primary bg-glass-bg'
+                    }`}
                   >
                     <button
                       onClick={() => handleDismissAnnouncement(ann.id)}
-                      style={{
-                        position: 'absolute',
-                        top: '14px',
-                        right: '14px',
-                        background: 'none',
-                        border: 'none',
-                        fontSize: '1.2rem',
-                        color: 'var(--muted)',
-                        cursor: 'pointer',
-                        padding: '4px 8px',
-                      }}
+                      className="absolute top-3.5 right-3.5 bg-transparent border-0 text-xl text-muted cursor-pointer py-1 px-2 hover:text-foreground"
                       aria-label="Dismiss announcement"
                     >
                       &times;
                     </button>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                    <div className="flex items-center gap-2 mb-2.5 flex-wrap">
                       {isUrgent ? (
-                        <span className="badge" style={{ background: 'var(--error)', color: '#fff', fontWeight: 700 }}>
+                        <span className="badge !bg-error text-white font-bold">
                           🚨 URGENT
                         </span>
                       ) : (
-                        <span className="badge" style={{ background: 'rgba(11,77,36,0.1)', color: 'var(--primary)', fontWeight: 600 }}>
+                        <span className="badge !bg-primary/10 !text-primary font-semibold">
                           📢 ANNOUNCEMENT
                         </span>
                       )}
                       {ann.is_pinned && (
-                        <span style={{ fontSize: '0.78rem', color: 'var(--accent)', fontWeight: 700 }}>
+                        <span className="text-xs text-accent font-bold">
                           📌 Pinned
                         </span>
                       )}
                       {ann.starts_at && (
-                        <span className="badge" style={{ background: 'rgba(30,58,138,0.08)', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600 }}>
+                        <span className="badge !bg-[#1e3a8a]/8 !text-primary text-xs font-semibold">
                           🗓️ Schedule: {new Date(ann.starts_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                         </span>
                       )}
-                      <span suppressHydrationWarning style={{ fontSize: '0.78rem', color: 'var(--muted)', marginLeft: 'auto', marginRight: '24px' }}>
+                      <span suppressHydrationWarning className="text-xs text-muted ml-auto mr-6">
                         Posted {new Date(ann.created_at).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: isUrgent ? 'var(--error)' : 'var(--primary)', margin: '0 0 8px 0' }}>
+                    <h3 className={`text-lg font-bold mb-2 m-0 ${isUrgent ? 'text-error' : 'text-primary'}`}>
                       {ann.title}
                     </h3>
-                    <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--foreground)', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+                    <p className="m-0 text-[0.95rem] text-foreground leading-relaxed whitespace-pre-wrap">
                       {ann.body}
                     </p>
                   </div>
@@ -602,30 +520,19 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
           {/* ── Unified Assigned Waivers & Documents Section ── */}
           {pendingSignatures && pendingSignatures.length > 0 && (
             <div
-              className="glass-container anim-card"
-              style={{
-                padding: '20px',
-                borderRadius: '16px',
-                border: pendingSignatures.some((s) => ['pending', 'rejected'].includes(s.status))
-                  ? '1.5px solid rgba(220,38,38,0.3)'
-                  : undefined,
-              }}
+              className={`glass-container anim-card p-5 rounded-2xl ${
+                pendingSignatures.some((s) => ['pending', 'rejected'].includes(s.status))
+                  ? 'border-[1.5px] border-error/30'
+                  : ''
+              }`}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+              <div className="flex items-center justify-between mb-3.5 flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-foreground m-0">
                     📄 Assigned Waivers &amp; Documents ({pendingSignatures.length})
                   </h3>
                   {pendingSignatures.some((s) => ['pending', 'rejected'].includes(s.status)) && (
-                    <span
-                      className="badge"
-                      style={{
-                        background: 'rgba(220,38,38,0.12)',
-                        color: '#dc2626',
-                        fontWeight: 700,
-                        fontSize: '0.72rem',
-                      }}
-                    >
+                    <span className="badge !bg-error/12 !text-[#dc2626] font-bold text-xs">
                       Action Needed
                     </span>
                   )}
@@ -633,72 +540,42 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
 
                 <Link
                   href="/my-documents"
-                  style={{
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    color: 'var(--primary)',
-                    textDecoration: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
+                  className="text-xs font-semibold text-primary no-underline inline-flex items-center gap-1 hover:underline"
                 >
                   View All Documents →
                 </Link>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="flex flex-col gap-2.5">
                 {pendingSignatures.map((sig) => {
                   const isUrgent = sig.status === 'pending' || sig.status === 'rejected';
 
                   return (
                     <div
                       key={sig.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '14px 16px',
-                        borderRadius: '12px',
-                        background: isUrgent
-                          ? 'linear-gradient(135deg, rgba(220,38,38,0.06) 0%, rgba(197,160,89,0.08) 100%)'
-                          : 'rgba(255,255,255,0.6)',
-                        border: isUrgent
-                          ? '1.5px solid rgba(220,38,38,0.25)'
-                          : '1px solid var(--glass-border)',
-                        flexWrap: 'wrap',
-                        gap: '12px',
-                        transition: 'all 0.2s ease',
-                      }}
+                      className={`flex items-center justify-between p-3.5 sm:px-4 rounded-xl flex-wrap gap-3 transition-all ${
+                        isUrgent
+                          ? 'bg-gradient-to-br from-error/6 to-accent/8 border-[1.5px] border-error/25'
+                          : 'bg-white/60 border border-glass-border'
+                      }`}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '220px' }}>
+                      <div className="flex items-center gap-3 flex-1 min-w-[220px]">
                         <div
-                          style={{
-                            width: '38px',
-                            height: '38px',
-                            borderRadius: '10px',
-                            background: isUrgent ? 'rgba(220,38,38,0.15)' : 'rgba(11,77,36,0.1)',
-                            color: isUrgent ? '#dc2626' : 'var(--primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.1rem',
-                            flexShrink: 0,
-                          }}
+                          className={`w-9.5 h-9.5 rounded-lg flex items-center justify-center text-lg flex-shrink-0 ${
+                            isUrgent ? 'bg-error/15 text-error' : 'bg-primary/10 text-primary'
+                          }`}
                         >
                           {isUrgent ? '✍️' : '📄'}
                         </div>
 
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                            <strong style={{ fontSize: '0.95rem', color: 'var(--foreground)' }}>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <strong className="text-sm sm:text-base text-foreground font-semibold">
                               {sig.documents?.title || 'Waiver Document'}
                             </strong>
                             <span
-                              className="badge"
+                              className="badge text-xs font-bold"
                               style={{
-                                fontSize: '0.72rem',
-                                fontWeight: 700,
                                 background:
                                   sig.status === 'pending' ? 'rgba(220,38,38,0.12)' :
                                   sig.status === 'submitted' ? 'rgba(197,160,89,0.18)' :
@@ -717,30 +594,20 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                                '✅ Verified'}
                             </span>
                           </div>
-                          <p style={{ margin: '3px 0 0', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                          <p className="mt-1 mb-0 text-xs text-muted">
                             Assigned: {new Date(sig.created_at).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <Link
                           href={`/sign/${sig.id}`}
-                          className={isUrgent ? 'btn btn-primary' : 'btn btn-secondary'}
-                          style={{
-                            fontSize: '0.85rem',
-                            padding: isUrgent ? '9px 18px' : '8px 14px',
-                            fontWeight: 700,
-                            whiteSpace: 'nowrap',
-                            minHeight: '40px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            background: isUrgent ? '#dc2626' : undefined,
-                            borderColor: isUrgent ? '#dc2626' : undefined,
-                            color: isUrgent ? '#ffffff' : undefined,
-                            boxShadow: isUrgent ? '0 4px 12px rgba(220,38,38,0.25)' : undefined,
-                            borderRadius: '10px',
-                          }}
+                          className={`btn ${
+                            isUrgent
+                              ? '!bg-[#dc2626] !border-[#dc2626] !text-white shadow-[0_4px_12px_rgba(220,38,38,0.25)] !py-2 !px-4'
+                              : 'btn-secondary !py-2 !px-3.5'
+                          } text-sm font-bold whitespace-nowrap min-h-[40px] inline-flex items-center !rounded-xl`}
                         >
                           {isUrgent ? 'Sign Waiver Now →' : 'View Submission →'}
                         </Link>
@@ -758,8 +625,7 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
                                 addToast({ type: 'error', title: 'Archive Failed', message: res.error });
                               }
                             }}
-                            className="btn btn-secondary"
-                            style={{ fontSize: '0.78rem', padding: '8px 12px', color: 'var(--muted)', minHeight: '40px', borderRadius: '10px' }}
+                            className="btn btn-secondary text-xs !py-2 !px-3 text-muted min-h-[40px] !rounded-xl"
                             title="Archive waiver off home feed"
                           >
                             📁 Archive
@@ -774,7 +640,7 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
           )}
 
           {/* ── My Photo Gallery Section ── */}
-          <div className="glass-container anim-card" style={{ padding: '20px', borderRadius: '16px' }}>
+          <div className="glass-container anim-card !p-5 !rounded-2xl">
             <PhotoGallery
               photos={photos}
               isOwner={true}
@@ -802,27 +668,27 @@ const DashboardClient = ({ profile: initialProfile, initialPhotos = [], isAdmin,
 
           {/* ── Quick Choir Shortcuts (Desktop View) ── */}
           <div className="dashboard-shortcuts-grid">
-            <Link href="/calendar" className="glass-container anim-card" style={{ padding: '16px', textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '14px' }}>
-              <span style={{ fontSize: '1.8rem' }}>📅</span>
+            <Link href="/calendar" className="glass-container anim-card !p-4 no-underline text-inherit flex items-center gap-3 !rounded-2xl hover:border-primary/20 transition-all">
+              <span className="text-3xl">📅</span>
               <div>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>Calendar & Birthdays</h4>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--muted)' }}>Rehearsals & celebrations</p>
+                <h4 className="m-0 text-sm font-bold text-foreground">Calendar &amp; Birthdays</h4>
+                <p className="m-0 text-xs text-muted">Rehearsals &amp; celebrations</p>
               </div>
             </Link>
 
-            <Link href="/directory" className="glass-container anim-card" style={{ padding: '16px', textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '14px' }}>
-              <span style={{ fontSize: '1.8rem' }}>👥</span>
+            <Link href="/directory" className="glass-container anim-card !p-4 no-underline text-inherit flex items-center gap-3 !rounded-2xl hover:border-primary/20 transition-all">
+              <span className="text-3xl">👥</span>
               <div>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>Member Directory</h4>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--muted)' }}>Roster & contact details</p>
+                <h4 className="m-0 text-sm font-bold text-foreground">Member Directory</h4>
+                <p className="m-0 text-xs text-muted">Roster &amp; contact details</p>
               </div>
             </Link>
 
-            <Link href="/repertoire" className="glass-container anim-card" style={{ padding: '16px', textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '14px' }}>
-              <span style={{ fontSize: '1.8rem' }}>🎶</span>
+            <Link href="/repertoire" className="glass-container anim-card !p-4 no-underline text-inherit flex items-center gap-3 !rounded-2xl hover:border-primary/20 transition-all">
+              <span className="text-3xl">🎶</span>
               <div>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)' }}>Song Repertoire</h4>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--muted)' }}>Tracks & sheet music</p>
+                <h4 className="m-0 text-sm font-bold text-foreground">Song Repertoire</h4>
+                <p className="m-0 text-xs text-muted">Tracks &amp; sheet music</p>
               </div>
             </Link>
           </div>

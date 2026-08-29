@@ -215,78 +215,74 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--background)', color: 'var(--foreground)' }}>
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar profile={currentUserProfile} />
 
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 16px 64px' }}>
+      <main className="max-w-[1200px] mx-auto py-8 px-4 pb-16">
         {/* Header Title */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+        <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary)' }}>
+            <div className="flex items-center gap-3">
+              <h1 className="m-0 text-2xl sm:text-[1.8rem] font-extrabold text-primary">
                 Waiver Verifications
               </h1>
               {submittedCount > 0 && (
-                <span className="badge badge-danger" style={{ fontSize: '0.85rem', padding: '4px 10px' }}>
+                <span className="badge badge-danger text-xs sm:text-[0.85rem] !py-1 !px-2.5">
                   {submittedCount} PENDING REVIEW
                 </span>
               )}
             </div>
-            <p style={{ margin: '6px 0 0', color: 'var(--muted)', fontSize: '0.92rem' }}>
+            <p className="mt-1.5 mb-0 text-muted text-sm sm:text-[0.92rem]">
               Review submitted digital signatures, selfies, and multi-dependent waivers.
             </p>
           </div>
 
-          <Link href="/admin/documents" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
+          <Link href="/admin/documents" className="btn btn-secondary text-xs sm:text-sm">
             ← Back to Documents Manager
           </Link>
         </div>
 
         {/* Filters & Control Toolbar Bar */}
-        <div className="glass-container" style={{ padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div className="glass-container p-4 mb-6 flex items-center justify-between flex-wrap gap-4">
           {/* Status Tabs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setActiveTab('submitted')}
-              className={`btn ${activeTab === 'submitted' ? 'btn-danger' : 'btn-secondary'}`}
-              style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+              className={`btn text-xs sm:text-sm !py-2 !px-4 ${activeTab === 'submitted' ? 'btn-danger' : 'btn-secondary'}`}
             >
               Submitted ({submittedCount})
             </button>
             <button
               onClick={() => setActiveTab('verified')}
-              className={`btn ${activeTab === 'verified' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+              className={`btn text-xs sm:text-sm !py-2 !px-4 ${activeTab === 'verified' ? 'btn-primary' : 'btn-secondary'}`}
             >
               Verified ({verifications.filter((v) => v.status === 'verified' || v.status === 'verified_manual').length})
             </button>
             <button
               onClick={() => setActiveTab('rejected')}
-              className={`btn ${activeTab === 'rejected' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+              className={`btn text-xs sm:text-sm !py-2 !px-4 ${activeTab === 'rejected' ? 'btn-primary' : 'btn-secondary'}`}
             >
               Rejected ({verifications.filter((v) => v.status === 'rejected').length})
             </button>
             <button
               onClick={() => setActiveTab('all')}
-              className={`btn ${activeTab === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+              className={`btn text-xs sm:text-sm !py-2 !px-4 ${activeTab === 'all' ? 'btn-primary' : 'btn-secondary'}`}
             >
               All ({verifications.length})
             </button>
           </div>
 
           {/* Search, Sort Dropdown, and View Mode Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', width: '100%', maxWidth: '580px', justifyContent: 'flex-end' }}>
+          <div className="flex items-center gap-2 flex-wrap w-full max-w-[580px] justify-end">
             {/* Search Input */}
-            <div style={{ position: 'relative', flex: 1, minWidth: '180px' }}>
-              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
+            <div className="relative flex-1 min-w-[180px]">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
               <input
                 type="text"
                 placeholder="Search member or document..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ width: '100%', padding: '8px 12px 8px 36px', borderRadius: '10px', border: '1px solid var(--border)', background: '#ffffff', color: 'var(--foreground)', fontSize: '0.85rem' }}
+                className="w-full py-2 pr-3 pl-9 rounded-xl border border-border bg-white text-foreground text-xs sm:text-sm"
               />
             </div>
 
@@ -294,16 +290,7 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
             <select
               value={sortBy}
               onChange={(e: any) => setSortBy(e.target.value)}
-              style={{
-                padding: '8px 10px',
-                borderRadius: '10px',
-                border: '1px solid var(--border)',
-                background: '#ffffff',
-                color: 'var(--foreground)',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
+              className="py-2 px-2.5 rounded-xl border border-border bg-white text-foreground text-xs font-semibold cursor-pointer"
             >
               <option value="newest">🕒 Newest First</option>
               <option value="oldest">⏳ Oldest First</option>
@@ -312,25 +299,14 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
             </select>
 
             {/* View Mode Toggle */}
-            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: '10px', padding: '2px' }}>
+            <div className="flex bg-black/5 rounded-xl p-0.5">
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
                 title="Card Grid View"
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: viewMode === 'grid' ? '#ffffff' : 'transparent',
-                  color: viewMode === 'grid' ? 'var(--primary)' : 'var(--muted)',
-                  cursor: 'pointer',
-                  boxShadow: viewMode === 'grid' ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                }}
+                className={`py-1.5 px-2.5 rounded-lg border-0 cursor-pointer flex items-center gap-1 text-xs font-bold ${
+                  viewMode === 'grid' ? 'bg-white text-primary shadow-sm' : 'bg-transparent text-muted'
+                }`}
               >
                 <LayoutGrid size={15} /> Grid
               </button>
@@ -338,20 +314,9 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                 type="button"
                 onClick={() => setViewMode('list')}
                 title="Table List View"
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: viewMode === 'list' ? '#ffffff' : 'transparent',
-                  color: viewMode === 'list' ? 'var(--primary)' : 'var(--muted)',
-                  cursor: 'pointer',
-                  boxShadow: viewMode === 'list' ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                }}
+                className={`py-1.5 px-2.5 rounded-lg border-0 cursor-pointer flex items-center gap-1 text-xs font-bold ${
+                  viewMode === 'list' ? 'bg-white text-primary shadow-sm' : 'bg-transparent text-muted'
+                }`}
               >
                 <List size={15} /> List
               </button>
@@ -361,10 +326,10 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
 
         {/* Bulk Action Bar (when viewing submitted tab & items selected) */}
         {activeTab === 'submitted' && filteredItems.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', padding: '0 8px' }}>
+          <div className="flex items-center justify-between mb-4 px-2">
             <button
               onClick={toggleSelectAll}
-              style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              className="bg-transparent border-0 text-primary font-semibold text-sm cursor-pointer inline-flex items-center gap-1.5"
             >
               {selectedIds.length > 0 && selectedIds.length === filteredItems.length ? (
                 <CheckSquare size={18} />
@@ -380,14 +345,13 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
               <button
                 onClick={handleBulkApprove}
                 disabled={isPending}
-                className="btn btn-primary"
-                style={{ fontSize: '0.85rem', padding: '6px 16px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                className="btn btn-primary text-xs sm:text-sm !py-1.5 !px-4 inline-flex items-center gap-1.5"
               >
                 <Check size={16} /> Approve Selected ({selectedIds.length})
               </button>
             )}
 
-            <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+            <span className="text-xs sm:text-sm text-muted">
               Showing {filteredItems.length} submission{filteredItems.length === 1 ? '' : 's'}
             </span>
           </div>
@@ -395,12 +359,12 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
 
         {/* Verification Submissions View (Grid or Table List) */}
         {filteredItems.length === 0 ? (
-          <div className="glass-container" style={{ textAlign: 'center', padding: '64px 20px', color: 'var(--muted)' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📋</div>
-            <p style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--foreground)', margin: '0 0 8px' }}>
+          <div className="glass-container text-center py-16 px-5 text-muted">
+            <div className="text-5xl mb-3">📋</div>
+            <p className="text-base sm:text-[1.05rem] font-semibold text-foreground m-0 mb-2">
               No submissions found
             </p>
-            <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            <p className="m-0 text-sm sm:text-[0.9rem]">
               {activeTab === 'submitted'
                 ? 'All pending waiver signatures have been reviewed!'
                 : `No records match status "${activeTab}".`}
@@ -408,83 +372,83 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
           </div>
         ) : viewMode === 'list' ? (
           /* Compact Table List View (Mobile Responsive with Touch Scroll) */
-          <div className="glass-container" style={{ padding: '0', overflow: 'hidden', borderRadius: '16px' }}>
-            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              <table style={{ width: '100%', minWidth: '760px', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
+          <div className="glass-container p-0 overflow-hidden rounded-2xl">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] border-collapse text-xs sm:text-sm text-left">
                 <thead>
-                  <tr style={{ background: 'rgba(11,77,36,0.06)', borderBottom: '1px solid var(--border)' }}>
-                    {activeTab === 'submitted' && <th style={{ padding: '12px 16px', width: '36px' }}></th>}
-                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>Member</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>Document</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>Signer & Family</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>Thumbnails</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>Status</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', textAlign: 'right', whiteSpace: 'nowrap' }}>Actions</th>
+                  <tr className="bg-primary/6 border-b border-border">
+                    {activeTab === 'submitted' && <th className="py-3 px-4 w-9"></th>}
+                    <th className="py-3 px-4 font-bold text-primary whitespace-nowrap">Member</th>
+                    <th className="py-3 px-4 font-bold text-primary whitespace-nowrap">Document</th>
+                    <th className="py-3 px-4 font-bold text-primary whitespace-nowrap">Signer & Family</th>
+                    <th className="py-3 px-4 font-bold text-primary whitespace-nowrap">Thumbnails</th>
+                    <th className="py-3 px-4 font-bold text-primary whitespace-nowrap">Status</th>
+                    <th className="py-3 px-4 font-bold text-primary text-right whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredItems.map((item) => {
                     const isSelected = selectedIds.includes(item.id);
                     return (
-                      <tr key={item.id} style={{ borderBottom: '1px solid var(--glass-border)', background: isSelected ? 'rgba(11,77,36,0.04)' : undefined }}>
+                      <tr key={item.id} className={`border-b border-glass-border ${isSelected ? 'bg-primary/4' : ''}`}>
                         {activeTab === 'submitted' && (
-                          <td style={{ padding: '12px 16px' }}>
+                          <td className="py-3 px-4">
                             <input
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => toggleSelect(item.id)}
-                              style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                              className="w-4 h-4 cursor-pointer accent-primary"
                             />
                           </td>
                         )}
-                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ position: 'relative', width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(30,58,138,0.1)', flexShrink: 0 }}>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2.5">
+                            <div className="relative w-8 h-8 rounded-full overflow-hidden bg-primary/10 flex-shrink-0">
                               {item.member?.avatar_url ? (
-                                <Image src={item.member.avatar_url} alt={item.member.full_name} fill style={{ objectFit: 'cover' }} />
+                                <Image src={item.member.avatar_url} alt={item.member.full_name} fill className="object-cover" />
                               ) : (
-                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--primary)', fontSize: '0.8rem' }}>
+                                <div className="w-full h-full flex items-center justify-center font-bold text-primary text-xs">
                                   {item.member?.full_name?.substring(0, 2).toUpperCase() || 'M'}
                                 </div>
                               )}
                             </div>
                             <div>
-                              <div style={{ fontWeight: 700, color: 'var(--foreground)' }}>{item.member?.full_name}</div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{item.member?.role} • {item.member?.voice_part || 'Vocalist'}</div>
+                              <div className="font-bold text-foreground">{item.member?.full_name}</div>
+                              <div className="text-xs text-muted">{item.member?.role} • {item.member?.voice_part || 'Vocalist'}</div>
                             </div>
                           </div>
                         </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <div style={{ fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>{item.document?.title}</div>
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-primary whitespace-nowrap">{item.document?.title}</div>
                           {item.signedPdfSignedUrl && (
                             <button
                               type="button"
                               onClick={() => setPdfPreviewModal({ url: item.signedPdfSignedUrl!, title: `${item.document?.title || 'Signed Waiver'} — ${item.member?.full_name}` })}
-                              style={{ background: 'none', border: 'none', color: 'var(--primary)', padding: 0, fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', marginTop: '2px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                              className="bg-transparent border-0 text-primary p-0 text-xs font-bold cursor-pointer underline mt-0.5 whitespace-nowrap inline-flex items-center gap-1"
                             >
                               📄 View Stamped PDF
                             </button>
                           )}
                         </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <div style={{ fontWeight: 600 }}>{item.signer_printed_name || 'Self'} ({item.signer_relationship || 'Member'})</div>
+                        <td className="py-3 px-4">
+                          <div className="font-semibold">{item.signer_printed_name || 'Self'} ({item.signer_relationship || 'Member'})</div>
                           {item.additional_names && item.additional_names.length > 0 && (
                             <button
                               onClick={() => setDependentsModal({ memberName: item.member?.full_name || 'Member', names: item.additional_names })}
-                              style={{ background: 'rgba(30,58,138,0.1)', color: 'var(--primary)', border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', marginTop: '4px' }}
+                              className="bg-primary/10 text-primary border-0 rounded py-0.5 px-1.5 text-[0.72rem] font-bold cursor-pointer mt-1"
                             >
                               👥 +{item.additional_names.length} Dependents
                             </button>
                           )}
                         </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <div style={{ display: 'flex', gap: '6px' }}>
+                        <td className="py-3 px-4">
+                          <div className="flex gap-1.5">
                             {item.signatureSignedUrl && (
                               <img
                                 src={item.signatureSignedUrl}
                                 alt="Signature"
                                 onClick={() => setLightboxUrl({ url: item.signatureSignedUrl!, title: `Signature: ${item.member?.full_name}` })}
-                                style={{ width: '48px', height: '32px', objectFit: 'contain', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', background: '#fff' }}
+                                className="w-12 h-8 object-contain border border-border rounded cursor-pointer bg-white"
                               />
                             )}
                             {item.selfieSignedUrl && (
@@ -492,24 +456,23 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                                 src={item.selfieSignedUrl}
                                 alt="Selfie"
                                 onClick={() => setLightboxUrl({ url: item.selfieSignedUrl!, title: `Selfie: ${item.member?.full_name}` })}
-                                style={{ width: '32px', height: '32px', objectFit: 'cover', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer' }}
+                                className="w-8 h-8 object-cover border border-border rounded cursor-pointer"
                               />
                             )}
                           </div>
                         </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <span className={`badge ${item.status === 'verified' || item.status === 'verified_manual' ? 'badge-success' : item.status === 'rejected' ? 'badge-danger' : 'badge-warning'}`} style={{ fontSize: '0.72rem' }}>
+                        <td className="py-3 px-4">
+                          <span className={`badge ${item.status === 'verified' || item.status === 'verified_manual' ? 'badge-success' : item.status === 'rejected' ? 'badge-danger' : 'badge-warning'} text-[0.72rem]`}>
                             {item.status.toUpperCase()}
                           </span>
                         </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex gap-1 justify-end">
                             {item.status !== 'verified' && item.status !== 'verified_manual' && (
                               <button
                                 onClick={() => handleSingleApprove(item.id)}
                                 disabled={isPending}
-                                className="btn btn-primary"
-                                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                className="btn btn-primary !py-1 !px-2 text-xs"
                                 title="Approve Signature"
                               >
                                 <Check size={13} />
@@ -519,8 +482,7 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                               <button
                                 onClick={() => handleReject(item.id)}
                                 disabled={isPending}
-                                className="btn btn-secondary"
-                                style={{ padding: '4px 8px', fontSize: '0.75rem', color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)' }}
+                                className="btn btn-secondary !py-1 !px-2 text-xs !text-red-600 !border-red-600/30"
                                 title="Reject Signature"
                               >
                                 <X size={13} />
@@ -529,8 +491,7 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                             <button
                               onClick={() => handleDelete(item.id)}
                               disabled={isPending}
-                              className="btn btn-secondary"
-                              style={{ padding: '4px 8px', fontSize: '0.75rem', color: '#991b1b', borderColor: 'rgba(153,27,27,0.3)' }}
+                              className="btn btn-secondary !py-1 !px-2 text-xs !text-red-800 !border-red-800/30"
                               title="Delete Record & Purge Files"
                             >
                               <Trash2 size={13} />
@@ -546,7 +507,7 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
           </div>
         ) : (
           /* Card Grid View */
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
             {filteredItems.map((item) => {
               const isSelected = selectedIds.includes(item.id);
               const hasDependents = item.additional_names && item.additional_names.length > 0;
@@ -554,43 +515,36 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
               return (
                 <div
                   key={item.id}
-                  className="glass-container anim-card"
-                  style={{
-                    padding: '20px',
-                    position: 'relative',
-                    border: isSelected ? '2px solid var(--primary)' : '1px solid var(--glass-border)',
-                    boxShadow: isSelected ? '0 8px 24px rgba(11,77,36,0.15)' : undefined,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                  }}
+                  className={`glass-container anim-card p-5 relative flex flex-col justify-between border ${
+                    isSelected ? 'border-2 border-primary shadow-lg shadow-primary/15' : 'border-glass-border'
+                  }`}
                 >
                   {/* Top Bar with Select Checkbox & Status */}
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="flex items-start justify-between gap-2.5 mb-3.5">
+                      <div className="flex items-center gap-2.5">
                         {item.status === 'submitted' && (
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => toggleSelect(item.id)}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                            className="w-4.5 h-4.5 cursor-pointer accent-primary"
                           />
                         )}
-                        <div style={{ position: 'relative', width: '38px', height: '38px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(30,58,138,0.1)', flexShrink: 0 }}>
+                        <div className="relative w-9.5 h-9.5 rounded-full overflow-hidden bg-primary/10 flex-shrink-0">
                           {item.member?.avatar_url ? (
-                            <Image src={item.member.avatar_url} alt={item.member.full_name} fill style={{ objectFit: 'cover' }} />
+                            <Image src={item.member.avatar_url} alt={item.member.full_name} fill className="object-cover" />
                           ) : (
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>
+                            <div className="w-full h-full flex items-center justify-center font-bold text-primary text-sm">
                               {item.member?.full_name?.substring(0, 2).toUpperCase() || 'M'}
                             </div>
                           )}
                         </div>
                         <div>
-                          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--foreground)' }}>
+                          <div className="font-bold text-sm sm:text-[0.95rem] text-foreground">
                             {item.member?.full_name}
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+                          <div className="text-xs text-muted">
                             {item.member?.role} • {item.member?.voice_part || 'Vocalist'}
                           </div>
                         </div>
@@ -602,34 +556,24 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                     </div>
 
                     {/* Document Details */}
-                    <div style={{ padding: '12px', borderRadius: '10px', background: 'rgba(0,0,0,0.02)', border: '1px solid var(--border)', marginBottom: '16px' }}>
-                      <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '0.5px' }}>
+                    <div className="p-3 rounded-xl bg-black/2 border border-border mb-4">
+                      <div className="text-xs uppercase text-muted tracking-wider">
                         Document
                       </div>
-                      <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem', marginTop: '2px' }}>
+                      <div className="font-bold text-primary text-sm sm:text-[0.95rem] mt-0.5">
                         {item.document?.title}
                       </div>
 
                       {item.signer_printed_name && (
-                        <div style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: '4px' }}>
-                          Signed by: <strong style={{ color: 'var(--foreground)' }}>{item.signer_printed_name}</strong> ({item.signer_relationship || 'Self'})
+                        <div className="text-xs sm:text-sm text-muted mt-1">
+                          Signed by: <strong className="text-foreground">{item.signer_printed_name}</strong> ({item.signer_relationship || 'Self'})
                         </div>
                       )}
 
                       {hasDependents && (
                         <button
                           onClick={() => setDependentsModal({ memberName: item.member?.full_name || 'Member', names: item.additional_names })}
-                          className="badge"
-                          style={{
-                            marginTop: '6px',
-                            marginRight: '6px',
-                            background: 'rgba(30,58,138,0.1)',
-                            color: 'var(--primary)',
-                            cursor: 'pointer',
-                            fontWeight: 700,
-                            border: 'none',
-                            fontSize: '0.75rem',
-                          }}
+                          className="badge mt-1.5 mr-1.5 !bg-primary/10 !text-primary cursor-pointer font-bold border-none text-xs"
                         >
                           👥 +{item.additional_names.length} DEPENDENTS (VIEW)
                         </button>
@@ -639,90 +583,62 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                         <button
                           type="button"
                           onClick={() => setPdfPreviewModal({ url: item.signedPdfSignedUrl!, title: `${item.document?.title || 'Signed Waiver'} — ${item.member?.full_name}` })}
-                          className="badge"
-                          style={{
-                            marginTop: '6px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            background: 'rgba(11,77,36,0.12)',
-                            color: 'var(--primary)',
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            border: 'none',
-                            cursor: 'pointer',
-                          }}
+                          className="badge mt-1.5 inline-flex items-center gap-1 !bg-primary/12 !text-primary font-bold text-xs border-none cursor-pointer"
                         >
                           📄 VIEW STAMPED PDF
                         </button>
                       )}
 
                       {(item.known_allergies || item.current_medications || item.no_allergies || item.no_medications) && (
-                        <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--glass-border)', fontSize: '0.8rem' }}>
-                          <div style={{ fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem' }}>
+                        <div className="mt-2 pt-2 border-t border-dashed border-glass-border text-xs sm:text-sm">
+                          <div className="font-bold text-primary flex items-center gap-1 text-xs">
                             🩺 Medical Authorization Info:
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--foreground)', marginTop: '2px' }}>
-                            <strong>Allergies/Conditions:</strong> {item.no_allergies ? <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>None indicated</span> : (item.known_allergies || 'None')}
+                          <div className="text-xs text-foreground mt-0.5">
+                            <strong>Allergies/Conditions:</strong> {item.no_allergies ? <span className="text-muted italic">None indicated</span> : (item.known_allergies || 'None')}
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--foreground)', marginTop: '2px' }}>
-                            <strong>Medications:</strong> {item.no_medications ? <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>None indicated</span> : (item.current_medications || 'None')}
+                          <div className="text-xs text-foreground mt-0.5">
+                            <strong>Medications:</strong> {item.no_medications ? <span className="text-muted italic">None indicated</span> : (item.current_medications || 'None')}
                           </div>
                         </div>
                       )}
                     </div>
 
                     {/* Signature & Selfie Image Thumbnails */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                    <div className="grid grid-cols-2 gap-2.5 mb-4">
                       {/* Signature Thumbnail */}
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '4px' }}>
+                      <div className="text-center">
+                        <div className="text-xs font-semibold text-muted mb-1">
                           Signature
                         </div>
                         {item.signatureSignedUrl ? (
                           <div
                             onClick={() => setLightboxUrl({ url: item.signatureSignedUrl!, title: `Signature: ${item.member?.full_name}` })}
-                            style={{
-                              height: '74px',
-                              borderRadius: '8px',
-                              border: '1px solid var(--border)',
-                              background: '#ffffff',
-                              position: 'relative',
-                              cursor: 'pointer',
-                              overflow: 'hidden',
-                            }}
+                            className="h-[74px] rounded-lg border border-border bg-white relative cursor-pointer overflow-hidden"
                           >
-                            <Image src={item.signatureSignedUrl} alt="Signature" fill style={{ objectFit: 'contain', padding: '6px' }} />
+                            <Image src={item.signatureSignedUrl} alt="Signature" fill className="object-contain p-1.5" />
                           </div>
                         ) : (
-                          <div style={{ height: '74px', borderRadius: '8px', border: '1px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: 'var(--muted)' }}>
+                          <div className="h-[74px] rounded-lg border border-dashed border-border flex items-center justify-center text-xs text-muted">
                             {item.status === 'verified_manual' ? 'Paper on File' : 'No Image'}
                           </div>
                         )}
                       </div>
 
                       {/* Selfie Thumbnail */}
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '4px' }}>
+                      <div className="text-center">
+                        <div className="text-xs font-semibold text-muted mb-1">
                           Selfie Verification
                         </div>
                         {item.selfieSignedUrl ? (
                           <div
                             onClick={() => setLightboxUrl({ url: item.selfieSignedUrl!, title: `Selfie: ${item.member?.full_name}` })}
-                            style={{
-                              height: '74px',
-                              borderRadius: '8px',
-                              border: '1px solid var(--border)',
-                              background: '#ffffff',
-                              position: 'relative',
-                              cursor: 'pointer',
-                              overflow: 'hidden',
-                            }}
+                            className="h-[74px] rounded-lg border border-border bg-white relative cursor-pointer overflow-hidden"
                           >
-                            <Image src={item.selfieSignedUrl} alt="Selfie Verification" fill style={{ objectFit: 'cover' }} />
+                            <Image src={item.selfieSignedUrl} alt="Selfie Verification" fill className="object-cover" />
                           </div>
                         ) : (
-                          <div style={{ height: '74px', borderRadius: '8px', border: '1px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: 'var(--muted)' }}>
+                          <div className="h-[74px] rounded-lg border border-dashed border-border flex items-center justify-center text-xs text-muted">
                             {item.status === 'verified_manual' ? 'Paper on File' : 'No Selfie'}
                           </div>
                         )}
@@ -732,17 +648,16 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
 
                   {/* Card Action Buttons */}
                   <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '10px' }}>
+                    <div className="text-xs text-muted mb-2.5">
                       Updated: {new Date(item.updated_at).toLocaleString()}
                     </div>
 
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <div className="flex gap-1.5 flex-wrap">
                       {item.status !== 'verified' && item.status !== 'verified_manual' && (
                         <button
                           onClick={() => handleSingleApprove(item.id)}
                           disabled={isPending}
-                          className="btn btn-primary"
-                          style={{ flex: 1, padding: '8px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                          className="btn btn-primary flex-1 !py-2 !px-2.5 text-xs sm:text-[0.8rem] inline-flex items-center justify-center gap-1"
                         >
                           <Check size={14} /> Approve
                         </button>
@@ -752,8 +667,7 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                         <button
                           onClick={() => handleReject(item.id)}
                           disabled={isPending}
-                          className="btn btn-secondary"
-                          style={{ padding: '8px 10px', fontSize: '0.8rem', color: '#dc2626', borderColor: 'rgba(220,38,38,0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          className="btn btn-secondary !py-2 !px-2.5 text-xs sm:text-[0.8rem] !text-red-600 !border-red-600/30 inline-flex items-center gap-1"
                         >
                           <X size={14} /> Reject
                         </button>
@@ -763,8 +677,7 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                         <button
                           onClick={() => handleManualVerify(item.id)}
                           disabled={isPending}
-                          className="btn btn-secondary"
-                          style={{ padding: '8px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          className="btn btn-secondary !py-2 !px-2.5 text-xs sm:text-[0.8rem] inline-flex items-center gap-1"
                           title="Verify manually with paper file"
                         >
                           <FileCheck size={14} /> Paper
@@ -774,8 +687,7 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
                       <button
                         onClick={() => handleDelete(item.id)}
                         disabled={isPending}
-                        className="btn btn-secondary"
-                        style={{ padding: '8px 10px', fontSize: '0.8rem', color: '#991b1b', borderColor: 'rgba(153,27,27,0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        className="btn btn-secondary !py-2 !px-2.5 text-xs sm:text-[0.8rem] !text-red-800 !border-red-800/30 inline-flex items-center gap-1"
                         title="Delete Record & Purge Files"
                       >
                         <Trash2 size={14} /> Delete
@@ -792,74 +704,29 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
       {/* Image Lightbox Modal */}
       {lightboxUrl && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1100,
-            background: 'rgba(15,23,42,0.65)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-          }}
+          className="fixed inset-0 z-[1100] bg-slate-900/65 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setLightboxUrl(null)}
         >
           <div
-            className="glass-container"
+            className="glass-container max-w-[540px] w-full max-h-[90vh] p-5 bg-white rounded-3xl shadow-2xl flex flex-col gap-3.5"
             onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: '540px',
-              width: '100%',
-              maxHeight: '90vh',
-              padding: '20px',
-              background: '#ffffff',
-              borderRadius: '20px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-            }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary)' }}>
+            <div className="flex items-center justify-between">
+              <h3 className="m-0 text-base sm:text-[1.05rem] font-bold text-primary">
                 {lightboxUrl.title}
               </h3>
               <button
                 type="button"
                 onClick={() => setLightboxUrl(null)}
-                style={{
-                  background: 'rgba(0,0,0,0.06)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.1rem',
-                  cursor: 'pointer',
-                  color: 'var(--foreground)',
-                }}
+                className="bg-black/6 border-none rounded-full w-8 h-8 flex items-center justify-center text-lg cursor-pointer text-foreground"
                 aria-label="Close"
               >
                 &times;
               </button>
             </div>
 
-            <div
-              style={{
-                position: 'relative',
-                width: '100%',
-                height: 'min(360px, 50vh)',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                background: '#f8fafc',
-                border: '1px solid var(--border)',
-              }}
-            >
-              <Image src={lightboxUrl.url} alt={lightboxUrl.title} fill style={{ objectFit: 'contain' }} />
+            <div className="relative w-full h-[min(360px,50vh)] rounded-xl overflow-hidden bg-slate-50 border border-border">
+              <Image src={lightboxUrl.url} alt={lightboxUrl.title} fill className="object-contain" />
             </div>
           </div>
         </div>
@@ -868,85 +735,38 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
       {/* Dependents Modal */}
       {dependentsModal && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1100,
-            background: 'rgba(15,23,42,0.65)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-          }}
+          className="fixed inset-0 z-[1100] bg-slate-900/65 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setDependentsModal(null)}
         >
           <div
-            className="glass-container"
+            className="glass-container max-w-[460px] w-full max-h-[90vh] overflow-y-auto p-6 bg-white rounded-3xl shadow-2xl flex flex-col gap-3.5"
             onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: '460px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: '24px',
-              background: '#ffffff',
-              borderRadius: '20px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-            }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="flex items-center justify-between">
+              <h3 className="m-0 text-base sm:text-[1.05rem] font-bold text-primary flex items-center gap-2">
                 👥 Covered Participants ({dependentsModal.memberName})
               </h3>
               <button
                 type="button"
                 onClick={() => setDependentsModal(null)}
-                style={{
-                  background: 'rgba(0,0,0,0.06)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.1rem',
-                  cursor: 'pointer',
-                  color: 'var(--foreground)',
-                }}
+                className="bg-black/6 border-none rounded-full w-8 h-8 flex items-center justify-center text-lg cursor-pointer text-foreground"
                 aria-label="Close"
               >
                 &times;
               </button>
             </div>
 
-            <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: 0 }}>
+            <p className="text-xs sm:text-sm text-muted m-0">
               The signer registered the following dependents / family members on this digital waiver:
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+            <div className="flex flex-col gap-2 mt-1">
               {dependentsModal.names.map((name, idx) => (
                 <div
                   key={idx}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '10px 14px',
-                    borderRadius: '10px',
-                    background: 'rgba(11,77,36,0.06)',
-                    border: '1px solid var(--border)',
-                    fontSize: '0.925rem',
-                    fontWeight: 600,
-                    color: 'var(--foreground)',
-                  }}
+                  className="flex items-center gap-2.5 p-2.5 sm:py-2.5 sm:px-3.5 rounded-xl bg-primary/6 border border-border text-sm sm:text-[0.925rem] font-semibold text-foreground"
                 >
-                  <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontSize: '0.725rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span className="w-5.5 h-5.5 rounded-full bg-primary text-white text-[0.725rem] flex items-center justify-center flex-shrink-0">
                     {idx + 1}
                   </span>
                   <span>{name}</span>
@@ -960,64 +780,31 @@ export default function VerificationsClient({ currentUserProfile, initialVerific
       {/* Stamped PDF In-App Preview Modal */}
       {pdfPreviewModal && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1100,
-            background: 'rgba(15,23,42,0.65)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '12px',
-          }}
+          className="fixed inset-0 z-[1100] bg-slate-900/65 backdrop-blur-md flex items-center justify-center p-3"
           onClick={() => setPdfPreviewModal(null)}
         >
           <div
-            className="glass-container"
-            style={{
-              width: '96%',
-              maxWidth: '880px',
-              height: '90vh',
-              maxHeight: '820px',
-              display: 'flex',
-              flexDirection: 'column',
-              padding: '0',
-              overflow: 'hidden',
-              borderRadius: '16px',
-              background: '#ffffff',
-            }}
+            className="glass-container w-[96%] max-w-[880px] h-[90vh] max-h-[820px] flex flex-col p-0 overflow-hidden rounded-2xl bg-white"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Top Bar */}
-            <div
-              style={{
-                padding: '14px 20px',
-                borderBottom: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                background: '#ffffff',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            <div className="py-3.5 px-5 border-b border-border flex items-center justify-between bg-white">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-base font-bold text-primary truncate">
                   📄 {pdfPreviewModal.title}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setPdfPreviewModal(null)}
-                className="btn btn-secondary"
-                style={{ padding: '6px 14px', fontSize: '0.82rem', fontWeight: 600 }}
+                className="btn btn-secondary !py-1.5 !px-3.5 text-xs font-semibold"
               >
                 ✕ Close
               </button>
             </div>
 
             {/* Modal Canvas Viewer Body */}
-            <div style={{ flex: 1, padding: '12px', overflow: 'hidden', background: '#f8fafc' }}>
+            <div className="flex-1 p-3 overflow-hidden bg-slate-50">
               <PdfCanvasViewer url={pdfPreviewModal.url} title={pdfPreviewModal.title} height="100%" />
             </div>
           </div>

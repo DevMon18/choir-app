@@ -117,7 +117,7 @@ export const SongsManagerClient = ({
   });
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+    <div ref={containerRef} className="flex flex-col min-h-screen relative">
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
 
@@ -126,7 +126,7 @@ export const SongsManagerClient = ({
       <main className="admin-content-full">
         {/* Alert banner */}
         {actionMsg && (
-          <div className={`alert ${actionMsg.type === 'error' ? 'alert-error' : 'alert-success'} content-anim-item`} style={{ marginBottom: '20px' }}>
+          <div className={`alert ${actionMsg.type === 'error' ? 'alert-error' : 'alert-success'} content-anim-item mb-5`}>
             <span>{actionMsg.text}</span>
           </div>
         )}
@@ -134,44 +134,20 @@ export const SongsManagerClient = ({
         {/* Tab Switcher */}
         {viewMode === 'list' && (
           <div className="content-anim-item songs-tab-bar">
-          <button
+            <button
               onClick={() => setActiveTab('songs')}
-              className="songs-tab-btn"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 18px',
-                borderRadius: '12px',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                border: 'none',
-                background: activeTab === 'songs' ? 'var(--primary)' : 'transparent',
-                color: activeTab === 'songs' ? '#ffffff' : 'var(--muted)',
-                transition: 'all 0.15s ease',
-              }}
+              className={`songs-tab-btn inline-flex items-center gap-2 !py-2 !px-4.5 !rounded-xl text-sm sm:text-[0.9rem] font-semibold cursor-pointer border-none transition-all ${
+                activeTab === 'songs' ? '!bg-primary !text-white' : '!bg-transparent !text-muted'
+              }`}
             >
               <Music size={16} />
               <span>Song Library</span>
             </button>
             <button
               onClick={() => setActiveTab('categories')}
-              className="songs-tab-btn"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 18px',
-                borderRadius: '12px',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                border: 'none',
-                background: activeTab === 'categories' ? 'var(--primary)' : 'transparent',
-                color: activeTab === 'categories' ? '#ffffff' : 'var(--muted)',
-                transition: 'all 0.15s ease',
-              }}
+              className={`songs-tab-btn inline-flex items-center gap-2 !py-2 !px-4.5 !rounded-xl text-sm sm:text-[0.9rem] font-semibold cursor-pointer border-none transition-all ${
+                activeTab === 'categories' ? '!bg-primary !text-white' : '!bg-transparent !text-muted'
+              }`}
             >
               <Tag size={16} />
               <span>Manage Categories ({categoriesList.length})</span>
@@ -183,26 +159,24 @@ export const SongsManagerClient = ({
         {activeTab === 'songs' && (
           <>
             {viewMode === 'list' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div className="flex flex-col gap-6">
                 {/* Header */}
-                <div className="content-anim-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px' }}>
+                <div className="content-anim-item flex justify-between items-end flex-wrap gap-3">
                   <div>
-                    <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '6px' }}>Song Library</h2>
-                    <p style={{ color: 'var(--muted)' }}>Manage ChordPro lyrics and song catalogue</p>
+                    <h2 className="text-2xl sm:text-[1.75rem] font-bold text-primary mb-1.5">Song Library</h2>
+                    <p className="text-muted text-sm sm:text-base">Manage ChordPro lyrics and song catalogue</p>
                   </div>
-                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <div className="flex gap-2.5 items-center">
                     <button
                       onClick={() => setShowArchived(!showArchived)}
-                      className="btn btn-secondary"
-                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                      className="btn btn-secondary !py-2 !px-4 text-xs sm:text-sm"
                     >
                       {showArchived ? 'Show Active' : 'Show Archived'}
                     </button>
                     {/* Desktop-only — hidden on mobile, replaced by sticky FAB below */}
                     <button
                       onClick={() => setViewMode('create')}
-                      className="btn btn-primary songs-desktop-create"
-                      style={{ padding: '8px 18px', fontSize: '0.85rem' }}
+                      className="btn btn-primary songs-desktop-create !py-2 !px-4.5 text-xs sm:text-sm"
                     >
                       + Add Song
                     </button>
@@ -213,18 +187,17 @@ export const SongsManagerClient = ({
                 <div className="content-anim-item">
                   <input
                     type="search"
-                    className="input-field"
+                    className="input-field max-w-[420px]"
                     placeholder="Search by title, composer, or category tag…"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ maxWidth: '420px' }}
                   />
                 </div>
 
                 {/* Table */}
-                <div className="glass-container content-anim-item" style={{ padding: '24px' }}>
+                <div className="glass-container content-anim-item p-6">
                   {filteredSongs.length === 0 ? (
-                    <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '40px 0' }}>
+                    <p className="text-muted text-center py-10">
                       {showArchived ? 'No archived songs.' : searchQuery ? 'No songs match your search.' : 'No songs yet — click "+ Add Song" to get started.'}
                     </p>
                   ) : (
@@ -250,57 +223,46 @@ export const SongsManagerClient = ({
                             return (
                               <tr key={song.id}>
                                 <td data-label="Title"><strong>{song.title}</strong></td>
-                                <td data-label="Composer">{song.composer || <span style={{ color: 'var(--muted)' }}>—</span>}</td>
+                                <td data-label="Composer">{song.composer || <span className="text-muted">—</span>}</td>
                                 <td data-label="Categories">
                                   {tags.length > 0 ? (
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                    <div className="flex flex-wrap gap-1">
                                       {tags.map((t) => (
                                         <span
                                           key={t.id}
-                                          className="badge badge-pending"
-                                          style={{
-                                            background: 'rgba(30,58,138,0.08)',
-                                            color: 'var(--primary)',
-                                            fontSize: '0.75rem',
-                                            padding: '2px 8px',
-                                            borderRadius: '12px',
-                                            border: '1px solid rgba(30,58,138,0.15)',
-                                          }}
+                                          className="badge badge-pending !bg-primary/8 !text-primary text-xs !py-0.5 !px-2 !rounded-xl border border-primary/15"
                                         >
                                           {t.name}
                                         </span>
                                       ))}
                                     </div>
                                   ) : (
-                                    <span style={{ color: 'var(--muted)' }}>—</span>
+                                    <span className="text-muted">—</span>
                                   )}
                                 </td>
                                 <td data-label="Lyrics">
                                   {song.lyrics ? (
-                                    <span style={{ color: 'var(--success)', fontSize: '0.85rem', fontWeight: 600 }}>✓ ChordPro</span>
+                                    <span className="text-success text-xs sm:text-sm font-semibold">✓ ChordPro</span>
                                   ) : (
-                                    <span style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>None</span>
+                                    <span className="text-muted text-xs sm:text-sm">None</span>
                                   )}
                                 </td>
                                 <td data-label="Actions">
-                                  <div style={{ display: 'flex', gap: '8px' }}>
+                                  <div className="flex gap-2">
                                     <button
                                       onClick={() => { setEditingSong(song); setViewMode('edit'); }}
-                                      className="btn btn-secondary"
-                                      style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+                                      className="btn btn-secondary !py-1 !px-3 text-xs"
                                     >
                                       Edit
                                     </button>
                                     <button
                                       onClick={() => handleArchiveClick(song)}
                                       disabled={loadingId === song.id}
-                                      className="btn btn-secondary"
-                                      style={{
-                                        padding: '4px 12px',
-                                        fontSize: '0.8rem',
-                                        color: song.is_archived ? 'var(--primary)' : 'var(--error)',
-                                        borderColor: song.is_archived ? 'var(--primary)' : 'rgba(239,68,68,0.3)',
-                                      }}
+                                      className={`btn btn-secondary !py-1 !px-3 text-xs ${
+                                        song.is_archived
+                                          ? '!text-primary !border-primary'
+                                          : '!text-error !border-red-500/30'
+                                      }`}
                                     >
                                       {loadingId === song.id ? '…' : song.is_archived ? 'Restore' : 'Archive'}
                                     </button>

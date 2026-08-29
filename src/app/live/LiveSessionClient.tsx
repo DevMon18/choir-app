@@ -213,64 +213,69 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
   }, [manualScroll, scrollPxPerSec, session]);
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+    <div ref={containerRef} className="flex flex-col min-h-screen relative">
       {(!session?.is_active || isDirector) && (
         <>
           <div className="bg-orb bg-orb-1" />
           <div className="bg-orb bg-orb-2" />
           <Navbar profile={profile}>
             {/* Live status pill */}
-            <span style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              background: `${statusColor}15`, border: `1px solid ${statusColor}40`,
-              borderRadius: '99px', padding: '4px 10px', fontSize: '0.78rem', fontWeight: 700, color: statusColor,
-            }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor, display: 'inline-block', animation: connStatus === 'connected' ? 'pulse 2s infinite' : 'none' }} />
+            <span
+              className="flex items-center gap-1.5 rounded-full py-1 px-2.5 text-xs font-bold"
+              style={{
+                background: `${statusColor}15`,
+                border: `1px solid ${statusColor}40`,
+                color: statusColor,
+              }}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full inline-block ${connStatus === 'connected' ? 'animate-pulse' : ''}`}
+                style={{ background: statusColor }}
+              />
               {statusLabel}
             </span>
           </Navbar>
         </>
       )}
 
-      <main style={{ flex: 1, padding: (!session?.is_active || isDirector) ? '24px 16px' : '16px 12px', maxWidth: '820px', margin: '0 auto', width: '100%', paddingBottom: '80px' }}>
+      <main className={`flex-1 ${(!session?.is_active || isDirector) ? 'py-6 px-4' : 'py-4 px-3'} max-w-[820px] mx-auto w-full pb-20`}>
         {/* Session ended or no session */}
         {(!session || !session.is_active) ? (
-          <div className="glass-container live-anim" style={{ textAlign: 'center', padding: '80px 24px' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '16px' }}>📺</div>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '12px' }}>
+          <div className="glass-container live-anim text-center py-20 px-6">
+            <div className="text-6xl mb-4">📺</div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-3">
               No Live Session Active
             </h1>
-            <p style={{ color: 'var(--muted)', fontSize: '1rem', marginBottom: '28px' }}>
+            <p className="text-muted text-base mb-7">
               {isDirector
                 ? 'Go to Sequences to start a live session for the choir.'
                 : 'Wait for the Director to start the live session.'}
             </p>
             {isDirector ? (
-              <Link href="/admin/sequences" className="btn btn-primary" style={{ minHeight: '48px' }}>
+              <Link href="/admin/sequences" className="btn btn-primary !min-h-[48px]">
                 Go to Sequences →
               </Link>
             ) : (
-              <div style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>This page will automatically update when a session starts.</div>
+              <div className="text-muted text-sm">This page will automatically update when a session starts.</div>
             )}
           </div>
         ) : (
           <>
             {/* Setlist Navigation Bar for Director */}
             {isDirector && activeSequenceItems.length > 0 && (
-              <div className="live-anim" style={{ background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.15)', borderRadius: '16px', padding: '16px 20px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Setlist Nav:</span>
-                  <span style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
+              <div className="live-anim bg-white border border-primary/15 rounded-2xl p-4 sm:py-4 sm:px-5 mb-4 flex items-center justify-between gap-4 flex-wrap shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-[0.85rem] font-bold text-primary uppercase tracking-wider">Setlist Nav:</span>
+                  <span className="text-xs sm:text-[0.82rem] text-muted">
                     {currentIndex !== -1 ? `Song ${currentIndex + 1} of ${activeSequenceItems.length}` : 'No active song selected'}
                   </span>
                 </div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <div className="flex items-center gap-2.5 flex-wrap">
                   <button
                     onClick={() => prevItem && handleNavigateToSong(prevItem.song_id)}
                     disabled={!prevItem}
-                    className="btn btn-secondary"
-                    style={{ minHeight: '40px', padding: '6px 12px', fontSize: '0.82rem', opacity: !prevItem ? 0.4 : 1, cursor: !prevItem ? 'not-allowed' : 'pointer' }}
+                    className={`btn btn-secondary !min-h-[40px] !py-1.5 !px-3 text-xs sm:text-[0.82rem] ${!prevItem ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     ◀ Prev
                   </button>
@@ -278,11 +283,7 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                   <select
                     value={activeSong?.id || ''}
                     onChange={(e) => handleNavigateToSong(e.target.value || null)}
-                    style={{
-                      background: 'none', border: '1px solid var(--border)', borderRadius: '8px',
-                      padding: '8px 12px', fontSize: '0.85rem', color: 'var(--foreground)',
-                      minHeight: '40px', outline: 'none', fontWeight: 600
-                    }}
+                    className="input-field !py-2 !px-3 text-xs sm:text-[0.85rem] text-foreground !min-h-[40px] font-semibold"
                   >
                     <option value="" disabled>-- Select Song --</option>
                     {activeSequenceItems.map((item, idx) => (
@@ -295,8 +296,7 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                   <button
                     onClick={() => nextItem && handleNavigateToSong(nextItem.song_id)}
                     disabled={!nextItem}
-                    className="btn btn-primary"
-                    style={{ minHeight: '40px', padding: '6px 12px', fontSize: '0.82rem', opacity: !nextItem ? 0.4 : 1, cursor: !nextItem ? 'not-allowed' : 'pointer' }}
+                    className={`btn btn-primary !min-h-[40px] !py-1.5 !px-3 text-xs sm:text-[0.82rem] ${!nextItem ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     Next ▶
                   </button>
@@ -306,28 +306,33 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
 
             {/* Active song display */}
             {!activeSong ? (
-              <div className="glass-container live-anim" style={{ textAlign: 'center', padding: '60px 24px', marginBottom: '20px' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎶</div>
-                <h2 style={{ color: 'var(--primary)', fontWeight: 700, marginBottom: '8px' }}>Session Active</h2>
-                <p style={{ color: 'var(--muted)' }}>Waiting for the Director to select the first song…</p>
+              <div className="glass-container live-anim text-center py-15 px-6 mb-5">
+                <div className="text-4xl mb-3">🎶</div>
+                <h2 className="text-primary font-bold mb-2">Session Active</h2>
+                <p className="text-muted">Waiting for the Director to select the first song…</p>
               </div>
             ) : (
               <div className="live-anim">
                 {/* Simplified Member Top Control Bar */}
                 {!isDirector && (
-                  <div className="live-anim" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px', flexWrap: 'wrap' }}>
-                    <Link href="/dashboard" className="btn btn-secondary" style={{ minHeight: '40px', padding: '8px 16px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div className="live-anim flex justify-between items-center mb-4 gap-3 flex-wrap">
+                    <Link href="/dashboard" className="btn btn-secondary !min-h-[40px] !py-2 !px-4 text-xs sm:text-[0.82rem] flex items-center gap-1.5">
                       ← Exit Sync
                     </Link>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="flex items-center gap-2">
                       {/* Live status pill for members (since they don't have navbar) */}
-                      <span style={{
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        background: `${statusColor}15`, border: `1px solid ${statusColor}40`,
-                        borderRadius: '99px', padding: '6px 12px', fontSize: '0.78rem', fontWeight: 700, color: statusColor,
-                        marginRight: '8px'
-                      }}>
-                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor, display: 'inline-block', animation: connStatus === 'connected' ? 'pulse 2s infinite' : 'none' }} />
+                      <span
+                        className="flex items-center gap-1.5 rounded-full py-1.5 px-3 text-xs font-bold mr-2"
+                        style={{
+                          background: `${statusColor}15`,
+                          border: `1px solid ${statusColor}40`,
+                          color: statusColor,
+                        }}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full inline-block ${connStatus === 'connected' ? 'animate-pulse' : ''}`}
+                          style={{ background: statusColor }}
+                        />
                         {statusLabel}
                       </span>
                       <button
@@ -335,19 +340,17 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                           const current = p !== null ? p : (session?.show_chords ?? true);
                           return !current;
                         })}
-                        className="btn btn-secondary"
-                        style={{
-                          minHeight: '40px', padding: '8px 14px', fontSize: '0.82rem',
-                          borderColor: isChordsVisible ? 'var(--primary)' : undefined,
-                          color: isChordsVisible ? 'var(--primary)' : undefined
-                        }}
+                        className={`btn btn-secondary !min-h-[40px] !py-2 !px-3.5 text-xs sm:text-[0.82rem] ${
+                          isChordsVisible ? '!border-primary !text-primary' : ''
+                        }`}
                       >
                         {isChordsVisible ? '🎸 Chords: On' : '📝 Chords: Off'}
                       </button>
                       <button
                         onClick={() => setManualScroll(p => !p)}
-                        className="btn btn-secondary"
-                        style={{ minHeight: '40px', padding: '8px 14px', fontSize: '0.82rem', borderColor: manualScroll ? 'var(--primary)' : undefined, color: manualScroll ? 'var(--primary)' : undefined }}
+                        className={`btn btn-secondary !min-h-[40px] !py-2 !px-3.5 text-xs sm:text-[0.82rem] ${
+                          manualScroll ? '!border-primary !text-primary' : ''
+                        }`}
                       >
                         {manualScroll ? '⏸ Manual' : '⏩ Auto-scroll'}
                       </button>
@@ -357,12 +360,12 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
 
                 {/* Song header (Director only) */}
                 {isDirector && (
-                  <div className="glass-container" style={{ padding: '24px', marginBottom: '16px' }}>
-                    <div className="live-meta-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <div className="glass-container p-6 mb-4">
+                    <div className="live-meta-row flex justify-between items-center gap-3 flex-wrap">
                       <div>
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                        <div className="flex gap-2 flex-wrap mb-2">
                           {activeSongMassRole && (
-                            <span style={{ display: 'inline-block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)', background: 'rgba(11,77,36,0.07)', padding: '2px 8px', borderRadius: '99px', border: '1px solid rgba(11,77,36,0.2)' }}>
+                            <span className="inline-block text-[0.7rem] font-bold uppercase tracking-wider text-primary bg-primary/7 py-0.5 px-2 rounded-full border border-primary/20">
                               {activeSongMassRole}
                             </span>
                           )}
@@ -372,31 +375,29 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                             ? [{ id: activeSong.category, name: activeSong.category }]
                             : []
                           ).map((cat: any) => (
-                            <span key={cat.id || cat.name} style={{ display: 'inline-block', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', background: 'rgba(180,83,9,0.06)', padding: '2px 8px', borderRadius: '99px', border: '1px solid rgba(180,83,9,0.2)' }}>
+                            <span key={cat.id || cat.name} className="inline-block text-[0.7rem] font-bold uppercase tracking-wider text-amber-700 bg-amber-700/6 py-0.5 px-2 rounded-full border border-amber-700/20">
                               {cat.name}
                             </span>
                           ))}
                         </div>
-                        <h1 style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>{activeSong.title}</h1>
-                        {activeSong.composer && <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: '4px' }}>{activeSong.composer}</p>}
+                        <h1 className="text-xl sm:text-2xl font-bold text-primary m-0">{activeSong.title}</h1>
+                        {activeSong.composer && <p className="text-muted text-xs sm:text-sm mt-1">{activeSong.composer}</p>}
                       </div>
                       {/* Scroll and Chord controls */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
                           onClick={() => setManualScroll(p => !p)}
-                          className="btn btn-secondary"
-                          style={{ minHeight: '44px', padding: '8px 14px', fontSize: '0.82rem', borderColor: manualScroll ? 'var(--primary)' : undefined, color: manualScroll ? 'var(--primary)' : undefined }}
+                          className={`btn btn-secondary !min-h-[44px] !py-2 !px-3.5 text-xs sm:text-[0.82rem] ${
+                            manualScroll ? '!border-primary !text-primary' : ''
+                          }`}
                         >
                           {manualScroll ? '⏸ Manual' : '⏩ Auto-scroll'}
                         </button>
                         <button
                           onClick={handleToggleChords}
-                          className="btn btn-secondary"
-                          style={{
-                            minHeight: '44px', padding: '8px 14px', fontSize: '0.82rem',
-                            borderColor: (session.show_chords ?? true) ? 'var(--primary)' : undefined,
-                            color: (session.show_chords ?? true) ? 'var(--primary)' : undefined
-                          }}
+                          className={`btn btn-secondary !min-h-[44px] !py-2 !px-3.5 text-xs sm:text-[0.82rem] ${
+                            (session.show_chords ?? true) ? '!border-primary !text-primary' : ''
+                          }`}
                           title="Global chords toggle for all members"
                         >
                           {(session.show_chords ?? true) ? '🎸 Chords: On' : '📝 Chords: Off'}
@@ -407,30 +408,30 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                 )}
 
                 {/* Lyrics Container */}
-                <div style={{ background: '#ffffff', border: '1px solid rgba(11, 77, 36, 0.12)', borderRadius: '24px', padding: 'clamp(20px, 4vw, 40px)', boxShadow: 'var(--card-shadow)', overflowX: 'auto' }}>
+                <div className="bg-white border border-primary/12 rounded-3xl p-5 sm:p-8 md:p-10 shadow-sm overflow-x-auto">
                   
                   {/* Clean distraction-free header inside sheet for members */}
                   {!isDirector && (
-                    <div style={{ borderBottom: '1px solid rgba(11, 77, 36, 0.08)', paddingBottom: '16px', marginBottom: '24px' }}>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                    <div className="border-b border-primary/8 pb-4 mb-6">
+                      <div className="flex gap-2 flex-wrap mb-1.5">
                         {activeSongMassRole && (
-                          <span style={{ display: 'inline-block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)', background: 'rgba(11,77,36,0.07)', padding: '2px 8px', borderRadius: '99px', border: '1px solid rgba(11,77,36,0.2)' }}>
+                          <span className="inline-block text-[0.65rem] font-bold uppercase tracking-wider text-primary bg-primary/7 py-0.5 px-2 rounded-full border border-primary/20">
                             {activeSongMassRole}
                           </span>
                         )}
                         {activeSong.category && (
-                          <span style={{ display: 'inline-block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', background: 'rgba(180,83,9,0.06)', padding: '2px 8px', borderRadius: '99px', border: '1px solid rgba(180,83,9,0.2)' }}>
+                          <span className="inline-block text-[0.65rem] font-bold uppercase tracking-wider text-amber-700 bg-amber-700/6 py-0.5 px-2 rounded-full border border-amber-700/20">
                             {activeSong.category}
                           </span>
                         )}
                       </div>
-                      <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>{activeSong.title}</h2>
-                      {activeSong.composer && <p style={{ color: 'var(--muted)', fontSize: '0.82rem', margin: '4px 0 0' }}>by {activeSong.composer}</p>}
+                      <h2 className="text-xl sm:text-2xl font-bold text-primary m-0">{activeSong.title}</h2>
+                      {activeSong.composer && <p className="text-muted text-xs mt-1 m-0">by {activeSong.composer}</p>}
                     </div>
                   )}
 
                   {/* Live Customizer Bar for Font Size, Weight & Key */}
-                  <div style={{ marginBottom: '16px' }}>
+                  <div className="mb-4">
                     <ChordProControls
                       semitones={session.director_semitones}
                       onSemitonesChange={async (st) => {
@@ -462,7 +463,7 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                       showChords={isChordsVisible}
                     />
                   ) : (
-                    <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 0' }}>
+                    <div className="text-center text-muted py-10">
                       No lyrics available for this song.
                     </div>
                   )}
@@ -470,30 +471,15 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
 
                 {/* Next Song Preview Card */}
                 {nextItem && nextItem.songs && (
-                  <div 
-                    className="live-anim" 
-                    style={{ 
-                      marginTop: '24px', 
-                      background: 'var(--glass-bg)', 
-                      backdropFilter: 'blur(20px)',
-                      WebkitBackdropFilter: 'blur(20px)',
-                      border: '1px solid var(--glass-border)', 
-                      borderRadius: '20px', 
-                      padding: '24px', 
-                      boxShadow: 'var(--card-shadow)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '16px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                      <div style={{ flex: 1, minWidth: '200px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <div className="live-anim mt-6 bg-white/70 backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+                    <div className="flex justify-between items-center flex-wrap gap-3">
+                      <div className="flex-1 min-w-[200px]">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-xs sm:text-[0.78rem] font-bold text-amber-700 uppercase tracking-wider">
                             ⏭️ Next Up
                           </span>
                           {nextItem.role_in_mass && (
-                            <span style={{ display: 'inline-block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--primary)', background: 'rgba(11,77,36,0.07)', padding: '1px 6px', borderRadius: '99px', border: '1px solid rgba(11,77,36,0.15)' }}>
+                            <span className="inline-block text-[0.65rem] font-bold uppercase tracking-wider text-primary bg-primary/7 py-0.5 px-1.5 rounded-full border border-primary/15">
                               {MASS_ROLE_LABELS[nextItem.role_in_mass] || nextItem.role_in_mass}
                             </span>
                           )}
@@ -503,32 +489,27 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                             ? [{ id: nextItem.songs.category, name: nextItem.songs.category }]
                             : []
                           ).map((cat: any) => (
-                            <span key={cat.id || cat.name} style={{ display: 'inline-block', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', background: 'rgba(180,83,9,0.06)', padding: '1px 6px', borderRadius: '99px', border: '1px solid rgba(180,83,9,0.15)' }}>
+                            <span key={cat.id || cat.name} className="inline-block text-[0.65rem] font-bold uppercase tracking-wider text-amber-700 bg-amber-700/6 py-0.5 px-1.5 rounded-full border border-amber-700/15">
                               {cat.name}
                             </span>
                           ))}
                         </div>
-                        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+                        <h3 className="text-base sm:text-lg font-bold text-primary m-0">
                           {nextItem.songs.title}
                         </h3>
                         {nextItem.songs.composer && (
-                          <p style={{ color: 'var(--muted)', fontSize: '0.8rem', margin: '2px 0 0' }}>
+                          <p className="text-muted text-xs mt-0.5 m-0">
                             by {nextItem.songs.composer}
                           </p>
                         )}
                       </div>
                       
-                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div className="flex gap-2.5 items-center flex-wrap">
                         <button
                           onClick={() => setShowNextLyrics(p => !p)}
-                          className="btn btn-secondary"
-                          style={{ 
-                            minHeight: '40px', 
-                            padding: '8px 16px', 
-                            fontSize: '0.82rem', 
-                            borderColor: showNextLyrics ? 'var(--primary)' : undefined, 
-                            color: showNextLyrics ? 'var(--primary)' : undefined 
-                          }}
+                          className={`btn btn-secondary !min-h-[40px] !py-2 !px-4 text-xs sm:text-[0.82rem] ${
+                            showNextLyrics ? '!border-primary !text-primary' : ''
+                          }`}
                         >
                           {showNextLyrics ? 'Hide Lyrics Preview' : '👁️ Preview Lyrics'}
                         </button>
@@ -536,8 +517,7 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                         {isDirector && (
                           <button
                             onClick={() => handleNavigateToSong(nextItem.song_id)}
-                            className="btn btn-primary"
-                            style={{ minHeight: '40px', padding: '8px 16px', fontSize: '0.82rem' }}
+                            className="btn btn-primary !min-h-[40px] !py-2 !px-4 text-xs sm:text-[0.82rem]"
                           >
                             Switch to Next ▶
                           </button>
@@ -547,18 +527,7 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
 
                     {/* Inline lyrics preview */}
                     {showNextLyrics && (
-                      <div 
-                        style={{ 
-                          background: '#ffffff', 
-                          border: '1px solid rgba(11, 77, 36, 0.08)', 
-                          borderRadius: '16px', 
-                          padding: '20px', 
-                          marginTop: '8px', 
-                          maxHeight: '400px', 
-                          overflowY: 'auto',
-                          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.03)'
-                        }}
-                      >
+                      <div className="bg-white border border-primary/8 rounded-2xl p-5 mt-2 max-h-[400px] overflow-y-auto shadow-inner">
                         {nextItem.songs.lyrics ? (
                           <ChordProRenderer
                             lyrics={nextItem.songs.lyrics}
@@ -567,7 +536,7 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
                             showChords={isChordsVisible}
                           />
                         ) : (
-                          <p style={{ color: 'var(--muted)', textAlign: 'center', margin: '16px 0', fontSize: '0.9rem' }}>
+                          <p className="text-muted text-center my-4 text-xs sm:text-sm">
                             No lyrics available for this song.
                           </p>
                         )}
@@ -580,14 +549,6 @@ export const LiveSessionClient = ({ profile, initialSession, initialSong, songs,
           </>
         )}
       </main>
-
-      {/* CSS pulse animation */}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
-      `}</style>
     </div>
   );
 };
