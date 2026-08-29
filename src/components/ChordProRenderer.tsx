@@ -114,7 +114,7 @@ export const ChordProRenderer = ({
   lyrics,
   semitones = 0,
   fontSize = 16,
-  fontWeight = 600,
+  fontWeight = 500,
   showChords = true,
 }: ChordProRendererProps) => {
   const lines = lyrics.split('\n');
@@ -422,7 +422,7 @@ export const usePersistedFontSize = (key: string, defaultSize = 16) => {
   return [fontSize, updateFontSize] as const;
 };
 
-export const usePersistedFontWeight = (key: string, defaultWeight = 600) => {
+export const usePersistedFontWeight = (key: string, defaultWeight = 500) => {
   const [fontWeight, setFontWeight] = useState(defaultWeight);
 
   useEffect(() => {

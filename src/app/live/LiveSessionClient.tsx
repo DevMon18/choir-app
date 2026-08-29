@@ -164,9 +164,9 @@ export const LiveSessionClient = ({
   const [modalSearchQuery, setModalSearchQuery] = useState('');
   const [modalSelectedCategory, setModalSelectedCategory] = useState('ALL');
 
-  // Persisted accessibility controls for font size & weight in Live Sync
-  const [fontSize, setFontSize] = usePersistedFontSize('choir_live_fontsize', 18);
-  const [fontWeight, setFontWeight] = usePersistedFontWeight('choir_live_fontweight', 600);
+  // Persisted accessibility controls for font size & weight in Live Sync (Default: 16px, Medium 500)
+  const [fontSize, setFontSize] = usePersistedFontSize('choir_live_fontsize', 16);
+  const [fontWeight, setFontWeight] = usePersistedFontWeight('choir_live_fontweight', 500);
 
   const isDirector = ['super_admin', 'director'].includes(profile.role);
 
@@ -945,10 +945,10 @@ export const LiveSessionClient = ({
                             B−
                           </button>
                           <span
-                            className="min-w-[40px] text-center text-primary font-bold text-xs"
+                            className="min-w-[44px] text-center text-primary font-bold text-xs"
                             style={{ fontWeight }}
                           >
-                            {fontWeight >= 800 ? 'Black' : fontWeight >= 700 ? 'Bold' : 'Medium'}
+                            {fontWeight >= 800 ? 'Black' : fontWeight >= 700 ? 'Bold' : fontWeight >= 600 ? 'Semi' : 'Medium'}
                           </span>
                           <button
                             type="button"

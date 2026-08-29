@@ -40,7 +40,7 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
   // Custom states for rendering customization
   const [semitones, setSemitones] = useState(0);
   const [fontSize, setFontSize] = usePersistedFontSize('choir_chordpro_fontsize', 16);
-  const [fontWeight, setFontWeight] = usePersistedFontWeight('choir_chordpro_fontweight', 600);
+  const [fontWeight, setFontWeight] = usePersistedFontWeight('choir_chordpro_fontweight', 500);
   const [showChords, setShowChords] = useState(true);
 
   useEffect(() => {
