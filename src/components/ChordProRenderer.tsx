@@ -180,7 +180,7 @@ export const ChordProRenderer = ({
                 style={{
                   fontFamily: MONOSPACE_FONT_FAMILY,
                   fontSize: `${fontSize}px`,
-                  fontWeight: Math.min(900, fontWeight + 100),
+                  fontWeight: Math.min(900, fontWeight + 200),
                   color: 'var(--primary)',
                   whiteSpace: 'pre',
                   lineHeight: 1.25,

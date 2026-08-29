@@ -4,7 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { SongCategory } from '@/app/admin/songs/SongForm';
 import { CategoryItem } from '@/app/admin/categories/actions';
 import { ChordProRenderer } from '@/components/ChordProRenderer';
-import { Music, Search, ChevronRight, ChevronDown, ChevronUp, X, BookOpen, SortAsc, Layers, Filter, Check, Plus, Eye } from 'lucide-react';
+import { listPracticeRecordings, PracticeRecordingItem } from '@/app/repertoire/[id]/recordings-actions';
+import { Music, Search, ChevronRight, ChevronDown, ChevronUp, X, BookOpen, SortAsc, Layers, Filter, Check, Plus, Eye, Volume2, Headphones } from 'lucide-react';
 
 export interface Song {
   id: string;
@@ -74,6 +75,10 @@ export const SongPickerModal: React.FC<SongPickerModalProps> = ({
   const [cardPages, setCardPages] = useState<Record<string, number>>({});
   const [previewSong, setPreviewSong] = useState<Song | null>(null);
   const [addingSongId, setAddingSongId] = useState<string | null>(null);
+
+  // Practice recordings for song preview
+  const [previewRecordings, setPreviewRecordings] = useState<PracticeRecordingItem[]>([]);
+  const [isLoadingPreviewRecordings, setIsLoadingPreviewRecordings] = useState(false);
 
   // Sync card pagination on search / filter changes
   useEffect(() => {
@@ -163,6 +168,26 @@ export const SongPickerModal: React.FC<SongPickerModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [previewSong, onClose]);
+
+  // Load recordings when preview song changes
+  useEffect(() => {
+    if (!previewSong) {
+      setPreviewRecordings([]);
+      return;
+    }
+    let cancelled = false;
+    setIsLoadingPreviewRecordings(true);
+    setPreviewRecordings([]);
+    listPracticeRecordings(previewSong.id)
+      .then(({ recordings }) => {
+        if (!cancelled) setPreviewRecordings(recordings || []);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsLoadingPreviewRecordings(false);
+      });
+    return () => { cancelled = true; };
+  }, [previewSong?.id]);
 
   const toggleSection = (id: string) => {
     setCollapsedSections((prev) => ({
@@ -883,6 +908,54 @@ export const SongPickerModal: React.FC<SongPickerModalProps> = ({
                 <ChordProRenderer lyrics={previewSong.lyrics} semitones={0} fontSize={15} showChords={true} />
               ) : (
                 <p style={{ color: 'var(--muted)', textAlign: 'center', margin: '20px 0' }}>No lyrics available for this song.</p>
+              )}
+            </div>
+
+            {/* Practice Tracks Section */}
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                <Headphones size={14} style={{ color: 'var(--primary)' }} />
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Practice Tracks</span>
+                {isLoadingPreviewRecordings && (
+                  <span style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>Loading…</span>
+                )}
+              </div>
+
+              {!isLoadingPreviewRecordings && previewRecordings.length === 0 && (
+                <p style={{ fontSize: '0.78rem', color: 'var(--muted)', fontStyle: 'italic', textAlign: 'center', margin: '8px 0' }}>
+                  No practice tracks available for this song.
+                </p>
+              )}
+
+              {previewRecordings.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {previewRecordings.map((rec) => (
+                    <div
+                      key={rec.id}
+                      style={{
+                        background: 'rgba(30,58,138,0.03)',
+                        border: '1px solid var(--glass-border)',
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(30,58,138,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', flexShrink: 0 }}>
+                          <Volume2 size={13} />
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+                            {rec.label || rec.voice_part || 'Track'}
+                          </p>
+                          {rec.uploader_name && (
+                            <p style={{ fontSize: '0.68rem', color: 'var(--muted)', margin: 0 }}>by {rec.uploader_name}</p>
+                          )}
+                        </div>
+                      </div>
+                      <audio controls src={rec.file_url} style={{ width: '100%', height: '36px', colorScheme: 'light' }} />
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>

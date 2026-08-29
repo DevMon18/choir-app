@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { ChordProRenderer, usePersistedFontSize, usePersistedFontWeight } from '@/components/ChordProRenderer';
 import Link from 'next/link';
 import { updateLiveSession, substituteSequenceSong } from '../admin/sequences/actions';
+import { listPracticeRecordings, PracticeRecordingItem } from '../repertoire/[id]/recordings-actions';
 import { Navbar } from '@/components/Navbar';
 import { useToast } from '@/components/Toast';
 import {
@@ -26,6 +27,8 @@ import {
   Check,
   FolderOpen,
   SlidersHorizontal,
+  Headphones,
+  Volume2,
 } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -160,6 +163,11 @@ export const LiveSessionClient = ({
   const [showNextLyrics, setShowNextLyrics] = useState(false);
   const [showFormattingControls, setShowFormattingControls] = useState(false);
 
+  // Practice track preview for members
+  const [previewRecordings, setPreviewRecordings] = useState<PracticeRecordingItem[]>([]);
+  const [isLoadingRecordings, setIsLoadingRecordings] = useState(false);
+  const [activeTrackId, setActiveTrackId] = useState<string | null>(null);
+
   // Search Repertoire Modal State
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [modalSearchQuery, setModalSearchQuery] = useState('');
@@ -213,6 +221,29 @@ export const LiveSessionClient = ({
   useEffect(() => {
     setShowNextLyrics(false);
   }, [displayedSong?.id]);
+
+  // Load practice tracks when a member enters preview mode
+  useEffect(() => {
+    if (isDirector || !previewSongId) {
+      setPreviewRecordings([]);
+      setActiveTrackId(null);
+      return;
+    }
+    let cancelled = false;
+    setIsLoadingRecordings(true);
+    setPreviewRecordings([]);
+    setActiveTrackId(null);
+    listPracticeRecordings(previewSongId)
+      .then(({ recordings }) => {
+        if (!cancelled) setPreviewRecordings(recordings || []);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsLoadingRecordings(false);
+      });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewSongId, isDirector]);
 
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1147,6 +1178,65 @@ export const LiveSessionClient = ({
                       <p className="text-muted text-center my-3 text-xs">
                         No lyrics available for this song.
                       </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Practice Tracks Panel – shown for members when in song preview mode */}
+                {isPreviewMode && !isDirector && (
+                  <div className="border-t border-primary/10 bg-[#faf9f5] p-4 sm:p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Headphones size={15} className="text-primary" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-primary">Practice Tracks</span>
+                      {isLoadingRecordings && (
+                        <span className="text-[11px] text-muted animate-pulse ml-1">Loading…</span>
+                      )}
+                    </div>
+
+                    {!isLoadingRecordings && previewRecordings.length === 0 && (
+                      <p className="text-xs text-muted italic text-center py-3">
+                        No practice tracks uploaded for this song yet.
+                      </p>
+                    )}
+
+                    {previewRecordings.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        {previewRecordings.map((rec) => (
+                          <div
+                            key={rec.id}
+                            className={`rounded-xl border transition-all p-3 ${
+                              activeTrackId === rec.id
+                                ? 'bg-primary/6 border-primary/30'
+                                : 'bg-white border-primary/12 hover:border-primary/25'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 mb-2">
+                              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                <Volume2 size={13} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-primary m-0 truncate">
+                                  {rec.label || rec.voice_part || 'Track'}
+                                </p>
+                                {rec.uploader_name && (
+                                  <p className="text-[10px] text-muted m-0 truncate">
+                                    by {rec.uploader_name}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <audio
+                              controls
+                              src={rec.file_url}
+                              className="w-full h-9"
+                              style={{ colorScheme: 'light' }}
+                              onPlay={() => setActiveTrackId(rec.id)}
+                              onPause={() => setActiveTrackId(null)}
+                              onEnded={() => setActiveTrackId(null)}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}
