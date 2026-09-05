@@ -8,6 +8,9 @@ import { Navbar } from '@/components/Navbar';
 import { SongCategory } from '@/app/admin/songs/SongForm';
 import { PracticeRecordings } from './PracticeRecordings';
 import { PracticeRecordingItem } from './recordings-actions';
+import { SongLyricsCoverageResponse } from './actions';
+import { LyricsCoverageBadge } from './LyricsCoverageBadge';
+import { LyricsContributionModal } from './LyricsContributionModal';
 import gsap from 'gsap';
 
 interface Profile {
@@ -31,11 +34,21 @@ interface SongViewerClientProps {
   currentUserProfile: Profile;
   song: Song;
   initialRecordings?: PracticeRecordingItem[];
+  initialCoverage?: SongLyricsCoverageResponse;
 }
 
-export const SongViewerClient = ({ currentUserProfile, song, initialRecordings = [] }: SongViewerClientProps) => {
+export const SongViewerClient = ({
+  currentUserProfile,
+  song,
+  initialRecordings = [],
+  initialCoverage,
+}: SongViewerClientProps) => {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const [coverageState, setCoverageState] = useState<SongLyricsCoverageResponse | undefined>(initialCoverage);
+  const [contributeModalOpen, setContributeModalOpen] = useState<boolean>(false);
+  const [selectedMassPartForModal, setSelectedMassPartForModal] = useState<string | undefined>(undefined);
   
   // Custom states for rendering customization
   const [semitones, setSemitones] = useState(0);
@@ -116,6 +129,21 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
           </div>
         </div>
 
+        {/* Mass Part Lyrics Coverage & Contribution Widget */}
+        {coverageState && coverageState.massParts.length > 0 && (
+          <LyricsCoverageBadge
+            songId={song.id}
+            songTitle={song.title}
+            coverage={coverageState.massParts}
+            coveredCount={coverageState.coveredCount}
+            totalCount={coverageState.totalCount}
+            onOpenContributeModal={(massPart) => {
+              setSelectedMassPartForModal(massPart);
+              setContributeModalOpen(true);
+            }}
+          />
+        )}
+
         {/* View Customizer Controls */}
         <div className="anim-controls">
           <ChordProControls
@@ -156,6 +184,21 @@ export const SongViewerClient = ({ currentUserProfile, song, initialRecordings =
           )}
         </div>
       </main>
+
+      {/* Lyrics Contribution Modal */}
+      {contributeModalOpen && coverageState && (
+        <LyricsContributionModal
+          songId={song.id}
+          songTitle={song.title}
+          coverage={coverageState.massParts}
+          initialMassPart={selectedMassPartForModal}
+          onSuccess={() => {
+            setContributeModalOpen(false);
+            router.refresh();
+          }}
+          onClose={() => setContributeModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

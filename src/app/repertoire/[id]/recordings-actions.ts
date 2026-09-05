@@ -299,11 +299,32 @@ export async function uploadPracticeRecording(
       inserted = insertedRow;
     }
 
+    // Award +2 Contributor points on Leaderboard for recording guide tracks
+    const pointsAwarded = 2;
+    try {
+      await adminSupabase
+        .from('song_submissions')
+        .insert({
+          song_id: songId,
+          submitted_by: user.id,
+          mass_part: 'audio_recording',
+          lyrics_content: `Audio Guide Track: ${label || userVoicePart}`,
+          status: 'approved',
+          points_awarded: pointsAwarded,
+          recording_id: inserted.id,
+          reviewed_at: new Date().toISOString(),
+        });
+    } catch (ptsErr) {
+      console.warn('Could not record submission points for audio track:', ptsErr);
+    }
+
     // Log history audit record
     const actionType = isOverwritten ? 'OVERWROTE' : 'CREATED';
     await logTrackHistory(adminSupabase, songId, actionType, label, user.id, userProfile.full_name);
 
     revalidatePath(`/repertoire/${songId}`);
+    revalidatePath('/leaderboard');
+    revalidatePath('/profile/my-contributions');
 
     const recordingItem: PracticeRecordingItem = {
       id: inserted.id,
@@ -391,7 +412,19 @@ export async function deletePracticeRecording(
       callerProfile.full_name
     );
 
+    // Clean up submission points if deleted
+    try {
+      await adminSupabase
+        .from('song_submissions')
+        .delete()
+        .eq('recording_id', recordingId);
+    } catch (cleanErr) {
+      console.warn('Could not delete linked recording submission:', cleanErr);
+    }
+
     revalidatePath(`/repertoire/${songId}`);
+    revalidatePath('/leaderboard');
+    revalidatePath('/profile/my-contributions');
 
     return { success: true };
   } catch (err: any) {

@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
 import SongViewerClient from './SongViewerClient';
 import { listPracticeRecordings } from './recordings-actions';
+import { getSongLyricsCoverage } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,8 +21,8 @@ const SongDetailPage = async ({ params }: PageProps) => {
 
   const supabase = await createClient();
 
-  // Concurrently fetch song data and practice recordings
-  const [songRes, recordingsRes] = await Promise.all([
+  // Concurrently fetch song data, practice recordings, and lyrics coverage
+  const [songRes, recordingsRes, coverageRes] = await Promise.all([
     supabase
       .from('songs')
       .select(`
@@ -34,6 +35,7 @@ const SongDetailPage = async ({ params }: PageProps) => {
       .eq('is_archived', false)
       .single(),
     listPracticeRecordings(id),
+    getSongLyricsCoverage(id),
   ]);
 
   const rawSong = songRes.data;
@@ -53,6 +55,7 @@ const SongDetailPage = async ({ params }: PageProps) => {
       currentUserProfile={currentProfile}
       song={mappedSong}
       initialRecordings={recordingsRes.recordings || []}
+      initialCoverage={coverageRes}
     />
   );
 };

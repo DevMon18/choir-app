@@ -3,14 +3,20 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { invalidateCalendarCache } from '@/app/calendar/actions';
+import { getProfile } from '@/lib/supabase/user';
+
+const SEQUENCE_MANAGER_ROLES = ['super_admin', 'director', 'secretary'];
+const LIVE_DIRECTOR_ROLES = ['super_admin', 'director', 'secretary'];
 
 // ── Sequence CRUD ──────────────────────────────────────
 
 export async function createSequence(formData: FormData) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
+  const profile = await getProfile();
+  if (!profile || !SEQUENCE_MANAGER_ROLES.includes(profile.role)) {
+    return { error: 'Unauthorized: You do not have permission to create sequences.' };
+  }
 
+  const supabase = await createClient();
   const title = formData.get('title') as string;
   const description = formData.get('description') as string | null;
   const scheduled_at = formData.get('scheduled_at') as string | null;
@@ -19,7 +25,7 @@ export async function createSequence(formData: FormData) {
     title: title.trim(),
     description: description?.trim() || null,
     scheduled_at: scheduled_at || null,
-    created_by: user.id,
+    created_by: profile.id,
   });
 
   if (error) return { error: error.message };
@@ -30,6 +36,11 @@ export async function createSequence(formData: FormData) {
 }
 
 export async function updateSequence(id: string, formData: FormData) {
+  const profile = await getProfile();
+  if (!profile || !SEQUENCE_MANAGER_ROLES.includes(profile.role)) {
+    return { error: 'Unauthorized: You do not have permission to update sequences.' };
+  }
+
   const supabase = await createClient();
   const title = formData.get('title') as string;
   const description = formData.get('description') as string | null;
@@ -52,6 +63,11 @@ export async function updateSequence(id: string, formData: FormData) {
 }
 
 export async function deleteSequence(id: string) {
+  const profile = await getProfile();
+  if (!profile || !SEQUENCE_MANAGER_ROLES.includes(profile.role)) {
+    return { error: 'Unauthorized: You do not have permission to delete sequences.' };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.from('mass_sequences').delete().eq('id', id);
   if (error) return { error: error.message };
@@ -64,6 +80,11 @@ export async function deleteSequence(id: string) {
 // ── Sequence Items ─────────────────────────────────────
 
 export async function addSongToSequence(sequenceId: string, songId: string, roleInMass?: string) {
+  const profile = await getProfile();
+  if (!profile || !SEQUENCE_MANAGER_ROLES.includes(profile.role)) {
+    return { error: 'Unauthorized: You do not have permission to modify sequences.' };
+  }
+
   const supabase = await createClient();
 
   // Get current max order_index for this sequence
@@ -90,6 +111,11 @@ export async function addSongToSequence(sequenceId: string, songId: string, role
 }
 
 export async function removeSongFromSequence(itemId: string) {
+  const profile = await getProfile();
+  if (!profile || !SEQUENCE_MANAGER_ROLES.includes(profile.role)) {
+    return { error: 'Unauthorized: You do not have permission to modify sequences.' };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.from('sequence_items').delete().eq('id', itemId);
   if (error) return { error: error.message };
@@ -100,6 +126,11 @@ export async function removeSongFromSequence(itemId: string) {
 export async function reorderSequenceItems(
   items: { id: string; order_index: number }[]
 ) {
+  const profile = await getProfile();
+  if (!profile || !SEQUENCE_MANAGER_ROLES.includes(profile.role)) {
+    return { error: 'Unauthorized: You do not have permission to modify sequences.' };
+  }
+
   const supabase = await createClient();
   // Update each item's order_index
   const updates = items.map(({ id, order_index }) =>
@@ -115,9 +146,12 @@ export async function reorderSequenceItems(
 // ── Live Sessions ──────────────────────────────────────
 
 export async function startLiveSession(sequenceId: string, firstSongId: string | null) {
+  const profile = await getProfile();
+  if (!profile || !LIVE_DIRECTOR_ROLES.includes(profile.role)) {
+    return { error: 'Unauthorized: Only director and admin can start a live session.' };
+  }
+
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
 
   // Fetch sequence details to populate title and scheduled_at for backwards compatibility
   const { data: seq } = await supabase
@@ -145,7 +179,7 @@ export async function startLiveSession(sequenceId: string, firstSongId: string |
       director_semitones: 0,
       scroll_speed: 2,
       is_active: true,
-      started_by: user.id,
+      started_by: profile.id,
     })
     .select()
     .single();
@@ -164,6 +198,11 @@ export async function updateLiveSession(
     show_chords?: boolean;
   }
 ) {
+  const profile = await getProfile();
+  if (!profile || !LIVE_DIRECTOR_ROLES.includes(profile.role)) {
+    return { error: 'Unauthorized: Only director and admin can control or change songs in the live session.' };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from('live_sessions')
@@ -176,6 +215,11 @@ export async function updateLiveSession(
 }
 
 export async function endLiveSession(sessionId: string) {
+  const profile = await getProfile();
+  if (!profile || !LIVE_DIRECTOR_ROLES.includes(profile.role)) {
+    return { error: 'Unauthorized: Only director and admin can end a live session.' };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from('live_sessions')
@@ -189,6 +233,11 @@ export async function endLiveSession(sessionId: string) {
 }
 
 export async function updateSequenceItemRole(itemId: string, roleInMass: string) {
+  const profile = await getProfile();
+  if (!profile || !SEQUENCE_MANAGER_ROLES.includes(profile.role)) {
+    return { error: 'Unauthorized: You do not have permission to modify sequences.' };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from('sequence_items')
@@ -206,6 +255,11 @@ export async function substituteSequenceSong(
   currentSequenceItemId?: string | null,
   roleInMass?: string | null
 ) {
+  const profile = await getProfile();
+  if (!profile || !LIVE_DIRECTOR_ROLES.includes(profile.role)) {
+    return { error: 'Unauthorized: Only director and admin can substitute or change songs during live session.' };
+  }
+
   const supabase = await createClient();
 
   if (currentSequenceItemId) {
@@ -246,4 +300,5 @@ export async function substituteSequenceSong(
 
   return addSongToSequence(sequenceId, newSongId, roleInMass || undefined);
 }
+
 

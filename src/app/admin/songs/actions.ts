@@ -4,27 +4,41 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { checkRateLimitMutation } from '@/lib/ratelimit';
 import { delCache } from '@/lib/cache';
+import { getProfile } from '@/lib/supabase/user';
+
+const SONG_MANAGER_ROLES = ['super_admin', 'director', 'secretary'];
 
 const getAdminClient = async () => {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase, user: null, profile: null, error: 'Not authenticated' };
-
-  const rateLimit = await checkRateLimitMutation(user.id);
-  if (!rateLimit.success) {
-    return { supabase, user, profile: null, error: 'Rate limit exceeded. Please slow down.' };
+  const profile = await getProfile();
+  if (!profile) {
+    return { supabase: null as any, user: null, profile: null, error: 'Not authenticated. Please log in.' };
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  const rateLimit = await checkRateLimitMutation(profile.id);
+  if (!rateLimit.success) {
+    return { supabase: null as any, user: null, profile: null, error: 'Rate limit exceeded. Please slow down.' };
+  }
 
-  const canEdit = ['super_admin', 'director', 'secretary'].includes(profile?.role ?? '');
-  if (!canEdit) return { supabase, user, profile, error: 'Insufficient permissions' };
+  const canEdit = SONG_MANAGER_ROLES.includes(profile.role);
+  if (!canEdit) {
+    return {
+      supabase: null as any,
+      user: null,
+      profile,
+      error: 'Insufficient permissions. Only directors, secretaries, and admins can edit songs.',
+    };
+  }
 
-  return { supabase, user, profile, error: null };
+  // Use service role admin client if available to prevent RLS permission drops, fallback to user client
+  let dbClient: any = await createClient();
+  try {
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    dbClient = createAdminClient();
+  } catch {
+    // fallback to standard client
+  }
+
+  return { supabase: dbClient, user: { id: profile.id, email: profile.email }, profile, error: null };
 };
 
 export const setSongCategories = async (songId: string, categoryIds: string[]) => {
@@ -37,7 +51,10 @@ export const setSongCategories = async (songId: string, categoryIds: string[]) =
     .delete()
     .eq('song_id', songId);
 
-  if (delErr) return { error: delErr.message };
+  if (delErr) {
+    console.error('Error deleting song category links:', delErr);
+    return { error: delErr.message };
+  }
 
   if (categoryIds && categoryIds.length > 0) {
     // Unique IDs only
@@ -51,7 +68,10 @@ export const setSongCategories = async (songId: string, categoryIds: string[]) =
       .from('song_category_links')
       .insert(inserts);
 
-    if (insErr) return { error: insErr.message };
+    if (insErr) {
+      console.error('Error inserting song category links:', insErr);
+      return { error: insErr.message };
+    }
   }
 
   return { success: true };
@@ -94,7 +114,10 @@ export const createSong = async (formData: FormData, categoryIds?: string[]) => 
     .select('id')
     .single();
 
-  if (dbErr) return { error: dbErr.message };
+  if (dbErr) {
+    console.error('Error creating song:', dbErr);
+    return { error: dbErr.message };
+  }
   if (!data) return { error: 'Failed to create song (write unconfirmed).' };
 
   // Link categories
@@ -104,6 +127,8 @@ export const createSong = async (formData: FormData, categoryIds?: string[]) => 
   await delCache('repertoire:all_songs');
   revalidatePath('/admin/songs');
   revalidatePath('/repertoire');
+  revalidatePath('/live');
+  revalidatePath('/admin/sequences');
   return { success: true, id: data.id };
 };
 
@@ -145,7 +170,10 @@ export const updateSong = async (id: string, formData: FormData, categoryIds?: s
     .select('id')
     .single();
 
-  if (dbErr) return { error: dbErr.message };
+  if (dbErr) {
+    console.error('Error updating song:', dbErr);
+    return { error: dbErr.message };
+  }
   if (!data) return { error: 'Failed to update song (write unconfirmed).' };
 
   // Link categories
@@ -156,6 +184,8 @@ export const updateSong = async (id: string, formData: FormData, categoryIds?: s
   revalidatePath('/admin/songs');
   revalidatePath('/repertoire');
   revalidatePath(`/repertoire/${id}`);
+  revalidatePath('/live');
+  revalidatePath('/admin/sequences');
   return { success: true };
 };
 
@@ -175,6 +205,7 @@ export const archiveSong = async (id: string) => {
   await delCache('repertoire:all_songs');
   revalidatePath('/admin/songs');
   revalidatePath('/repertoire');
+  revalidatePath('/live');
   return { success: true };
 };
 
@@ -193,5 +224,8 @@ export const restoreSong = async (id: string) => {
 
   await delCache('repertoire:all_songs');
   revalidatePath('/admin/songs');
+  revalidatePath('/repertoire');
+  revalidatePath('/live');
   return { success: true };
 };
+

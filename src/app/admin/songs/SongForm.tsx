@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { ChordProRenderer } from '@/components/ChordProRenderer';
 import { createSong, updateSong } from './actions';
 import { createCategory } from '@/app/admin/categories/actions';
-import { Plus, Check, Tag } from 'lucide-react';
+import { Plus, Check, Tag, X } from 'lucide-react';
 
 export interface SongCategory {
   id: string;
@@ -24,7 +24,7 @@ interface Song {
 interface SongFormProps {
   song?: Song;
   availableCategories: SongCategory[];
-  onSuccess: (id: string) => void;
+  onSuccess: (id: string, updatedData?: Partial<Song>) => void;
   onCancel: () => void;
   onCategoryCreated?: (newCat: SongCategory) => void;
 }
@@ -52,6 +52,20 @@ export const SongForm = ({
 
   // Categories list in local state to allow instant inline creation
   const [catList, setCatList] = useState<SongCategory[]>(availableCategories);
+
+  // Sync state if song prop or availableCategories change
+  React.useEffect(() => {
+    setTitle(song?.title ?? '');
+    setComposer(song?.composer ?? '');
+    setArranger(song?.arranger ?? '');
+    setLyrics(song?.lyrics ?? '');
+    setSelectedCategoryIds((song?.categories || []).map((c) => c.id));
+    setError(null);
+  }, [song]);
+
+  React.useEffect(() => {
+    setCatList(availableCategories);
+  }, [availableCategories]);
 
   // Inline new category input
   const [showAddCatInput, setShowAddCatInput] = useState(false);
@@ -94,33 +108,65 @@ export const SongForm = ({
     setError(null);
     setLoading(true);
 
-    const fd = new FormData(e.currentTarget);
-    const result = isEdit
-      ? await updateSong(song!.id, fd, selectedCategoryIds)
-      : await createSong(fd, selectedCategoryIds);
+    try {
+      const fd = new FormData(e.currentTarget);
+      const result = isEdit
+        ? await updateSong(song!.id, fd, selectedCategoryIds)
+        : await createSong(fd, selectedCategoryIds);
 
-    setLoading(false);
+      setLoading(false);
 
-    if (result?.error) {
-      setError(result.error);
-    } else if (result?.success) {
-      onSuccess(isEdit ? song!.id : (result as any).id);
+      if (result?.error) {
+        setError(result.error);
+      } else if (result?.success) {
+        const selectedCats = catList.filter((c) => selectedCategoryIds.includes(c.id));
+        const savedId = isEdit ? song!.id : (result as any).id;
+        onSuccess(savedId, {
+          id: savedId,
+          title: title.trim(),
+          composer: composer.trim() || null,
+          arranger: arranger.trim() || null,
+          lyrics: lyrics.trim() || null,
+          categories: selectedCats,
+          category: selectedCats[0]?.name || null,
+        });
+      }
+    } catch (err: any) {
+      setLoading(false);
+      setError(err.message || 'Failed to save song. Please try again.');
     }
   };
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-5">
-        <h3 className="text-lg sm:text-xl font-bold text-primary">
-          {isEdit ? 'Edit Song' : 'Add New Song'}
-        </h3>
-        <button
-          type="button"
-          onClick={() => setShowPreview(!showPreview)}
-          className="btn btn-secondary !py-1.5 !px-3.5 text-xs"
-        >
-          {showPreview ? 'Hide Preview' : 'Show Preview'}
-        </button>
+      <div className="flex justify-between items-center mb-5 pb-3 border-b border-border/60">
+        <div>
+          <h3 className="text-lg sm:text-xl font-bold text-primary m-0">
+            {isEdit ? 'Edit Song' : 'Add New Song'}
+          </h3>
+          {isEdit && song?.title && (
+            <p className="text-xs text-muted font-medium m-0 mt-0.5 truncate max-w-[320px] sm:max-w-md">
+              {song.title}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            className="btn btn-secondary !py-1.5 !px-3 text-xs"
+          >
+            {showPreview ? 'Hide Preview' : 'Show Preview'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-black/5 transition-colors border-0 bg-transparent cursor-pointer"
+            title="Close"
+          >
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
       {error && (

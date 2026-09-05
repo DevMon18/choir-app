@@ -6,10 +6,25 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { SongCategory } from '@/app/admin/songs/SongForm';
 import { CategoryItem } from '@/app/admin/categories/actions';
-import { Music, Search, ChevronRight, ChevronDown, ChevronUp, X, BookOpen, SortAsc, Layers, ListFilter, Filter } from 'lucide-react';
+import {
+  Music,
+  Search,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  X,
+  BookOpen,
+  SortAsc,
+  Layers,
+  Filter,
+  Sparkles,
+  CheckCircle2,
+  FileText,
+  SlidersHorizontal,
+} from 'lucide-react';
 import gsap from 'gsap';
-import { useClientCache } from '@/context/ClientCacheContext';
 import { useRepertoire } from '@/hooks/useRepertoire';
+import { SubmitSongModal } from '@/app/repertoire/SubmitSongModal';
 
 interface Profile {
   id: string;
@@ -34,21 +49,21 @@ interface RepertoireClientProps {
   categoriesParam?: string;
 }
 
-// Direct list of the 13 Mass Part names
+// Canonical Mass Part list with numbering & liturgical order
 const MASS_PART_SECTIONS = [
-  { id: 'entrance-song', name: 'Entrance Song', matchKeywords: ['entrance song', 'entrance'] },
-  { id: 'kyrie', name: 'Kyrie', matchKeywords: ['kyrie', 'lord have mercy', 'lord, have mercy'] },
-  { id: 'gloria', name: 'Gloria', matchKeywords: ['gloria', 'glory to god'] },
-  { id: 'responsorial-psalm', name: 'Responsorial Psalm', matchKeywords: ['responsorial psalm', 'psalm'] },
-  { id: 'gospel-acclamation', name: 'Gospel Acclamation', matchKeywords: ['gospel acclamation', 'gospel acclamation (alleluia or praise to you)', 'gospel', 'alleluia', 'praise to you'] },
-  { id: 'offertory-presentation', name: 'Offertory / Presentation Song', matchKeywords: ['offertory / presentation song', 'offertory / presentation', 'offertory', 'presentation song', 'offertory song'] },
-  { id: 'sanctus', name: 'Sanctus', matchKeywords: ['sanctus', 'holy, holy, holy', 'holy holy holy'] },
-  { id: 'memorial-acclamation', name: 'Memorial Acclamation', matchKeywords: ['memorial acclamation'] },
-  { id: 'great-amen', name: 'Great Amen', matchKeywords: ['great amen', 'amen'] },
-  { id: 'lords-prayer', name: "Lord's Prayer", matchKeywords: ["lord's prayer", 'lords prayer', 'our father'] },
-  { id: 'lamb-of-god', name: 'Lamb of God', matchKeywords: ['lamb of god', 'agnus dei'] },
-  { id: 'communion-song', name: 'Communion Song', matchKeywords: ['communion song', 'communion'] },
-  { id: 'recessional-closing', name: 'Recessional / Closing Song', matchKeywords: ['recessional / closing song', 'recessional / closing', 'recessional', 'closing song', 'sending forth'] },
+  { id: 'entrance-song', num: '01', name: 'Entrance Song', matchKeywords: ['entrance song', 'entrance'] },
+  { id: 'kyrie', num: '02', name: 'Kyrie', matchKeywords: ['kyrie', 'lord have mercy', 'lord, have mercy'] },
+  { id: 'gloria', num: '03', name: 'Gloria', matchKeywords: ['gloria', 'glory to god'] },
+  { id: 'responsorial-psalm', num: '04', name: 'Responsorial Psalm', matchKeywords: ['responsorial psalm', 'psalm'] },
+  { id: 'gospel-acclamation', num: '05', name: 'Gospel Acclamation', matchKeywords: ['gospel acclamation', 'gospel acclamation (alleluia or praise to you)', 'gospel', 'alleluia', 'praise to you'] },
+  { id: 'offertory-presentation', num: '06', name: 'Offertory / Presentation', matchKeywords: ['offertory / presentation song', 'offertory / presentation', 'offertory', 'presentation song', 'offertory song'] },
+  { id: 'sanctus', num: '07', name: 'Sanctus', matchKeywords: ['sanctus', 'holy, holy, holy', 'holy holy holy'] },
+  { id: 'memorial-acclamation', num: '08', name: 'Memorial Acclamation', matchKeywords: ['memorial acclamation'] },
+  { id: 'great-amen', num: '09', name: 'Great Amen', matchKeywords: ['great amen', 'amen'] },
+  { id: 'lords-prayer', num: '10', name: "Lord's Prayer", matchKeywords: ["lord's prayer", 'lords prayer', 'our father', 'ama namin'] },
+  { id: 'lamb-of-god', num: '11', name: 'Lamb of God', matchKeywords: ['lamb of god', 'agnus dei', 'kordero ng diyos'] },
+  { id: 'communion-song', num: '12', name: 'Communion Song', matchKeywords: ['communion song', 'communion'] },
+  { id: 'recessional-closing', num: '13', name: 'Recessional / Closing', matchKeywords: ['recessional / closing song', 'recessional / closing', 'recessional', 'closing song', 'sending forth'] },
 ];
 
 const matchesMassPart = (song: Song, targetName: string, keywords: string[]): boolean => {
@@ -76,68 +91,24 @@ export const RepertoireClient = ({
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const filterScrollRef = useRef<HTMLDivElement>(null);
 
   const [searchValue, setSearchValue] = useState(initialQuery);
 
   // Initial Category & Tab State
   const initialCategory = categoriesParam || 'ALL';
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>(initialCategory);
+  const [selectedMassPartFilter, setSelectedMassPartFilter] = useState<string>(initialCategory);
 
-  // Helper functions for 2-way synchronization between Tabs and Dropdown
-  const getTabIdFromCategory = (catName: string): string => {
-    if (!catName || catName === 'ALL') return 'ALL';
-    const found = MASS_PART_SECTIONS.find((p) => p.name.toLowerCase() === catName.toLowerCase());
-    return found ? found.id : 'ALL';
-  };
-
-  const getCategoryNameFromTabId = (tabId: string): string => {
-    if (!tabId || tabId === 'ALL' || tabId === 'other-songs') return 'ALL';
-    const found = MASS_PART_SECTIONS.find((p) => p.id === tabId);
-    return found ? found.name : 'ALL';
-  };
-
-  // Songbook Display Mode: 'MASS_PARTS' (Grouped by Mass Parts) vs 'AZ_INDEX' (Alphabetical Songbook Index)
+  // Songbook Display Mode: 'MASS_PARTS' (Grouped by Liturgical Order) vs 'AZ_INDEX' (Alphabetical Hymnal Index)
   const [viewMode, setViewMode] = useState<'MASS_PARTS' | 'AZ_INDEX'>('MASS_PARTS');
-
-  // Selected Mass Part Page Tab ('ALL' or section id like 'communion-song')
-  const [activeTab, setActiveTab] = useState<string>(() => getTabIdFromCategory(initialCategory));
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
 
   // Collapsed sections state
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [showTagFilterPopover, setShowTagFilterPopover] = useState(false);
+  const [selectedSeasonTags, setSelectedSeasonTags] = useState<string[]>([]);
 
   const [isPending, startTransition] = useTransition();
-
-  // 2-Way Synchronized Handler: Tapping a Tab pill updates Dropdown value
-  const handleSelectTab = (tabId: string) => {
-    setActiveTab(tabId);
-    const catName = getCategoryNameFromTabId(tabId);
-    setSelectedCategoryFilter(catName);
-  };
-
-  // 2-Way Synchronized Handler: Selecting a Dropdown option updates Tab pill
-  const handleSelectDropdownCategory = (val: string) => {
-    setSelectedCategoryFilter(val);
-    const tabId = getTabIdFromCategory(val);
-    setActiveTab(tabId);
-  };
-
-  // Filter popover state
-  const [openFilterCardId, setOpenFilterCardId] = useState<string | null>(null);
-
-  // Multi-select category tags state (array of active tag names)
-  const [selectedCategoryTags, setSelectedCategoryTags] = useState<string[]>([]);
-
-  // Card-level pagination state: mapping card section ID to current page (1-indexed, 5 items per page)
-  const [cardPages, setCardPages] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    setCardPages({});
-  }, [searchValue, selectedCategoryTags, selectedCategoryFilter, activeTab]);
-
-  const getCardPage = (cardId: string): number => cardPages[cardId] || 1;
-  const setCardPage = (cardId: string, page: number) => {
-    setCardPages((prev) => ({ ...prev, [cardId]: page }));
-  };
 
   // Helper to check if a category name corresponds to a Mass Part section
   const isMassPartName = (name: string): boolean => {
@@ -147,8 +118,8 @@ export const RepertoireClient = ({
     );
   };
 
-  // Collect all non-Mass Part category tag names across all songs and availableCategories
-  const tagCategoryNames = Array.from(
+  // Collect all non-Mass Part category tags (e.g., Liturgical Season, Language, Theme)
+  const seasonTagNames = Array.from(
     new Set([
       ...availableCategories.map((c) => c.name),
       ...songs.flatMap((s) => [
@@ -158,19 +129,19 @@ export const RepertoireClient = ({
     ])
   ).filter((name): name is string => Boolean(name) && !isMassPartName(name));
 
-  const toggleCategoryTag = (tagName: string) => {
-    setSelectedCategoryTags((prev) =>
-      prev.includes(tagName)
-        ? prev.filter((t) => t !== tagName)
-        : [...prev, tagName]
+  const toggleSeasonTag = (tagName: string) => {
+    setSelectedSeasonTags((prev) =>
+      prev.includes(tagName) ? prev.filter((t) => t !== tagName) : [...prev, tagName]
     );
   };
 
-  const clearCategoryTags = () => {
-    setSelectedCategoryTags([]);
+  const clearAllFilters = () => {
+    setSearchValue('');
+    setSelectedMassPartFilter('ALL');
+    setSelectedSeasonTags([]);
   };
 
-  const songMatchesSelectedTags = (song: Song, selectedTags: string[]): boolean => {
+  const songMatchesSeasonTags = (song: Song, selectedTags: string[]): boolean => {
     if (selectedTags.length === 0) return true;
     const songCatNames = (song.categories || []).map((c) => c.name.toLowerCase());
     if (song.category) songCatNames.push(song.category.toLowerCase());
@@ -180,18 +151,10 @@ export const RepertoireClient = ({
     );
   };
 
-  // 2-Way Synchronized Handler: Clear all filters
-  const handleClearAllFilters = () => {
-    setSearchValue('');
-    setSelectedCategoryFilter('ALL');
-    setActiveTab('ALL');
-    setSelectedCategoryTags([]);
-  };
-
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.from('.anim-header', { opacity: 0, y: 15, duration: 0.4, ease: 'power2.out' });
-      gsap.from('.anim-section', { opacity: 0, y: 15, duration: 0.4, stagger: 0.05, ease: 'power2.out' });
+      gsap.from('.anim-header', { opacity: 0, y: 12, duration: 0.35, ease: 'power2.out' });
+      gsap.from('.anim-section', { opacity: 0, y: 12, duration: 0.35, stagger: 0.04, ease: 'power2.out' });
     }, containerRef);
     return () => ctx.revert();
   }, []);
@@ -214,8 +177,8 @@ export const RepertoireClient = ({
       startTransition(() => {
         const params = new URLSearchParams();
         if (searchValue) params.set('q', searchValue);
-        if (selectedCategoryFilter && selectedCategoryFilter !== 'ALL') {
-          params.set('categories', selectedCategoryFilter);
+        if (selectedMassPartFilter && selectedMassPartFilter !== 'ALL') {
+          params.set('categories', selectedMassPartFilter);
         }
 
         const queryString = params.toString();
@@ -223,7 +186,7 @@ export const RepertoireClient = ({
       });
     }, 300);
     return () => clearTimeout(t);
-  }, [searchValue, selectedCategoryFilter]);
+  }, [searchValue, selectedMassPartFilter]);
 
   const toggleSection = (id: string) => {
     setCollapsedSections((prev) => ({
@@ -247,7 +210,7 @@ export const RepertoireClient = ({
 
   const isAdmin = ['super_admin', 'director', 'secretary'].includes(currentUserProfile.role);
 
-  // Multi-field Search & Category Filtering
+  // Filter songs based on search and season tags
   const filteredSongs = songs.filter((song) => {
     if (searchValue.trim()) {
       const qLower = searchValue.toLowerCase().trim();
@@ -257,23 +220,17 @@ export const RepertoireClient = ({
       if (!titleMatch && !composerMatch && !lyricsMatch) return false;
     }
 
-    if (selectedCategoryFilter && selectedCategoryFilter !== 'ALL') {
+    if (!songMatchesSeasonTags(song, selectedSeasonTags)) {
+      return false;
+    }
+
+    if (selectedMassPartFilter && selectedMassPartFilter !== 'ALL') {
       const massPart = MASS_PART_SECTIONS.find(
-        (p) => p.name.toLowerCase() === selectedCategoryFilter.toLowerCase() || p.id === selectedCategoryFilter
+        (p) => p.name.toLowerCase() === selectedMassPartFilter.toLowerCase() || p.id === selectedMassPartFilter
       );
 
       if (massPart) {
         if (!matchesMassPart(song, massPart.name, massPart.matchKeywords)) return false;
-      } else {
-        const songCatIds = (song.categories || []).map((c) => c.id);
-        const songCatNames = (song.categories || []).map((c) => c.name.toLowerCase());
-        if (song.category) songCatNames.push(song.category.toLowerCase());
-
-        const targetLower = selectedCategoryFilter.toLowerCase();
-        const matchById = songCatIds.includes(selectedCategoryFilter);
-        const matchByName = songCatNames.some((cat) => cat === targetLower || cat.includes(targetLower) || targetLower.includes(cat));
-
-        if (!matchById && !matchByName) return false;
       }
     }
 
@@ -292,76 +249,82 @@ export const RepertoireClient = ({
   const otherSongs = filteredSongs.filter((s) => !assignedSongIds.has(s.id));
 
   const isSearching = searchValue.trim().length > 0;
+  const songsWithChordsCount = songs.filter((s) => Boolean(s.lyrics)).length;
 
-  // Render compact song row
-  const renderSongRow = (song: Song) => {
-    const tags = song.categories && song.categories.length > 0
+  // Render clean, modern song row tile
+  const renderSongRow = (song: Song, currentSectionName?: string) => {
+    // Only display extra tags that aren't repeating the current section mass part name
+    const extraTags = (song.categories && song.categories.length > 0
       ? song.categories
       : song.category
       ? [{ id: song.category, name: song.category }]
-      : [];
+      : []
+    ).filter((tag) => {
+      if (!currentSectionName) return true;
+      const tLower = tag.name.toLowerCase();
+      const sLower = currentSectionName.toLowerCase();
+      return !tLower.includes(sLower) && !sLower.includes(tLower) && !isMassPartName(tag.name);
+    });
 
     return (
       <Link
         key={song.id}
         href={`/repertoire/${song.id}`}
-        className="flex items-center justify-between py-3 px-4 rounded-xl bg-white/90 border border-glass-border text-inherit no-underline min-h-[52px] gap-3 transition-all hover:bg-white hover:shadow-card hover:border-primary/20"
+        className="group flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-white border border-black/[0.07] text-inherit no-underline transition-all hover:bg-slate-50/80 hover:border-primary/30 hover:shadow-sm gap-3 min-w-0"
       >
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-primary/8 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Music size={17} />
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {/* Note Icon Badge */}
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+            <Music size={16} />
           </div>
-          
-          {/* Main Title & Meta Sub-row */}
-          <div className="flex-1 min-w-0 flex flex-col gap-1">
-            <h4 className="text-[0.96rem] font-bold text-primary m-0 leading-snug break-words">
-              {song.title}
-            </h4>
 
-            {/* Sub-row: Composer & Category Badges */}
-            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-              {song.composer && (
-                <span className="text-xs text-muted font-medium mr-1">
+          {/* Title & Metadata */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="text-[0.92rem] sm:text-[0.96rem] font-bold text-foreground m-0 truncate group-hover:text-primary transition-colors">
+                {song.title}
+              </h4>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap mt-0.5 text-xs text-muted">
+              {song.composer ? (
+                <span className="truncate max-w-[160px] sm:max-w-[220px]">
                   {song.composer}
                 </span>
+              ) : (
+                <span className="italic opacity-75">Composer unknown</span>
               )}
 
-              {tags.length > 0 && (
-                <div className="flex gap-1 flex-wrap items-center">
-                  {tags.slice(0, 3).map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="text-[0.66rem] font-bold uppercase tracking-wider text-primary bg-primary/8 py-0.5 px-2 rounded-full border border-primary/12 whitespace-nowrap"
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
-                  {tags.length > 3 && (
-                    <span className="text-[0.66rem] text-muted font-semibold">
-                      +{tags.length - 3}
-                    </span>
-                  )}
-                </div>
-              )}
-
+              {/* Chords Badge */}
               {song.lyrics && (
-                <span
-                  title="ChordPro lyrics available"
-                  className="text-[0.66rem] font-bold text-accent bg-accent/8 py-0.5 px-2 rounded-full border border-accent/15 inline-flex items-center gap-0.5 whitespace-nowrap"
-                >
+                <span className="inline-flex items-center gap-0.5 text-[0.68rem] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                  <FileText size={10} />
                   Chords
                 </span>
               )}
+
+              {/* Sub Tags (e.g. Lent, Advent, Easter, Latin) */}
+              {extraTags.slice(0, 2).map((t) => (
+                <span
+                  key={t.id}
+                  className="text-[0.66rem] font-semibold text-primary bg-primary/8 px-1.5 py-0.5 rounded border border-primary/15 whitespace-nowrap"
+                >
+                  {t.name}
+                </span>
+              ))}
             </div>
           </div>
         </div>
 
-        <ChevronRight size={18} className="text-muted flex-shrink-0 self-center" />
+        {/* Right Action Chevron */}
+        <div className="w-7 h-7 rounded-full bg-black/4 flex items-center justify-center text-muted group-hover:text-primary group-hover:bg-primary/10 transition-colors flex-shrink-0">
+          <ChevronRight size={15} />
+        </div>
       </Link>
     );
   };
 
-  // Group songs alphabetically for A-Z Songbook Index Mode
+  // Group songs alphabetically for A-Z Hymnal Mode
   const alphabetMap: Record<string, Song[]> = {};
   if (viewMode === 'AZ_INDEX') {
     const sorted = [...filteredSongs].sort((a, b) => a.title.localeCompare(b.title));
@@ -373,68 +336,130 @@ export const RepertoireClient = ({
     });
   }
 
-  // Filter sections by active tab
-  const displaySections = activeTab === 'ALL'
+  // Filter sections by active mass part tab
+  const displaySections = selectedMassPartFilter === 'ALL'
     ? MASS_PART_SECTIONS
-    : MASS_PART_SECTIONS.filter((p) => p.id === activeTab);
+    : MASS_PART_SECTIONS.filter((p) => p.id === selectedMassPartFilter || p.name.toLowerCase() === selectedMassPartFilter.toLowerCase());
 
   return (
-    <div ref={containerRef} className="flex flex-col min-h-screen relative">
-      <div className="bg-orb bg-orb-1" />
-      <div className="bg-orb bg-orb-2" />
-
+    <div ref={containerRef} className="flex flex-col min-h-screen bg-[#fbfbf9] text-foreground">
       <Navbar profile={currentUserProfile} />
 
-      <main className="flex-1 py-6 px-4 pb-10 max-w-[1040px] mx-auto w-full">
-        {/* Header & Songbook Title */}
-        <div className="anim-header mb-5 flex items-center justify-between flex-wrap gap-3">
+      <main className="flex-1 py-5 sm:py-7 px-3 sm:px-6 pb-24 max-w-[1120px] mx-auto w-full">
+        {/* Modern Liturgical Hero Header */}
+        <div className="anim-header mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-black/[0.06]">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <BookOpen size={22} className="text-primary" />
-              <h1 className="text-2xl sm:text-[1.8rem] font-bold text-primary m-0">
-                Choir Songbook Repertoire
-              </h1>
+            <div className="inline-flex items-center gap-1.5 py-0.5 px-2.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-1.5 border border-primary/15">
+              <BookOpen size={13} />
+              <span>Choir Liturgical Library</span>
             </div>
-            <p className="text-muted text-sm m-0">
-              Flip directly to any Mass Part page or browse the A-Z Index without endless scrolling.
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-primary m-0 tracking-tight">
+              Repertoire &amp; Songbook
+            </h1>
+            <p className="text-xs sm:text-sm text-muted m-0 mt-1">
+              Browse mass parts in liturgical order or switch to the A-Z alphabetical index.
             </p>
           </div>
 
-          {/* View Mode Toggle: Mass Parts vs A-Z Hymnal Index */}
-          <div className="flex gap-1.5 bg-black/6 p-1 rounded-xl">
+          {/* Top Actions: Propose Song & View Switcher */}
+          <div className="flex items-center gap-2.5 flex-wrap">
             <button
-              onClick={() => { setViewMode('MASS_PARTS'); setActiveTab('ALL'); }}
-              className={`flex items-center gap-1.5 py-2 px-3.5 rounded-lg text-xs font-bold border-0 cursor-pointer transition-all ${
-                viewMode === 'MASS_PARTS' ? 'bg-white text-primary shadow-sm' : 'bg-transparent text-muted'
-              }`}
+              type="button"
+              onClick={() => setSubmitModalOpen(true)}
+              className="btn btn-primary !py-2 !px-3.5 text-xs font-bold inline-flex items-center gap-1.5 shadow-sm rounded-xl"
+              style={{ background: 'linear-gradient(135deg, var(--accent), var(--primary))' }}
             >
-              <Layers size={15} />
-              Mass Parts View
+              <Sparkles size={14} />
+              <span>+ Propose Song</span>
             </button>
-            <button
-              onClick={() => setViewMode('AZ_INDEX')}
-              className={`flex items-center gap-1.5 py-2 px-3.5 rounded-lg text-xs font-bold border-0 cursor-pointer transition-all ${
-                viewMode === 'AZ_INDEX' ? 'bg-white text-primary shadow-sm' : 'bg-transparent text-muted'
-              }`}
-            >
-              <SortAsc size={15} />
-              A-Z Hymnal Index
-            </button>
+
+            {/* View Mode Toggle */}
+            <div className="flex bg-black/[0.05] p-1 rounded-xl border border-black/[0.05]">
+              <button
+                type="button"
+                onClick={() => { setViewMode('MASS_PARTS'); setSelectedMassPartFilter('ALL'); }}
+                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-bold border-0 cursor-pointer transition-all ${
+                  viewMode === 'MASS_PARTS' ? 'bg-white text-primary shadow-sm' : 'bg-transparent text-muted hover:text-foreground'
+                }`}
+              >
+                <Layers size={14} />
+                <span className="hidden sm:inline">Mass Parts</span>
+                <span className="sm:hidden">Liturgical</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('AZ_INDEX')}
+                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-bold border-0 cursor-pointer transition-all ${
+                  viewMode === 'AZ_INDEX' ? 'bg-white text-primary shadow-sm' : 'bg-transparent text-muted hover:text-foreground'
+                }`}
+              >
+                <SortAsc size={14} />
+                <span>A–Z Index</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Search Bar & Category Dropdown */}
-        <div className="anim-header mb-5 flex flex-wrap gap-3 items-center">
-          {/* Search Input */}
-          <div className="relative flex-[1_1_280px] min-w-[260px]">
+        {/* Quick Liturgical Mass Part Horizontal Filter Chips */}
+        {viewMode === 'MASS_PARTS' && (
+          <div className="anim-header mb-4">
+            <div
+              ref={filterScrollRef}
+              className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar text-xs font-semibold"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              <button
+                type="button"
+                onClick={() => setSelectedMassPartFilter('ALL')}
+                className={`py-1.5 px-3 rounded-full border whitespace-nowrap cursor-pointer transition-all ${
+                  selectedMassPartFilter === 'ALL'
+                    ? 'bg-primary text-white border-primary shadow-sm font-bold'
+                    : 'bg-white text-muted border-black/10 hover:border-black/20 hover:text-foreground'
+                }`}
+              >
+                All Mass Parts ({songs.length})
+              </button>
+
+              {MASS_PART_SECTIONS.map((part) => {
+                const isActive = selectedMassPartFilter === part.id || selectedMassPartFilter === part.name;
+                const partCount = songs.filter((s) => matchesMassPart(s, part.name, part.matchKeywords)).length;
+
+                return (
+                  <button
+                    key={part.id}
+                    type="button"
+                    onClick={() => setSelectedMassPartFilter(isActive ? 'ALL' : part.id)}
+                    className={`py-1.5 px-3 rounded-full border whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-primary text-white border-primary shadow-sm font-bold'
+                        : 'bg-white text-muted border-black/10 hover:border-black/20 hover:text-foreground'
+                    }`}
+                  >
+                    <span>{part.name}</span>
+                    <span className={`text-[0.68rem] px-1.5 py-0.2 rounded-full font-bold ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-black/5 text-muted'
+                    }`}>
+                      {partCount}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Search Bar & Tag Filter Controls */}
+        <div className="anim-header mb-5 flex items-center gap-2.5 flex-wrap">
+          {/* Search Field */}
+          <div className="relative flex-1 min-w-[240px]">
             <Search
-              size={18}
+              size={17}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
             />
             <input
               ref={searchInputRef}
               type="text"
-              className="input-field pl-10 pr-10 w-full min-h-[44px] text-sm"
+              className="w-full pl-9 pr-9 py-2.5 bg-white border border-black/10 rounded-xl text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-sm"
               placeholder="Search title, composer, or lyrics… (/)"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
@@ -443,100 +468,168 @@ export const RepertoireClient = ({
               <button
                 type="button"
                 onClick={() => setSearchValue('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-0 text-muted cursor-pointer p-1 flex items-center justify-center"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground bg-transparent border-0 cursor-pointer p-1"
                 title="Clear search"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             )}
           </div>
 
-          {/* Category Dropdown (Mass Parts Only) */}
-          <div className="relative flex-none min-w-[220px]">
-            <select
-              className="input-field w-full min-h-[44px] text-sm font-semibold text-foreground cursor-pointer"
-              value={selectedCategoryFilter}
-              onChange={(e) => handleSelectDropdownCategory(e.target.value)}
-            >
-              <option value="ALL">All Mass Parts ({songs.length} songs)</option>
-              {MASS_PART_SECTIONS.map((part) => (
-                <option key={part.id} value={part.name}>
-                  {part.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Liturgical Season Tags Filter Dropdown */}
+          {seasonTagNames.length > 0 && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowTagFilterPopover(!showTagFilterPopover)}
+                className={`py-2.5 px-3.5 rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 border shadow-sm transition-all ${
+                  selectedSeasonTags.length > 0
+                    ? 'bg-primary/10 text-primary border-primary/30'
+                    : 'bg-white text-muted border-black/10 hover:border-black/20'
+                }`}
+              >
+                <SlidersHorizontal size={14} />
+                <span>Season Tags</span>
+                {selectedSeasonTags.length > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-primary text-white text-[0.65rem] flex items-center justify-center font-black">
+                    {selectedSeasonTags.length}
+                  </span>
+                )}
+              </button>
 
-          {/* Clear Filters Button if active */}
-          {(searchValue || selectedCategoryFilter !== 'ALL' || selectedCategoryTags.length > 0) && (
-            <button
-              onClick={handleClearAllFilters}
-              className="py-2 px-3.5 rounded-xl text-xs font-semibold text-muted bg-black/5 border-0 min-h-[44px] cursor-pointer hover:bg-black/10"
-            >
-              Clear Filter
-            </button>
+              {showTagFilterPopover && (
+                <div
+                  className="absolute right-0 top-full mt-2 z-50 w-64 bg-white rounded-xl border border-black/10 shadow-xl p-3 flex flex-col gap-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between border-b border-black/6 pb-1.5">
+                    <span className="text-xs font-bold text-foreground">Liturgical Themes &amp; Tags</span>
+                    {selectedSeasonTags.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSeasonTags([])}
+                        className="text-[0.7rem] font-semibold text-primary bg-transparent border-0 cursor-pointer hover:underline"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
+                    {seasonTagNames.map((tag) => {
+                      const isChecked = selectedSeasonTags.includes(tag);
+                      return (
+                        <label
+                          key={tag}
+                          className={`flex items-center gap-2 p-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                            isChecked ? 'bg-primary/8 text-primary font-bold' : 'hover:bg-slate-50 text-foreground'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSeasonTag(tag)}
+                            className="accent-primary cursor-pointer"
+                          />
+                          <span>{tag}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
-          {/* Quick Collapse / Expand All Buttons */}
-          {viewMode === 'MASS_PARTS' && selectedCategoryFilter === 'ALL' && !isSearching && (
-            <div className="flex gap-1.5 ml-auto">
+          {/* Quick Collapse / Expand All (Mass Parts Mode) */}
+          {viewMode === 'MASS_PARTS' && selectedMassPartFilter === 'ALL' && !isSearching && (
+            <div className="flex items-center gap-1 ml-auto">
               <button
+                type="button"
                 onClick={collapseAllSections}
-                className="py-2 px-3 rounded-xl text-xs font-semibold text-muted bg-black/5 border-0 cursor-pointer whitespace-nowrap hover:bg-black/10"
+                className="py-2 px-2.5 rounded-lg text-xs font-semibold text-muted bg-white border border-black/10 cursor-pointer hover:bg-slate-50"
               >
-                Collapse All
+                Collapse
               </button>
               <button
+                type="button"
                 onClick={expandAllSections}
-                className="py-2 px-3 rounded-xl text-xs font-semibold text-muted bg-black/5 border-0 cursor-pointer whitespace-nowrap hover:bg-black/10"
+                className="py-2 px-2.5 rounded-lg text-xs font-semibold text-muted bg-white border border-black/10 cursor-pointer hover:bg-slate-50"
               >
-                Expand All
+                Expand
               </button>
             </div>
           )}
+
+          {/* Clear active filters button */}
+          {(searchValue || selectedMassPartFilter !== 'ALL' || selectedSeasonTags.length > 0) && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="py-2 px-3 rounded-xl text-xs font-bold text-primary bg-primary/8 border border-primary/15 cursor-pointer hover:bg-primary/12"
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
 
-        {/* Results Counter Banner when searching */}
+        {/* Search Results Count */}
         {isSearching && (
-          <div className="mb-4 text-sm text-muted font-semibold">
-            Found {filteredSongs.length} {filteredSongs.length === 1 ? 'song' : 'songs'} matching "{searchValue.trim()}"
+          <div className="mb-4 text-xs sm:text-sm text-muted font-semibold">
+            Found {filteredSongs.length} {filteredSongs.length === 1 ? 'song' : 'songs'} matching &quot;{searchValue.trim()}&quot;
           </div>
         )}
 
         {/* Repertoire Content: Empty State */}
         {filteredSongs.length === 0 ? (
-          <div className="glass-container anim-section text-center py-12 px-5">
-            <Music size={42} className="mx-auto mb-3 text-muted" />
-            <p className="text-muted text-base m-0">
-              {searchValue || selectedCategoryFilter !== 'ALL'
-                ? 'No songs match your search query or selected category filter.'
-                : 'No songs in the repertoire yet.'}
+          <div className="bg-white rounded-2xl border border-black/8 p-10 text-center shadow-sm anim-section my-6">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
+              <Music size={28} />
+            </div>
+            <h3 className="text-base font-bold text-foreground mb-1">No Songs Found</h3>
+            <p className="text-xs sm:text-sm text-muted max-w-sm mx-auto mb-4">
+              {searchValue || selectedMassPartFilter !== 'ALL' || selectedSeasonTags.length > 0
+                ? 'No songs matched your search criteria. Try clearing your filters.'
+                : 'No songs have been added to the repertoire yet.'}
             </p>
-            {isAdmin && !searchValue && (
-              <Link href="/admin/songs" className="btn btn-primary mt-4 inline-block">
-                Add the first song
-              </Link>
+            {(searchValue || selectedMassPartFilter !== 'ALL' || selectedSeasonTags.length > 0) ? (
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="btn btn-secondary !py-2 !px-4 text-xs font-bold"
+              >
+                Clear All Filters
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setSubmitModalOpen(true)}
+                className="btn btn-primary !py-2 !px-4 text-xs font-bold inline-flex items-center gap-1.5"
+              >
+                <Sparkles size={14} />
+                <span>Propose First Song</span>
+              </button>
             )}
           </div>
         ) : viewMode === 'AZ_INDEX' ? (
           /* 🔤 ALPHABETICAL A-Z HYMNAL INDEX VIEW */
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4">
             {Object.keys(alphabetMap).sort().map((letter) => {
               const letterSongs = alphabetMap[letter];
               return (
                 <div
                   key={letter}
-                  className="glass-container anim-section rounded-xl overflow-hidden border border-glass-border shadow-card"
+                  className="bg-white rounded-2xl border border-black/8 shadow-sm overflow-hidden anim-section"
                 >
-                  <div className="py-2.5 px-4.5 bg-primary/6 border-b border-glass-border flex items-center justify-between">
-                    <span className="text-lg font-extrabold text-primary">
+                  <div className="py-2.5 px-4 bg-slate-50/80 border-b border-black/6 flex items-center justify-between">
+                    <span className="text-base font-black text-primary">
                       {letter}
                     </span>
-                    <span className="text-xs font-semibold text-muted">
+                    <span className="text-xs font-bold text-muted">
                       {letterSongs.length} {letterSongs.length === 1 ? 'song' : 'songs'}
                     </span>
                   </div>
-                  <div className="p-3 pb-4 flex flex-col gap-2 bg-white/25">
+                  <div className="p-3 flex flex-col gap-2">
                     {letterSongs.map((song) => renderSongRow(song))}
                   </div>
                 </div>
@@ -544,8 +637,8 @@ export const RepertoireClient = ({
             })}
           </div>
         ) : (
-          /* 📖 LITURGICAL MASS PARTS VIEW (Page-by-Page / Accordion) */
-          <div className="flex flex-col gap-4">
+          /* 📖 LITURGICAL MASS PARTS VIEW */
+          <div className="flex flex-col gap-3.5">
             {displaySections.map((part) => {
               const partSongs = filteredSongs.filter((s) => matchesMassPart(s, part.name, part.matchKeywords));
 
@@ -554,219 +647,60 @@ export const RepertoireClient = ({
 
               const isCollapsed = isSearching ? false : !!collapsedSections[part.id];
 
-              // Collect all unique category tags for songs in this section
-              const sectionCategoryTags = Array.from(
-                new Set(
-                  partSongs.flatMap((s) => [
-                    ...(s.categories || []).map((c) => c.name),
-                    ...(s.category ? [s.category] : []),
-                  ])
-                )
-              );
-
-              // Filter songs by multi-select category tags
-              const tagFilteredPartSongs = partSongs.filter((s) => songMatchesSelectedTags(s, selectedCategoryTags));
-              const ITEMS_PER_PAGE = 5;
-              const totalPartSongs = tagFilteredPartSongs.length;
-              const totalPartPages = Math.ceil(totalPartSongs / ITEMS_PER_PAGE) || 1;
-              const currentPartPage = Math.min(getCardPage(part.id), totalPartPages);
-              const paginatedPartSongs = tagFilteredPartSongs.slice(
-                (currentPartPage - 1) * ITEMS_PER_PAGE,
-                currentPartPage * ITEMS_PER_PAGE
-              );
-
               return (
                 <div
                   key={part.id}
                   id={`part-${part.id}`}
-                  className={`glass-container anim-section rounded-xl border border-glass-border shadow-card relative overflow-visible ${
-                    openFilterCardId === part.id ? 'z-50' : 'z-0'
-                  }`}
+                  className="bg-white rounded-2xl border border-black/8 shadow-sm overflow-hidden transition-all anim-section"
                 >
-                  {/* Section Header */}
+                  {/* Mass Part Card Header */}
                   <div
                     onClick={() => toggleSection(part.id)}
-                    className={`flex items-center justify-between py-3.5 px-4.5 cursor-pointer bg-white/75 select-none transition-colors ${
-                      isCollapsed ? 'rounded-xl' : 'rounded-t-xl'
-                    }`}
+                    className="flex items-center justify-between p-3.5 sm:p-4 cursor-pointer select-none bg-white hover:bg-slate-50/75 transition-colors gap-3"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <BookOpen size={18} className="text-primary" />
-                      <h2 className="text-base font-bold text-primary m-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Liturgical Order Number Pill */}
+                      <span className="text-[0.72rem] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/15 flex-shrink-0">
+                        {part.num}
+                      </span>
+                      <h2 className="text-[0.95rem] sm:text-base font-bold text-primary m-0 truncate">
                         {part.name}
                       </h2>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <span
-                        className={`text-xs font-semibold py-0.5 px-2.5 rounded-full ${
-                          tagFilteredPartSongs.length > 0 ? 'bg-primary/10 text-primary' : 'bg-black/5 text-muted'
+                        className={`text-xs font-bold py-0.5 px-2.5 rounded-full ${
+                          partSongs.length > 0 ? 'bg-primary/10 text-primary' : 'bg-black/5 text-muted'
                         }`}
                       >
-                        {tagFilteredPartSongs.length} {tagFilteredPartSongs.length === 1 ? 'song' : 'songs'}
+                        {partSongs.length} {partSongs.length === 1 ? 'song' : 'songs'}
                       </span>
-                      {isCollapsed ? <ChevronDown size={18} className="text-muted" /> : <ChevronUp size={18} className="text-muted" />}
+                      <div className="text-muted p-0.5">
+                        {isCollapsed ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Section Songs List & Category Tags with Filter Funnel Button */}
+                  {/* Mass Part Song List */}
                   {!isCollapsed && (
-                    <div className="p-3 pb-4 flex flex-col gap-2 bg-white/25 rounded-b-xl">
-                      {/* Category Tags Line with Funnel Filter Button (Rendered on ALL Mass Part Cards) */}
-                      <div className="flex items-center justify-between gap-2 mb-1.5 pb-2 border-b border-black/6">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[0.72rem] font-bold text-muted uppercase tracking-wider">
-                            CATEGORY TAGS:
-                          </span>
-                          {sectionCategoryTags.length > 0 ? (
-                            sectionCategoryTags.map((tag) => (
-                              <span
-                                key={tag}
-                                className="text-[0.72rem] font-bold py-0.5 px-2 rounded-full bg-primary/6 text-primary tracking-wide cursor-default select-none"
-                              >
-                                {tag}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-[0.72rem] italic text-muted">None</span>
-                          )}
-                        </div>
-
-                        {/* Funnel Filter Button on ALL Mass Part Cards */}
-                        <div className="relative flex-shrink-0">
+                    <div className="p-3 sm:p-3.5 pt-0 border-t border-black/5 bg-[#fafaf8]/50 flex flex-col gap-2">
+                      {partSongs.length > 0 ? (
+                        partSongs.map((song) => renderSongRow(song, part.name))
+                      ) : (
+                        <div className="py-6 px-4 text-center">
+                          <p className="text-xs text-muted m-0 italic mb-2">
+                            No songs currently assigned to this mass part.
+                          </p>
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenFilterCardId((prev) => (prev === part.id ? null : part.id));
-                            }}
-                            className={`py-1 px-2.5 rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1.5 shadow-sm transition-all ${
-                              selectedCategoryTags.length > 0
-                                ? 'border border-primary bg-primary/10 text-primary'
-                                : 'border border-black/12 bg-white text-foreground hover:bg-slate-50'
-                            }`}
-                            title="Filter card by multiple category tags"
+                            onClick={() => setSubmitModalOpen(true)}
+                            className="text-xs font-bold text-primary hover:underline bg-transparent border-0 cursor-pointer inline-flex items-center gap-1"
                           >
-                            <Filter size={13} className={selectedCategoryTags.length > 0 ? 'text-primary' : 'text-muted'} />
-                            <span>Filter</span>
-                            {selectedCategoryTags.length > 0 && (
-                              <span className="text-[0.68rem] font-bold bg-primary text-white px-1.5 rounded-full">
-                                {selectedCategoryTags.length}
-                              </span>
-                            )}
+                            <Sparkles size={12} />
+                            <span>Propose a song for {part.name}</span>
                           </button>
-
-                          {/* Multi-Select Category Tags Popover inside Card listing ALL System Categories */}
-                          {openFilterCardId === part.id && (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="absolute top-[calc(100%+6px)] right-0 z-50 w-56 bg-white rounded-xl border border-black/12 shadow-2xl p-2.5 flex flex-col gap-1.5"
-                            >
-                              <div className="flex items-center justify-between border-b border-black/6 pb-1">
-                                <span className="text-xs font-bold text-foreground">Filter Categories</span>
-                                {selectedCategoryTags.length > 0 && (
-                                  <button
-                                    type="button"
-                                    onClick={clearCategoryTags}
-                                    className="text-[0.7rem] font-semibold text-muted bg-transparent border-0 cursor-pointer hover:text-foreground"
-                                  >
-                                    Reset
-                                  </button>
-                                )}
-                              </div>
-
-                              <div className="flex flex-col gap-1 max-h-44 overflow-y-auto">
-                                {tagCategoryNames.length > 0 ? (
-                                  tagCategoryNames.map((catName) => {
-                                    const isChecked = selectedCategoryTags.includes(catName);
-                                    return (
-                                      <label
-                                        key={catName}
-                                        className={`flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer py-1 px-1.5 rounded-md select-none transition-colors ${
-                                          isChecked ? 'bg-primary/6' : 'hover:bg-slate-50'
-                                        }`}
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          checked={isChecked}
-                                          onChange={() => toggleCategoryTag(catName)}
-                                          className="accent-primary cursor-pointer"
-                                        />
-                                        <span>{catName}</span>
-                                      </label>
-                                    );
-                                  })
-                                ) : (
-                                  <span className="text-xs text-muted italic p-1">
-                                    No non-Mass Part category tags created yet.
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          )}
                         </div>
-                      </div>
-
-                      {paginatedPartSongs.length > 0 ? (
-                        <>
-                          {paginatedPartSongs.map((song) => renderSongRow(song))}
-
-                          {/* Card Pagination Bar */}
-                          {totalPartPages > 1 && (
-                            <div className="flex items-center justify-between mt-2 pt-2.5 border-t border-black/6 gap-2 flex-wrap">
-                              <span className="text-xs text-muted font-semibold">
-                                Showing {(currentPartPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPartPage * ITEMS_PER_PAGE, totalPartSongs)} of {totalPartSongs}
-                              </span>
-
-                              <div className="flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  disabled={currentPartPage <= 1}
-                                  onClick={() => setCardPage(part.id, currentPartPage - 1)}
-                                  className={`py-1 px-2.5 rounded-lg text-xs font-semibold border ${
-                                    currentPartPage <= 1
-                                      ? 'border-black/10 bg-black/3 text-muted cursor-not-allowed'
-                                      : 'border-black/12 bg-white text-foreground cursor-pointer hover:bg-slate-50'
-                                  }`}
-                                >
-                                  Prev
-                                </button>
-
-                                {Array.from({ length: totalPartPages }, (_, i) => i + 1).map((pageNum) => (
-                                  <button
-                                    key={pageNum}
-                                    type="button"
-                                    onClick={() => setCardPage(part.id, pageNum)}
-                                    className={`py-1 px-2 rounded-lg text-xs cursor-pointer ${
-                                      pageNum === currentPartPage
-                                        ? 'font-bold border border-primary bg-primary text-white'
-                                        : 'font-medium border border-black/12 bg-white text-foreground hover:bg-slate-50'
-                                    }`}
-                                  >
-                                    {pageNum}
-                                  </button>
-                                ))}
-
-                                <button
-                                  type="button"
-                                  disabled={currentPartPage >= totalPartPages}
-                                  onClick={() => setCardPage(part.id, currentPartPage + 1)}
-                                  className={`py-1 px-2.5 rounded-lg text-xs font-semibold border ${
-                                    currentPartPage >= totalPartPages
-                                      ? 'border-black/10 bg-black/3 text-muted cursor-not-allowed'
-                                      : 'border-black/12 bg-white text-foreground cursor-pointer hover:bg-slate-50'
-                                  }`}
-                                >
-                                  Next
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-xs text-muted m-0 italic py-1">
-                          No songs match the selected tag filter.
-                        </p>
                       )}
                     </div>
                   )}
@@ -775,214 +709,38 @@ export const RepertoireClient = ({
             })}
 
             {/* Other Repertoire Songs Section */}
-            {(activeTab === 'ALL' || activeTab === 'other-songs') && otherSongs.length > 0 && (() => {
-              const otherCategoryTags = Array.from(
-                new Set(
-                  otherSongs.flatMap((s) => [
-                    ...(s.categories || []).map((c) => c.name),
-                    ...(s.category ? [s.category] : []),
-                  ])
-                )
-              );
-              const tagFilteredOtherSongs = otherSongs.filter((s) => songMatchesSelectedTags(s, selectedCategoryTags));
-              const ITEMS_PER_PAGE = 5;
-              const totalOtherSongs = tagFilteredOtherSongs.length;
-              const totalOtherPages = Math.ceil(totalOtherSongs / ITEMS_PER_PAGE) || 1;
-              const currentOtherPage = Math.min(getCardPage('other-songs'), totalOtherPages);
-              const paginatedOtherSongs = tagFilteredOtherSongs.slice(
-                (currentOtherPage - 1) * ITEMS_PER_PAGE,
-                currentOtherPage * ITEMS_PER_PAGE
-              );
+            {(selectedMassPartFilter === 'ALL' || selectedMassPartFilter === 'other-songs') && otherSongs.length > 0 && (() => {
               const isCollapsed = !!collapsedSections['other-songs'];
 
               return (
                 <div
-                  className={`glass-container anim-section rounded-xl border border-glass-border shadow-card relative overflow-visible ${
-                    openFilterCardId === 'other-songs' ? 'z-50' : 'z-0'
-                  }`}
+                  className="bg-white rounded-2xl border border-black/8 shadow-sm overflow-hidden anim-section"
                 >
                   <div
                     onClick={() => toggleSection('other-songs')}
-                    className={`flex items-center justify-between py-3.5 px-4.5 cursor-pointer bg-white/75 select-none transition-colors ${
-                      isCollapsed ? 'rounded-xl' : 'rounded-t-xl'
-                    }`}
+                    className="flex items-center justify-between p-3.5 sm:p-4 cursor-pointer select-none bg-white hover:bg-slate-50/75 transition-colors gap-3"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Music size={18} className="text-foreground" />
-                      <h2 className="text-base font-bold text-foreground m-0">
-                        Other Repertoire Songs
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-6 h-6 rounded-md bg-black/5 text-muted flex items-center justify-center flex-shrink-0">
+                        <Music size={14} />
+                      </div>
+                      <h2 className="text-[0.95rem] sm:text-base font-bold text-foreground m-0 truncate">
+                        Additional &amp; Seasonal Songs
                       </h2>
                     </div>
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className={`text-xs font-semibold py-0.5 px-2.5 rounded-full ${
-                          tagFilteredOtherSongs.length > 0 ? 'bg-primary/10 text-primary' : 'bg-black/5 text-muted'
-                        }`}
-                      >
-                        {tagFilteredOtherSongs.length} {tagFilteredOtherSongs.length === 1 ? 'song' : 'songs'}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-xs font-bold py-0.5 px-2.5 rounded-full bg-black/5 text-muted">
+                        {otherSongs.length} {otherSongs.length === 1 ? 'song' : 'songs'}
                       </span>
-                      {isCollapsed ? <ChevronDown size={18} className="text-muted" /> : <ChevronUp size={18} className="text-muted" />}
+                      <div className="text-muted p-0.5">
+                        {isCollapsed ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
+                      </div>
                     </div>
                   </div>
 
                   {!isCollapsed && (
-                    <div className="p-3 pb-4 flex flex-col gap-2 bg-white/25 rounded-b-xl">
-                      {/* Category Tags Line with Funnel Filter Button */}
-                      <div className="flex items-center justify-between gap-2 mb-1.5 pb-2 border-b border-black/6">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[0.72rem] font-bold text-muted uppercase tracking-wider">
-                            CATEGORY TAGS:
-                          </span>
-                          {otherCategoryTags.length > 0 ? (
-                            otherCategoryTags.map((tag) => (
-                              <span
-                                key={tag}
-                                className="text-[0.72rem] font-bold py-0.5 px-2 rounded-full bg-primary/6 text-primary tracking-wide cursor-default select-none"
-                              >
-                                {tag}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-[0.72rem] italic text-muted">None</span>
-                          )}
-                        </div>
-
-                        {/* Funnel Filter Button inside Card */}
-                        <div className="relative flex-shrink-0">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenFilterCardId((prev) => (prev === 'other-songs' ? null : 'other-songs'));
-                            }}
-                            className={`py-1 px-2.5 rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1.5 shadow-sm transition-all ${
-                              selectedCategoryTags.length > 0
-                                ? 'border border-primary bg-primary/10 text-primary'
-                                : 'border border-black/12 bg-white text-foreground hover:bg-slate-50'
-                            }`}
-                            title="Filter card by multiple category tags"
-                          >
-                            <Filter size={13} className={selectedCategoryTags.length > 0 ? 'text-primary' : 'text-muted'} />
-                            <span>Filter</span>
-                            {selectedCategoryTags.length > 0 && (
-                              <span className="text-[0.68rem] font-bold bg-primary text-white px-1.5 rounded-full">
-                                {selectedCategoryTags.length}
-                              </span>
-                            )}
-                          </button>
-
-                          {/* Multi-Select Category Tags Popover */}
-                          {openFilterCardId === 'other-songs' && (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="absolute top-[calc(100%+6px)] right-0 z-50 w-56 bg-white rounded-xl border border-black/12 shadow-2xl p-2.5 flex flex-col gap-1.5"
-                            >
-                              <div className="flex items-center justify-between border-b border-black/6 pb-1">
-                                <span className="text-xs font-bold text-foreground">Filter Categories</span>
-                                {selectedCategoryTags.length > 0 && (
-                                  <button
-                                    type="button"
-                                    onClick={clearCategoryTags}
-                                    className="text-[0.7rem] font-semibold text-muted bg-transparent border-0 cursor-pointer hover:text-foreground"
-                                  >
-                                    Reset
-                                  </button>
-                                )}
-                              </div>
-
-                              <div className="flex flex-col gap-1 max-h-44 overflow-y-auto">
-                                {tagCategoryNames.length > 0 ? (
-                                  tagCategoryNames.map((catName) => {
-                                    const isChecked = selectedCategoryTags.includes(catName);
-                                    return (
-                                      <label
-                                        key={catName}
-                                        className={`flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer py-1 px-1.5 rounded-md select-none transition-colors ${
-                                          isChecked ? 'bg-primary/6' : 'hover:bg-slate-50'
-                                        }`}
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          checked={isChecked}
-                                          onChange={() => toggleCategoryTag(catName)}
-                                          className="accent-primary cursor-pointer"
-                                        />
-                                        <span>{catName}</span>
-                                      </label>
-                                    );
-                                  })
-                                ) : (
-                                  <span className="text-xs text-muted italic p-1">
-                                    No non-Mass Part category tags created yet.
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {paginatedOtherSongs.length > 0 ? (
-                        <>
-                          {paginatedOtherSongs.map((song) => renderSongRow(song))}
-
-                          {/* Card Pagination Bar */}
-                          {totalOtherPages > 1 && (
-                            <div className="flex items-center justify-between mt-2 pt-2.5 border-t border-black/6 gap-2 flex-wrap">
-                              <span className="text-xs text-muted font-semibold">
-                                Showing {(currentOtherPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentOtherPage * ITEMS_PER_PAGE, totalOtherSongs)} of {totalOtherSongs}
-                              </span>
-
-                              <div className="flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  disabled={currentOtherPage <= 1}
-                                  onClick={() => setCardPage('other-songs', currentOtherPage - 1)}
-                                  className={`py-1 px-2.5 rounded-lg text-xs font-semibold border ${
-                                    currentOtherPage <= 1
-                                      ? 'border-black/10 bg-black/3 text-muted cursor-not-allowed'
-                                      : 'border-black/12 bg-white text-foreground cursor-pointer hover:bg-slate-50'
-                                  }`}
-                                >
-                                  Prev
-                                </button>
-
-                                {Array.from({ length: totalOtherPages }, (_, i) => i + 1).map((pageNum) => (
-                                  <button
-                                    key={pageNum}
-                                    type="button"
-                                    onClick={() => setCardPage('other-songs', pageNum)}
-                                    className={`py-1 px-2 rounded-lg text-xs cursor-pointer ${
-                                      pageNum === currentOtherPage
-                                        ? 'font-bold border border-primary bg-primary text-white'
-                                        : 'font-medium border border-black/12 bg-white text-foreground hover:bg-slate-50'
-                                    }`}
-                                  >
-                                    {pageNum}
-                                  </button>
-                                ))}
-
-                                <button
-                                  type="button"
-                                  disabled={currentOtherPage >= totalOtherPages}
-                                  onClick={() => setCardPage('other-songs', currentOtherPage + 1)}
-                                  className={`py-1 px-2.5 rounded-lg text-xs font-semibold border ${
-                                    currentOtherPage >= totalOtherPages
-                                      ? 'border-black/10 bg-black/3 text-muted cursor-not-allowed'
-                                      : 'border-black/12 bg-white text-foreground cursor-pointer hover:bg-slate-50'
-                                  }`}
-                                >
-                                  Next
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-xs text-muted m-0 italic py-1">
-                          No songs match the selected tag filter.
-                        </p>
-                      )}
+                    <div className="p-3 sm:p-3.5 pt-0 border-t border-black/5 bg-[#fafaf8]/50 flex flex-col gap-2">
+                      {otherSongs.map((song) => renderSongRow(song))}
                     </div>
                   )}
                 </div>
@@ -991,6 +749,14 @@ export const RepertoireClient = ({
           </div>
         )}
       </main>
+
+      <SubmitSongModal
+        isOpen={submitModalOpen}
+        onClose={() => setSubmitModalOpen(false)}
+        onSuccess={() => {
+          router.refresh();
+        }}
+      />
     </div>
   );
 };

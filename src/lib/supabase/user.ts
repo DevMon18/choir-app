@@ -52,9 +52,42 @@ export const getProfile = async (): Promise<Profile | null> => {
     // next/headers might throw when called outside request context (e.g. in some static pre-renders)
   }
 
-  // Fallback: Get verified user from Supabase Auth and construct profile from claims/metadata
+  // Fallback: Get verified user from Supabase Auth
   const user = await getCachedUser();
   if (!user) return null;
+
+  // If app_metadata has a valid assigned role, use it
+  if (user.app_metadata?.role && user.app_metadata.role !== 'pending') {
+    return {
+      id: user.id,
+      email: user.email || '',
+      role: user.app_metadata.role as any,
+      full_name: (user.user_metadata?.full_name as string) || '',
+      created_at: user.created_at,
+    };
+  }
+
+  // Query database profiles table for actual user role
+  try {
+    const supabase = await createClient();
+    const { data: profileRow } = await supabase
+      .from('profiles')
+      .select('id, email, role, full_name, created_at')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profileRow) {
+      return {
+        id: profileRow.id,
+        email: profileRow.email || user.email || '',
+        role: (profileRow.role as any) || 'pending',
+        full_name: profileRow.full_name || (user.user_metadata?.full_name as string) || '',
+        created_at: profileRow.created_at || user.created_at,
+      };
+    }
+  } catch (err) {
+    console.error('Error fetching profile fallback from database:', err);
+  }
 
   return {
     id: user.id,

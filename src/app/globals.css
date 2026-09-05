@@ -429,35 +429,39 @@ input::-webkit-contacts-auto-fill-button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
+  padding: 8px 18px;
   background: #ffffff !important;
   opacity: 1 !important;
   border: 1px solid var(--glass-border);
   border-radius: 16px;
   box-shadow: 0 10px 30px -5px rgba(11, 77, 36, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
-  margin: 12px auto;
-  max-width: 1280px;
-  width: calc(100% - 32px);
+  margin: 10px auto;
+  max-width: 1440px;
+  width: calc(100% - 24px);
   position: sticky !important;
-  top: 12px !important;
+  top: 10px !important;
   z-index: 1000 !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+  gap: 12px;
 }
 
 .nav-brand {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--primary);
   letter-spacing: -0.02em;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .nav-links {
   display: flex;
-  gap: 2px;
+  gap: 3px;
   align-items: center;
   flex-wrap: nowrap;
   flex-shrink: 1;
@@ -468,59 +472,63 @@ input::-webkit-contacts-auto-fill-button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 8px;
+  padding: 6px 7px;
   border-radius: 8px;
   color: var(--muted);
   font-weight: 500;
-  font-size: 0.82rem;
+  font-size: 0.79rem;
   text-decoration: none;
   transition: all 0.2s ease;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-link:hover {
-  background: rgba(30, 58, 138, 0.04);
+  background: rgba(11, 77, 36, 0.05);
   color: var(--primary);
 }
 
 .nav-link.active {
-  background: rgba(30, 58, 138, 0.06);
+  background: rgba(11, 77, 36, 0.08);
   color: var(--primary);
   font-weight: 600;
 }
 
-@media (max-width: 1360px) {
+@media (max-width: 1380px) {
   .nav-bar {
-    padding: 10px 14px;
+    padding: 8px 12px;
   }
   .nav-brand span {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+  }
+  .nav-links {
+    gap: 1px;
   }
   .nav-link {
-    padding: 6px 6px;
-    font-size: 0.8rem;
-    gap: 3px;
+    padding: 5px 6px;
+    font-size: 0.76rem;
+    gap: 4px;
   }
   .nav-dropdown-trigger {
-    padding: 6px 7px !important;
-    font-size: 0.8rem !important;
+    padding: 5px 6px !important;
+    font-size: 0.76rem !important;
   }
   .nav-logout-text {
     display: none;
   }
   .nav-logout-btn {
-    padding: 8px 10px !important;
-    gap: 0 !important;
+    padding: 6px 8px !important;
+    min-height: 32px !important;
   }
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1200px) {
   .nav-link-text {
     display: none;
   }
   .nav-link {
-    padding: 8px 10px;
+    padding: 6px 7px;
   }
   .nav-dropdown-text {
     display: none;
@@ -1265,6 +1273,149 @@ input::-webkit-contacts-auto-fill-button {
     justify-content: center;
     font-size: 1.1rem;
     flex-shrink: 0;
+  }
+
+  /* ──────────────────────────────────────────────
+     FACEBOOK-STYLE MENU DRAWER STYLING
+  ────────────────────────────────────────────── */
+  .fb-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 14px rgba(11, 77, 36, 0.06);
+    text-decoration: none;
+    color: inherit;
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
+  }
+  .fb-profile-card:hover {
+    background: #fafaf9;
+    border-color: rgba(11, 77, 36, 0.25);
+    box-shadow: 0 6px 18px rgba(11, 77, 36, 0.09);
+  }
+
+  .fb-menu-section {
+    margin-bottom: 16px;
+  }
+  .fb-menu-section-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 6px;
+    padding-left: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .fb-menu-group {
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid var(--glass-border);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .fb-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  }
+  .fb-menu-item:last-child {
+    border-bottom: none;
+  }
+  .fb-menu-item:hover {
+    background: rgba(11, 77, 36, 0.04);
+  }
+  .fb-menu-item.active {
+    background: rgba(11, 77, 36, 0.07);
+  }
+
+  .fb-menu-icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+  }
+  .fb-menu-item:hover .fb-menu-icon-wrap {
+    transform: scale(1.06);
+  }
+
+  .fb-menu-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .fb-menu-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .fb-menu-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--foreground);
+  }
+  .fb-menu-item.active .fb-menu-title {
+    color: var(--primary);
+  }
+
+  .fb-menu-subtitle {
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fb-menu-chevron {
+    color: #a1a1aa;
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  .fb-menu-badge {
+    font-size: 0.62rem;
+    font-weight: 800;
+    border-radius: 999px;
+    padding: 1px 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+  }
+  .fb-menu-badge.error {
+    background: var(--error);
+    color: #ffffff;
+  }
+  .fb-menu-badge.accent {
+    background: var(--accent);
+    color: #ffffff;
+  }
+  .fb-menu-badge.primary {
+    background: var(--primary);
+    color: #ffffff;
   }
 
   /* Admin content full-width on mobile */

@@ -20,12 +20,20 @@ import {
   User,
   Calendar,
   Radio,
-  FileMusic,
   FileText,
   MessageSquare,
   ShieldCheck,
   ChevronDown,
-  ListTodo
+  ChevronRight,
+  ListTodo,
+  Trophy,
+  Sparkles,
+  Home,
+  CreditCard,
+  Settings,
+  Menu,
+  Award,
+  Layers,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -38,32 +46,64 @@ interface NavbarProps {
 
 type Role = string;
 
-// Role-based admin menu items
-const getAdminItems = (role: Role) => {
-  const iconSize = 16;
-  const all = [
-    { href: '/admin/tasks',     label: 'Manage Tasks',  icon: <ListTodo size={iconSize} />, roles: ['super_admin', 'director', 'secretary', 'treasurer'] },
-    { href: '/admin/users',     label: 'Manage Users',  icon: <Users size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/roster',    label: 'Choir Roster',  icon: <Music size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/attendance',label: 'Attendance',    icon: <ClipboardList size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/songs',     label: 'Songs',         icon: <Music2 size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/sequences', label: 'Sequences',     icon: <Mic size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/announcements', label: 'Announcements', icon: <Megaphone size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/documents', label: 'Documents',     icon: <FileText size={iconSize} />, roles: ['super_admin', 'director'] },
-    { href: '/admin/verifications', label: 'Verifications', icon: <ShieldCheck size={iconSize} />, roles: ['super_admin', 'director', 'secretary'] },
-    { href: '/admin/finances',  label: 'Finances',      icon: <DollarSign size={iconSize} />, roles: ['super_admin', 'director', 'treasurer'] },
-    { href: '/admin/analytics', label: 'Analytics',     icon: <BarChart3 size={iconSize} />, roles: ['super_admin', 'director', 'secretary', 'treasurer'] },
-  ];
-  return all.filter(item => item.roles.includes(role));
-};
+// Grouped Admin Navigation items for both Desktop Dropdown & Mobile Drawer
+interface AdminCategoryGroup {
+  title: string;
+  items: {
+    href: string;
+    label: string;
+    subtitle?: string;
+    icon: React.ReactNode;
+    roles: Role[];
+    badgeKey?: 'users' | 'lyrics';
+  }[];
+}
+
+const ADMIN_GROUPS: AdminCategoryGroup[] = [
+  {
+    title: 'Music & Liturgy',
+    items: [
+      { href: '/admin/songs', label: 'Manage Songs', subtitle: 'Repertoire catalog & ChordPro', icon: <Music2 size={16} />, roles: ['super_admin', 'director', 'secretary'] },
+      { href: '/admin/sequences', label: 'Sequence Flow', subtitle: 'Mass order of songs', icon: <Mic size={16} />, roles: ['super_admin', 'director', 'secretary'] },
+      { href: '/admin/lyrics-review', label: 'Lyrics Review', subtitle: 'Approve member submissions', icon: <Sparkles size={16} />, roles: ['super_admin', 'director'], badgeKey: 'lyrics' },
+      { href: '/admin/documents', label: 'Document Templates', subtitle: 'Waivers & consent forms', icon: <FileText size={16} />, roles: ['super_admin', 'director'] },
+    ],
+  },
+  {
+    title: 'Members & Operations',
+    items: [
+      { href: '/admin/users', label: 'Manage Users', subtitle: 'Roster approval & roles', icon: <Users size={16} />, roles: ['super_admin', 'director', 'secretary'], badgeKey: 'users' },
+      { href: '/admin/roster', label: 'Choir Roster', subtitle: 'Voice sections & parts', icon: <Music size={16} />, roles: ['super_admin', 'director', 'secretary'] },
+      { href: '/admin/attendance', label: 'Attendance', subtitle: 'One-tap rehearsal & Mass roll', icon: <ClipboardList size={16} />, roles: ['super_admin', 'director', 'secretary'] },
+      { href: '/admin/tasks', label: 'Manage Tasks', subtitle: 'Assign choir duties', icon: <ListTodo size={16} />, roles: ['super_admin', 'director', 'secretary', 'treasurer'] },
+      { href: '/admin/announcements', label: 'Announcements', subtitle: 'Broadcasts & urgent alerts', icon: <Megaphone size={16} />, roles: ['super_admin', 'director', 'secretary'] },
+      { href: '/admin/verifications', label: 'Verifications', subtitle: 'Signed waiver verification', icon: <ShieldCheck size={16} />, roles: ['super_admin', 'director', 'secretary'] },
+    ],
+  },
+  {
+    title: 'Finances & Reports',
+    items: [
+      { href: '/admin/finances', label: 'Finances & Sinking Fund', subtitle: 'Ledger, dues & receipts', icon: <DollarSign size={16} />, roles: ['super_admin', 'director', 'treasurer'] },
+      { href: '/admin/analytics', label: 'Analytics & Reports', subtitle: 'Attendance & growth charts', icon: <BarChart3 size={16} />, roles: ['super_admin', 'director', 'secretary', 'treasurer'] },
+    ],
+  },
+];
 
 const hasAdminAccess = (role: Role) =>
   ['super_admin', 'director', 'secretary', 'treasurer'].includes(role);
 
-// ✅ FIX: NavLink defined OUTSIDE Navbar so React doesn't create a new component
-// type on every render (which would cause all nav links to unmount/remount).
-const NavLink = ({ href, icon, label, matchFn, pathname, badge }: {
-  href: string; icon: React.ReactNode; label: string;
+// Desktop Top NavLink Component
+const NavLink = ({
+  href,
+  icon,
+  label,
+  matchFn,
+  pathname,
+  badge,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
   matchFn?: (p: string) => boolean;
   pathname: string;
   badge?: number;
@@ -112,13 +152,14 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [activeTaskCount, setActiveTaskCount] = useState(0);
   const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
+  const [pendingLyricsCount, setPendingLyricsCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const supabase = useMemo(() => createClient(), []);
 
-  const adminItems = getAdminItems(profile.role);
   const isAdminPage = pathname.startsWith('/admin');
   const isFinanceAdmin = ['super_admin', 'director', 'treasurer'].includes(profile.role);
   const canManageUsers = ['super_admin', 'director', 'secretary'].includes(profile.role);
+  const isLyricsReviewer = ['super_admin', 'director'].includes(profile.role);
 
   // Unread messages & active tasks & pending signup approvals count & Realtime listener
   useEffect(() => {
@@ -135,6 +176,18 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
         if (isMounted) setPendingApprovalCount(count);
       } catch (err) {
         console.error('Navbar pending approvals fetch error:', err);
+      }
+    }
+
+    async function fetchPendingLyrics() {
+      try {
+        const { count } = await supabase
+          .from('song_submissions')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending');
+        if (isMounted) setPendingLyricsCount(count || 0);
+      } catch (err) {
+        console.error('Navbar pending lyrics fetch error:', err);
       }
     }
 
@@ -169,6 +222,11 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
           fetchPendingApprovals();
         }
 
+        // Initial pending lyrics fetch for directors and super_admin
+        if (isLyricsReviewer) {
+          fetchPendingLyrics();
+        }
+
         const { data: convs } = await supabase
           .from('conversations')
           .select('id')
@@ -186,7 +244,6 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
           if (isMounted) setUnreadCount(count || 0);
         }
 
-        // Generate unique channel topic per mount to prevent topic collision after re-renders
         const channelTopic = `navbar-live-${user.id}-${Math.random().toString(36).substring(2, 7)}`;
 
         channel = supabase
@@ -269,35 +326,17 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
           )
           .on(
             'postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'document_signatures', filter: `primary_member_id=eq.${user.id}` },
-            () => {
-              addToast({
-                type: 'info',
-                title: '📄 New Waiver Assigned',
-                message: 'A new document waiver has been assigned to your account.',
-              });
-              router.refresh();
-            }
-          )
-          .on(
-            'postgres_changes',
-            { event: 'UPDATE', schema: 'public', table: 'document_signatures', filter: `primary_member_id=eq.${user.id}` },
+            { event: '*', schema: 'public', table: 'song_submissions' },
             (payload) => {
-              const updated = payload.new as any;
-              if (updated?.status === 'verified' || updated?.status === 'verified_manual') {
-                addToast({
-                  type: 'success',
-                  title: '🎉 Waiver Verified',
-                  message: 'Your submitted waiver has been approved and verified by the choir director.',
-                });
-                router.refresh();
-              } else if (updated?.status === 'rejected') {
-                addToast({
-                  type: 'error',
-                  title: '⚠️ Waiver Requires Re-signing',
-                  message: 'Your submitted waiver was rejected. Please review and sign again.',
-                });
-                router.refresh();
+              if (isLyricsReviewer) {
+                fetchPendingLyrics();
+                if (payload.eventType === 'INSERT') {
+                  addToast({
+                    type: 'info',
+                    title: '✨ New Lyrics Submitted for Review',
+                    message: 'A choir member submitted new Mass Part lyrics waiting for your review.',
+                  });
+                }
               }
             }
           )
@@ -322,7 +361,6 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
 
     fetchUnread();
 
-    // Mobile App / Browser tab resume revalidation
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
         fetchUnread();
@@ -338,7 +376,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
         supabase.removeChannel(channel);
       }
     };
-  }, [supabase, pathname, addToast, router]);
+  }, [supabase, pathname, addToast, router, canManageUsers, isLyricsReviewer]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -357,16 +395,18 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
     setAdminSheetOpen(false);
   }, [pathname]);
 
+  const totalAdminPending = (canManageUsers ? pendingApprovalCount : 0) + (isLyricsReviewer ? pendingLyricsCount : 0);
+
   return (
     <>
-      {/* ── Desktop / top navbar ── */}
+      {/* ── Desktop / Top Navbar ── */}
       <nav className="nav-bar">
-        {/* Brand and Children */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        {/* Brand */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
           <Link
             href="/dashboard"
             className="nav-brand"
-            style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit', flexShrink: 0 }}
           >
             <Image
               src="/collective-logo.png"
@@ -376,65 +416,34 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               priority
               style={{ borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }}
             />
-            <span>Choir Collective</span>
+            <span style={{ whiteSpace: 'nowrap' }}>Choir Collective</span>
           </Link>
           {children}
         </div>
 
-        {/* Desktop links */}
+        {/* Desktop Links */}
         <div className="nav-links">
-          <NavLink href="/dashboard" label="Dashboard" pathname={pathname} icon={
-            <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-          } />
-          <NavLink href="/repertoire" label="Repertoire" pathname={pathname} matchFn={p => p.startsWith('/repertoire')} icon={
-            <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-            </svg>
-          } />
-          <NavLink href="/live" label="Live Sync" pathname={pathname} icon={
-            <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-            </svg>
-          } />
-          <NavLink href="/calendar" label="Calendar" pathname={pathname} icon={
-            <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          } />
-          <NavLink href="/directory" label="Directory" pathname={pathname} matchFn={p => p.startsWith('/directory')} icon={
-            <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          } />
-          <NavLink href="/messages" label="Messages" pathname={pathname} matchFn={p => p.startsWith('/messages')} badge={unreadCount} icon={
-            <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          } />
-          <NavLink href="/tasks" label="Tasks" pathname={pathname} matchFn={p => p.startsWith('/tasks')} badge={activeTaskCount} icon={<ListTodo size={16} />} />
+          <NavLink href="/dashboard" label="Dashboard" pathname={pathname} icon={<Home size={15} />} />
+          <NavLink href="/repertoire" label="Repertoire" pathname={pathname} matchFn={p => p.startsWith('/repertoire')} icon={<Music size={15} />} />
+          <NavLink href="/live" label="Live Sync" pathname={pathname} icon={<Radio size={15} />} />
+          <NavLink href="/calendar" label="Calendar" pathname={pathname} icon={<Calendar size={15} />} />
+          <NavLink href="/directory" label="Directory" pathname={pathname} matchFn={p => p.startsWith('/directory')} icon={<Users size={15} />} />
+          <NavLink href="/messages" label="Messages" pathname={pathname} matchFn={p => p.startsWith('/messages')} badge={unreadCount} icon={<MessageSquare size={15} />} />
+          <NavLink href="/tasks" label="Tasks" pathname={pathname} matchFn={p => p.startsWith('/tasks')} badge={activeTaskCount} icon={<ListTodo size={15} />} />
           <NavLink
             href={isFinanceAdmin ? '/admin/finances' : '/dues'}
             label="Dues"
             pathname={pathname}
             matchFn={p => p === '/dues' || p.startsWith('/admin/finances')}
-            icon={
-              <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
+            icon={<CreditCard size={15} />}
           />
           {profile.role !== 'super_admin' && (
-            <NavLink href="/my-documents" label="Waivers" pathname={pathname} matchFn={p => p === '/my-documents' || p.startsWith('/sign')} icon={<FileText size={16} />} />
+            <NavLink href="/my-documents" label="Waivers" pathname={pathname} matchFn={p => p === '/my-documents' || p.startsWith('/sign')} icon={<FileText size={15} />} />
           )}
-          <NavLink href="/profile" label="Profile" pathname={pathname} icon={
-            <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          } />
+          <NavLink href="/leaderboard" label="Leaderboard" pathname={pathname} icon={<Trophy size={15} />} />
+          <NavLink href="/profile" label="Profile" pathname={pathname} icon={<User size={15} />} />
 
-          {/* Admin dropdown — only for users with admin access */}
+          {/* Categorized Admin Dropdown */}
           {hasAdminAccess(profile.role) && (
             <div className="nav-dropdown-wrap" ref={dropdownRef}>
               <button
@@ -444,12 +453,9 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                 aria-expanded={dropdownOpen}
                 title="Admin Panel"
               >
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+                <Settings size={15} />
                 <span className="nav-dropdown-text">Admin</span>
-                {pendingApprovalCount > 0 && (
+                {totalAdminPending > 0 && (
                   <span
                     style={{
                       marginLeft: '4px',
@@ -468,56 +474,100 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                       border: '1.5px solid #ffffff',
                     }}
                   >
-                    {pendingApprovalCount > 9 ? '9+' : pendingApprovalCount}
+                    {totalAdminPending > 9 ? '9+' : totalAdminPending}
                   </span>
                 )}
-                <svg
-                  width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"
+                <ChevronDown
+                  size={12}
                   style={{ transition: 'transform 0.2s ease', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
+                />
               </button>
 
               {dropdownOpen && (
-                <div className="nav-dropdown-panel" role="menu">
-                  <div className="nav-dropdown-label">Admin Panel</div>
-                  {adminItems.map(item => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`nav-dropdown-item ${pathname.startsWith(item.href) ? 'active' : ''}`}
-                      role="menuitem"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      <span className="nav-dropdown-icon">{item.icon}</span>
-                      <span>{item.label}</span>
-                      {item.href === '/admin/users' && pendingApprovalCount > 0 && (
-                        <span
-                          style={{
-                            marginLeft: 'auto',
-                            marginRight: pathname.startsWith(item.href) ? '6px' : '0',
-                            background: 'var(--error)',
-                            color: '#ffffff',
-                            fontSize: '0.62rem',
-                            fontWeight: 800,
-                            borderRadius: '999px',
-                            padding: '1px 6px',
-                            height: '15px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            lineHeight: 1,
-                          }}
-                        >
-                          {pendingApprovalCount} pending
-                        </span>
-                      )}
-                      {pathname.startsWith(item.href) && (
-                        <span className="nav-dropdown-active-dot" />
-                      )}
-                    </Link>
-                  ))}
+                <div
+                  className="nav-dropdown-panel"
+                  role="menu"
+                  style={{
+                    minWidth: '240px',
+                    padding: '8px',
+                    maxHeight: '80vh',
+                    overflowY: 'auto',
+                  }}
+                >
+                  {ADMIN_GROUPS.map((group, gIdx) => {
+                    const accessibleItems = group.items.filter(item => item.roles.includes(profile.role));
+                    if (accessibleItems.length === 0) return null;
+
+                    return (
+                      <div key={group.title} style={{ marginBottom: gIdx < ADMIN_GROUPS.length - 1 ? '10px' : '0' }}>
+                        <div className="nav-dropdown-label" style={{ fontSize: '0.68rem', opacity: 0.75 }}>
+                          {group.title}
+                        </div>
+                        {accessibleItems.map((item) => {
+                          const isUsersPending = item.badgeKey === 'users' && pendingApprovalCount > 0;
+                          const isLyricsPending = item.badgeKey === 'lyrics' && pendingLyricsCount > 0;
+
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              className={`nav-dropdown-item ${pathname.startsWith(item.href) ? 'active' : ''}`}
+                              role="menuitem"
+                              onClick={() => setDropdownOpen(false)}
+                            >
+                              <span className="nav-dropdown-icon">{item.icon}</span>
+                              <span>{item.label}</span>
+                              {isUsersPending && (
+                                <span
+                                  style={{
+                                    marginLeft: 'auto',
+                                    marginRight: pathname.startsWith(item.href) ? '6px' : '0',
+                                    background: 'var(--error)',
+                                    color: '#ffffff',
+                                    fontSize: '0.62rem',
+                                    fontWeight: 800,
+                                    borderRadius: '999px',
+                                    padding: '1px 6px',
+                                    height: '15px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    lineHeight: 1,
+                                  }}
+                                >
+                                  {pendingApprovalCount}
+                                </span>
+                              )}
+                              {isLyricsPending && (
+                                <span
+                                  style={{
+                                    marginLeft: 'auto',
+                                    marginRight: pathname.startsWith(item.href) ? '6px' : '0',
+                                    background: 'var(--accent)',
+                                    color: '#ffffff',
+                                    fontSize: '0.62rem',
+                                    fontWeight: 800,
+                                    borderRadius: '999px',
+                                    padding: '1px 6px',
+                                    height: '15px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    lineHeight: 1,
+                                  }}
+                                >
+                                  {pendingLyricsCount}
+                                </span>
+                              )}
+                              {pathname.startsWith(item.href) && (
+                                <span className="nav-dropdown-active-dot" />
+                              )}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -529,37 +579,33 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               className="btn btn-secondary nav-logout-btn"
               title="Log Out"
               style={{
-                padding: '8px 14px',
-                fontSize: '0.85rem',
-                minHeight: '38px',
+                padding: '6px 10px',
+                fontSize: '0.8rem',
+                minHeight: '34px',
                 borderRadius: '8px',
                 whiteSpace: 'nowrap',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '5px',
               }}
             >
-              <LogOut size={15} />
+              <LogOut size={14} />
               <span className="nav-logout-text">Log Out</span>
             </button>
           </form>
         </div>
       </nav>
 
-      {/* ── Mobile bottom tab bar ── */}
+      {/* ── Mobile Bottom Tab Bar ── */}
       <nav className="mobile-bottom-bar" aria-label="Main navigation">
         <Link href="/dashboard" className={`mobile-tab ${pathname === '/dashboard' ? 'active' : ''}`}>
-          <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
+          <Home size={20} />
           <span>Home</span>
         </Link>
 
         <Link href="/messages" className={`mobile-tab ${pathname.startsWith('/messages') ? 'active' : ''}`}>
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
+            <MessageSquare size={20} />
             {unreadCount > 0 && (
               <span
                 style={{
@@ -589,17 +635,13 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
         </Link>
 
         <Link href="/live" className={`mobile-tab ${pathname === '/live' ? 'active' : ''}`}>
-          <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.348 14.652a3.75 3.75 0 010-5.304m5.304 0a3.75 3.75 0 010 5.304m-7.425 2.121a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M12 12h.008v.008H12V12z" />
-          </svg>
+          <Radio size={20} />
           <span>Live Sync</span>
         </Link>
 
         <Link href="/tasks" className={`mobile-tab ${pathname.startsWith('/tasks') || pathname.startsWith('/admin/tasks') ? 'active' : ''}`}>
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
+            <ListTodo size={20} />
             {activeTaskCount > 0 && (
               <span
                 style={{
@@ -628,17 +670,15 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
           <span>Tasks</span>
         </Link>
 
-        {/* 5th tab: Menu for all users */}
+        {/* 5th Tab: Facebook-style Menu Trigger */}
         <button
           className={`mobile-tab ${adminSheetOpen ? 'active' : ''}`}
           onClick={() => setAdminSheetOpen(true)}
           aria-label="Open navigation menu"
         >
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            {canManageUsers && pendingApprovalCount > 0 && (
+            <Menu size={20} />
+            {totalAdminPending > 0 && (
               <span
                 style={{
                   position: 'absolute',
@@ -659,7 +699,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                   border: '1.5px solid #ffffff',
                 }}
               >
-                {pendingApprovalCount > 9 ? '9+' : pendingApprovalCount}
+                {totalAdminPending > 9 ? '9+' : totalAdminPending}
               </span>
             )}
           </div>
@@ -667,105 +707,377 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
         </button>
       </nav>
 
-      {/* ── Mobile Navigation Menu Drawer ── */}
+      {/* ── Facebook-Style Categorized Mobile Menu Drawer ── */}
       {adminSheetOpen && (
         <div className="mobile-sheet-overlay" onClick={() => setAdminSheetOpen(false)}>
           <div className="mobile-sheet-panel" onClick={e => e.stopPropagation()}>
             <div className="mobile-sheet-handle" />
-            <div className="mobile-sheet-header">
-              <span>☰ Menu & Settings</span>
-              <span className="mobile-sheet-role">{profile.role.replace('_', ' ')}</span>
-            </div>
-            <div className="mobile-sheet-links">
-              <Link href="/profile" className={`mobile-sheet-link ${pathname === '/profile' ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
-                <span className="mobile-sheet-link-icon">👤</span>
-                <span>My Profile & Settings</span>
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </Link>
 
-              <Link href="/calendar" className={`mobile-sheet-link ${pathname === '/calendar' ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
-                <span className="mobile-sheet-link-icon">📅</span>
-                <span>Choir Calendar & Events</span>
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </Link>
-
-              <Link href="/directory" className={`mobile-sheet-link ${pathname.startsWith('/directory') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
-                <span className="mobile-sheet-link-icon">👥</span>
-                <span>Member Directory</span>
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </Link>
-
-              <Link href="/repertoire" className={`mobile-sheet-link ${pathname.startsWith('/repertoire') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
-                <span className="mobile-sheet-link-icon">🎶</span>
-                <span>Repertoire & Songbook</span>
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </Link>
-
-              <Link href={hasAdminAccess(profile.role) ? '/admin/finances' : '/dues'} className={`mobile-sheet-link ${pathname === '/dues' || pathname.startsWith('/admin/finances') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
-                <span className="mobile-sheet-link-icon">💳</span>
-                <span>My Dues & Finances</span>
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </Link>
-
-              {profile.role !== 'super_admin' && (
-                <Link href="/my-documents" className={`mobile-sheet-link ${pathname === '/my-documents' || pathname.startsWith('/sign') ? 'active' : ''}`} onClick={() => setAdminSheetOpen(false)}>
-                  <span className="mobile-sheet-link-icon">📄</span>
-                  <span>My Documents &amp; Waivers</span>
-                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: 'auto', opacity: 0.4 }}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                </Link>
-              )}
-
-              {hasAdminAccess(profile.role) && (
-                <>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginTop: '12px', marginBottom: '4px' }}>
-                    Admin Controls
-                  </div>
-                  {adminItems.map(item => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`mobile-sheet-link ${pathname.startsWith(item.href) ? 'active' : ''}`}
-                      onClick={() => setAdminSheetOpen(false)}
-                    >
-                      <span className="mobile-sheet-link-icon">{item.icon}</span>
-                      <span>{item.label}</span>
-                      {item.href === '/admin/users' && pendingApprovalCount > 0 && (
-                        <span
-                          style={{
-                            marginLeft: 'auto',
-                            marginRight: '6px',
-                            background: 'var(--error)',
-                            color: '#ffffff',
-                            fontSize: '0.65rem',
-                            fontWeight: 800,
-                            borderRadius: '999px',
-                            padding: '2px 7px',
-                            height: '16px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            lineHeight: 1,
-                          }}
-                        >
-                          {pendingApprovalCount} pending
-                        </span>
-                      )}
-                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" style={{ marginLeft: item.href === '/admin/users' && pendingApprovalCount > 0 ? '0' : 'auto', opacity: 0.4 }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  ))}
-                </>
-              )}
-
-              <div style={{ borderTop: '1px solid var(--glass-border)', marginTop: '8px', paddingTop: '8px' }}>
-                <form action={logout} style={{ width: '100%' }}>
-                  <button type="submit" className="mobile-sheet-link" style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--error)', fontFamily: 'inherit' }}>
-                    <span className="mobile-sheet-link-icon" style={{ background: '#fee2e2' }}>🚪</span>
-                    <span>Log Out</span>
-                  </button>
-                </form>
+            {/* Top Facebook-Style Profile Card */}
+            <Link
+              href="/profile"
+              className="fb-profile-card"
+              onClick={() => setAdminSheetOpen(false)}
+            >
+              <div
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: '1.15rem',
+                  boxShadow: '0 2px 8px rgba(11, 77, 36, 0.2)',
+                  flexShrink: 0,
+                }}
+              >
+                {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : 'C'}
               </div>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                    {profile.full_name || 'Choir Member'}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      background: 'rgba(11, 77, 36, 0.08)',
+                      color: 'var(--primary)',
+                      padding: '2px 7px',
+                      borderRadius: '999px',
+                      border: '1px solid rgba(11, 77, 36, 0.15)',
+                    }}
+                  >
+                    {profile.role.replace('_', ' ')}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '2px' }}>
+                  View Profile, Voice Part &amp; Settings
+                </div>
+              </div>
+
+              <ChevronRight size={18} style={{ color: 'var(--muted)', opacity: 0.6 }} />
+            </Link>
+
+            {/* ── Group 1: 🎵 Liturgy & Music ── */}
+            <div className="fb-menu-section">
+              <div className="fb-menu-section-title">
+                <Music size={13} style={{ color: 'var(--primary)' }} />
+                <span>Music &amp; Liturgy</span>
+              </div>
+              <div className="fb-menu-group">
+                <Link
+                  href="/repertoire"
+                  className={`fb-menu-item ${pathname.startsWith('/repertoire') ? 'active' : ''}`}
+                  onClick={() => setAdminSheetOpen(false)}
+                >
+                  <div className="fb-menu-icon-wrap" style={{ background: '#ecfdf5', color: '#047857' }}>
+                    <Music size={18} />
+                  </div>
+                  <div className="fb-menu-content">
+                    <div className="fb-menu-title-row">
+                      <span className="fb-menu-title">Repertoire &amp; Songbook</span>
+                    </div>
+                    <span className="fb-menu-subtitle">Mass parts, hymn catalog &amp; chords</span>
+                  </div>
+                  <ChevronRight size={16} className="fb-menu-chevron" />
+                </Link>
+
+                <Link
+                  href="/live"
+                  className={`fb-menu-item ${pathname === '/live' ? 'active' : ''}`}
+                  onClick={() => setAdminSheetOpen(false)}
+                >
+                  <div className="fb-menu-icon-wrap" style={{ background: '#fffbeb', color: '#b45309' }}>
+                    <Radio size={18} />
+                  </div>
+                  <div className="fb-menu-content">
+                    <div className="fb-menu-title-row">
+                      <span className="fb-menu-title">Live Sync Session</span>
+                    </div>
+                    <span className="fb-menu-subtitle">Real-time synchronized Mass flow</span>
+                  </div>
+                  <ChevronRight size={16} className="fb-menu-chevron" />
+                </Link>
+
+                <Link
+                  href="/leaderboard"
+                  className={`fb-menu-item ${pathname === '/leaderboard' ? 'active' : ''}`}
+                  onClick={() => setAdminSheetOpen(false)}
+                >
+                  <div className="fb-menu-icon-wrap" style={{ background: '#fef3c7', color: '#d97706' }}>
+                    <Trophy size={18} />
+                  </div>
+                  <div className="fb-menu-content">
+                    <div className="fb-menu-title-row">
+                      <span className="fb-menu-title">Contributor Leaderboard</span>
+                    </div>
+                    <span className="fb-menu-subtitle">Points &amp; contributor rankings</span>
+                  </div>
+                  <ChevronRight size={16} className="fb-menu-chevron" />
+                </Link>
+
+                <Link
+                  href="/profile/my-contributions"
+                  className={`fb-menu-item ${pathname === '/profile/my-contributions' ? 'active' : ''}`}
+                  onClick={() => setAdminSheetOpen(false)}
+                >
+                  <div className="fb-menu-icon-wrap" style={{ background: '#faf5ff', color: '#7e22ce' }}>
+                    <Sparkles size={18} />
+                  </div>
+                  <div className="fb-menu-content">
+                    <div className="fb-menu-title-row">
+                      <span className="fb-menu-title">My Lyrics &amp; Recordings</span>
+                    </div>
+                    <span className="fb-menu-subtitle">Track submission status &amp; points</span>
+                  </div>
+                  <ChevronRight size={16} className="fb-menu-chevron" />
+                </Link>
+              </div>
+            </div>
+
+            {/* ── Group 2: 👥 Choir Community & Activities ── */}
+            <div className="fb-menu-section">
+              <div className="fb-menu-section-title">
+                <Users size={13} style={{ color: 'var(--primary)' }} />
+                <span>Community &amp; Schedules</span>
+              </div>
+              <div className="fb-menu-group">
+                <Link
+                  href="/calendar"
+                  className={`fb-menu-item ${pathname === '/calendar' ? 'active' : ''}`}
+                  onClick={() => setAdminSheetOpen(false)}
+                >
+                  <div className="fb-menu-icon-wrap" style={{ background: '#eff6ff', color: '#1d4ed8' }}>
+                    <Calendar size={18} />
+                  </div>
+                  <div className="fb-menu-content">
+                    <div className="fb-menu-title-row">
+                      <span className="fb-menu-title">Calendar &amp; Events</span>
+                    </div>
+                    <span className="fb-menu-subtitle">Rehearsals, Mass times &amp; calls</span>
+                  </div>
+                  <ChevronRight size={16} className="fb-menu-chevron" />
+                </Link>
+
+                <Link
+                  href="/directory"
+                  className={`fb-menu-item ${pathname.startsWith('/directory') ? 'active' : ''}`}
+                  onClick={() => setAdminSheetOpen(false)}
+                >
+                  <div className="fb-menu-icon-wrap" style={{ background: '#f0fdfa', color: '#0f766e' }}>
+                    <Users size={18} />
+                  </div>
+                  <div className="fb-menu-content">
+                    <div className="fb-menu-title-row">
+                      <span className="fb-menu-title">Member Directory</span>
+                    </div>
+                    <span className="fb-menu-subtitle">Roster, voice sections &amp; contacts</span>
+                  </div>
+                  <ChevronRight size={16} className="fb-menu-chevron" />
+                </Link>
+
+                <Link
+                  href="/messages"
+                  className={`fb-menu-item ${pathname.startsWith('/messages') ? 'active' : ''}`}
+                  onClick={() => setAdminSheetOpen(false)}
+                >
+                  <div className="fb-menu-icon-wrap" style={{ background: '#eef2ff', color: '#4338ca' }}>
+                    <MessageSquare size={18} />
+                  </div>
+                  <div className="fb-menu-content">
+                    <div className="fb-menu-title-row">
+                      <span className="fb-menu-title">Direct Messages</span>
+                      {unreadCount > 0 && (
+                        <span className="fb-menu-badge error">{unreadCount} new</span>
+                      )}
+                    </div>
+                    <span className="fb-menu-subtitle">Choir group &amp; private chat</span>
+                  </div>
+                  <ChevronRight size={16} className="fb-menu-chevron" />
+                </Link>
+
+                <Link
+                  href="/tasks"
+                  className={`fb-menu-item ${pathname.startsWith('/tasks') ? 'active' : ''}`}
+                  onClick={() => setAdminSheetOpen(false)}
+                >
+                  <div className="fb-menu-icon-wrap" style={{ background: '#ecfdf5', color: '#065f46' }}>
+                    <ListTodo size={18} />
+                  </div>
+                  <div className="fb-menu-content">
+                    <div className="fb-menu-title-row">
+                      <span className="fb-menu-title">My Tasks &amp; Duties</span>
+                      {activeTaskCount > 0 && (
+                        <span className="fb-menu-badge error">{activeTaskCount} active</span>
+                      )}
+                    </div>
+                    <span className="fb-menu-subtitle">Assigned responsibilities</span>
+                  </div>
+                  <ChevronRight size={16} className="fb-menu-chevron" />
+                </Link>
+              </div>
+            </div>
+
+            {/* ── Group 3: 💳 Personal & Records ── */}
+            <div className="fb-menu-section">
+              <div className="fb-menu-section-title">
+                <CreditCard size={13} style={{ color: 'var(--primary)' }} />
+                <span>Personal &amp; Records</span>
+              </div>
+              <div className="fb-menu-group">
+                <Link
+                  href={isFinanceAdmin ? '/admin/finances' : '/dues'}
+                  className={`fb-menu-item ${pathname === '/dues' || pathname.startsWith('/admin/finances') ? 'active' : ''}`}
+                  onClick={() => setAdminSheetOpen(false)}
+                >
+                  <div className="fb-menu-icon-wrap" style={{ background: '#f0fdf4', color: '#15803d' }}>
+                    <CreditCard size={18} />
+                  </div>
+                  <div className="fb-menu-content">
+                    <div className="fb-menu-title-row">
+                      <span className="fb-menu-title">Dues &amp; Finances</span>
+                    </div>
+                    <span className="fb-menu-subtitle">Sinking fund, dues &amp; statements</span>
+                  </div>
+                  <ChevronRight size={16} className="fb-menu-chevron" />
+                </Link>
+
+                {profile.role !== 'super_admin' && (
+                  <Link
+                    href="/my-documents"
+                    className={`fb-menu-item ${pathname === '/my-documents' || pathname.startsWith('/sign') ? 'active' : ''}`}
+                    onClick={() => setAdminSheetOpen(false)}
+                  >
+                    <div className="fb-menu-icon-wrap" style={{ background: '#f1f5f9', color: '#334155' }}>
+                      <FileText size={18} />
+                    </div>
+                    <div className="fb-menu-content">
+                      <div className="fb-menu-title-row">
+                        <span className="fb-menu-title">Documents &amp; Waivers</span>
+                      </div>
+                      <span className="fb-menu-subtitle">Signed waivers &amp; consent forms</span>
+                    </div>
+                    <ChevronRight size={16} className="fb-menu-chevron" />
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* ── Group 4: ⚡ Categorized Director & Admin Controls ── */}
+            {hasAdminAccess(profile.role) && (
+              <div className="fb-menu-section">
+                <div className="fb-menu-section-title" style={{ color: 'var(--primary)' }}>
+                  <Settings size={13} style={{ color: 'var(--primary)' }} />
+                  <span>Director &amp; Admin Controls</span>
+                </div>
+
+                {ADMIN_GROUPS.map((group) => {
+                  const accessibleItems = group.items.filter(item => item.roles.includes(profile.role));
+                  if (accessibleItems.length === 0) return null;
+
+                  return (
+                    <div key={group.title} style={{ marginBottom: '10px' }}>
+                      <div
+                        style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.06em',
+                          color: 'var(--muted)',
+                          paddingLeft: '6px',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        {group.title}
+                      </div>
+
+                      <div className="fb-menu-group">
+                        {accessibleItems.map((item) => {
+                          const isUsersPending = item.badgeKey === 'users' && pendingApprovalCount > 0;
+                          const isLyricsPending = item.badgeKey === 'lyrics' && pendingLyricsCount > 0;
+
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              className={`fb-menu-item ${pathname.startsWith(item.href) ? 'active' : ''}`}
+                              onClick={() => setAdminSheetOpen(false)}
+                            >
+                              <div
+                                className="fb-menu-icon-wrap"
+                                style={{
+                                  background: pathname.startsWith(item.href) ? 'rgba(11, 77, 36, 0.12)' : '#f4f4f5',
+                                  color: pathname.startsWith(item.href) ? 'var(--primary)' : 'var(--foreground)',
+                                }}
+                              >
+                                {item.icon}
+                              </div>
+
+                              <div className="fb-menu-content">
+                                <div className="fb-menu-title-row">
+                                  <span className="fb-menu-title">{item.label}</span>
+                                  {isUsersPending && (
+                                    <span className="fb-menu-badge error">
+                                      {pendingApprovalCount} pending
+                                    </span>
+                                  )}
+                                  {isLyricsPending && (
+                                    <span className="fb-menu-badge accent">
+                                      {pendingLyricsCount} pending
+                                    </span>
+                                  )}
+                                </div>
+                                {item.subtitle && (
+                                  <span className="fb-menu-subtitle">{item.subtitle}</span>
+                                )}
+                              </div>
+
+                              <ChevronRight size={16} className="fb-menu-chevron" />
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── Log Out Button ── */}
+            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+              <form action={logout} style={{ width: '100%' }}>
+                <button
+                  type="submit"
+                  className="fb-menu-item"
+                  style={{
+                    width: '100%',
+                    background: '#fff',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    borderRadius: '16px',
+                    cursor: 'pointer',
+                    color: 'var(--error)',
+                    fontFamily: 'inherit',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '12px 16px',
+                    fontWeight: 700,
+                    gap: '8px',
+                  }}
+                >
+                  <LogOut size={16} />
+                  <span>Log Out of Choir Collective</span>
+                </button>
+              </form>
             </div>
           </div>
         </div>
@@ -773,3 +1085,5 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
     </>
   );
 };
+
+export default Navbar;

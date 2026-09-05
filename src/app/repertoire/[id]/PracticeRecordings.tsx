@@ -293,9 +293,9 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
         addToast({ title: 'Save Failed', type: 'error', message: res.error || 'Failed to save recording.' });
       } else {
         const msg = res.overwritten
-          ? `Overwrote existing track for "${activeLabel}".`
-          : 'Practice recording saved successfully!';
-        addToast({ title: 'Recording Saved', type: 'success', message: msg });
+          ? `Overwrote existing track for "${activeLabel}". (+2 points awarded)`
+          : 'Practice recording saved successfully! (+2 points awarded)';
+        addToast({ title: '🎉 +2 Points Awarded!', type: 'success', message: msg });
 
         if (res.overwritten) {
           setRecordings((prev) => [
@@ -343,9 +343,9 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
         addToast({ title: 'Upload Failed', type: 'error', message: res.error || 'Failed to upload audio file.' });
       } else {
         const msg = res.overwritten
-          ? `Overwrote existing track for "${activeLabel}".`
-          : 'Practice recording uploaded successfully!';
-        addToast({ title: 'Upload Successful', type: 'success', message: msg });
+          ? `Overwrote existing track for "${activeLabel}". (+2 points awarded)`
+          : 'Practice recording uploaded successfully! (+2 points awarded)';
+        addToast({ title: '🎉 +2 Points Awarded!', type: 'success', message: msg });
 
         if (res.overwritten) {
           setRecordings((prev) => [
@@ -435,12 +435,13 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="btn btn-primary inline-flex items-center gap-1.5 !py-2 !px-3.5 text-sm font-semibold !rounded-xl"
+            style={{ background: 'linear-gradient(135deg, var(--accent), var(--primary))' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            Add Recording
+            Add Recording (+2 pts)
           </button>
 
           {/* Minimize / Maximize Toggle Button */}

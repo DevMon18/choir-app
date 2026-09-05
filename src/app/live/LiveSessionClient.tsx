@@ -5,32 +5,20 @@ import { createClient } from '@/lib/supabase/client';
 import { ChordProRenderer, usePersistedFontSize, usePersistedFontWeight } from '@/components/ChordProRenderer';
 import Link from 'next/link';
 import { updateLiveSession, substituteSequenceSong } from '../admin/sequences/actions';
-import { listPracticeRecordings, PracticeRecordingItem } from '../repertoire/[id]/recordings-actions';
 import { Navbar } from '@/components/Navbar';
 import { useToast } from '@/components/Toast';
 import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  Radio,
-  RotateCcw,
-  Sparkles,
-  ArrowLeft,
-  ArrowRight,
   ListMusic,
-  Maximize2,
-  Minimize2,
-  Tv,
   Search,
   X,
   Music,
-  Check,
-  FolderOpen,
   SlidersHorizontal,
-  Headphones,
-  Volume2,
 } from 'lucide-react';
 import gsap from 'gsap';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface Profile {
   id: string;
@@ -150,25 +138,21 @@ export const LiveSessionClient = ({
 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
+  
+  // Create a stable Supabase client instance (prevents subscription churn on re-renders)
+  const supabase = useMemo(() => createClient(), []);
   const { addToast } = useToast();
 
   const [session, setSession] = useState<LiveSession | null>(initialSession);
   const [activeSequenceItems, setActiveSequenceItems] = useState<any[]>(initialSequenceItems);
   const [globalActiveSong, setGlobalActiveSong] = useState<Song | null>(initialSong);
-  const [previewSongId, setPreviewSongId] = useState<string | null>(null);
   const [connStatus, setConnStatus] = useState<ConnStatus>('connecting');
   const [manualScroll, setManualScroll] = useState(false);
   const [localShowChords, setLocalShowChords] = useState<boolean | null>(null);
   const [showNextLyrics, setShowNextLyrics] = useState(false);
   const [showFormattingControls, setShowFormattingControls] = useState(false);
 
-  // Practice track preview for members
-  const [previewRecordings, setPreviewRecordings] = useState<PracticeRecordingItem[]>([]);
-  const [isLoadingRecordings, setIsLoadingRecordings] = useState(false);
-  const [activeTrackId, setActiveTrackId] = useState<string | null>(null);
-
-  // Search Repertoire Modal State
+  // Search Repertoire Modal State (Director/Admin only)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [modalSearchQuery, setModalSearchQuery] = useState('');
   const [modalSelectedCategory, setModalSelectedCategory] = useState('ALL');
@@ -177,11 +161,18 @@ export const LiveSessionClient = ({
   const [fontSize, setFontSize] = usePersistedFontSize('choir_live_fontsize', 16);
   const [fontWeight, setFontWeight] = usePersistedFontWeight('choir_live_fontweight', 500);
 
-  const isDirector = ['super_admin', 'director'].includes(profile.role);
+  // Strictly check if current user is authorized to direct/admin the live session
+  const isDirector = ['super_admin', 'director', 'secretary'].includes(profile.role);
+
+  // Realtime channel reference for instant bidirectional broadcasts
+  const channelRef = useRef<RealtimeChannel | null>(null);
+
+  // The displayed song is ALWAYS the global active song synchronized in real time
+  const displayedSong = globalActiveSong;
 
   // Auto-focus search input when modal opens
   useEffect(() => {
-    if (isSearchModalOpen) {
+    if (isDirector && isSearchModalOpen) {
       // Auto-select category if current song has a matching role
       const currentItem = activeSequenceItems.find(i => i.song_id === globalActiveSong?.id);
       if (currentItem?.role_in_mass) {
@@ -195,7 +186,7 @@ export const LiveSessionClient = ({
     } else {
       setModalSearchQuery('');
     }
-  }, [isSearchModalOpen]);
+  }, [isSearchModalOpen, isDirector, activeSequenceItems, globalActiveSong?.id]);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -208,46 +199,12 @@ export const LiveSessionClient = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSearchModalOpen]);
 
-  // Determine current displayed song: If member is previewing, show that; otherwise show global active song
-  const isPreviewMode = !isDirector && previewSongId !== null && previewSongId !== globalActiveSong?.id;
-  const displayedSong = useMemo(() => {
-    if (isPreviewMode && previewSongId) {
-      return songs.find((s) => s.id === previewSongId) || globalActiveSong;
-    }
-    return globalActiveSong;
-  }, [isPreviewMode, previewSongId, songs, globalActiveSong]);
-
   // Reset next lyrics preview when displayed song changes
   useEffect(() => {
     setShowNextLyrics(false);
   }, [displayedSong?.id]);
 
-  // Load practice tracks when a member enters preview mode
-  useEffect(() => {
-    if (isDirector || !previewSongId) {
-      setPreviewRecordings([]);
-      setActiveTrackId(null);
-      return;
-    }
-    let cancelled = false;
-    setIsLoadingRecordings(true);
-    setPreviewRecordings([]);
-    setActiveTrackId(null);
-    listPracticeRecordings(previewSongId)
-      .then(({ recordings }) => {
-        if (!cancelled) setPreviewRecordings(recordings || []);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setIsLoadingRecordings(false);
-      });
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewSongId, isDirector]);
-
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const reconnectDelay = useRef(1000);
 
   // Check if current displayed song contains ChordPro bracket chords [G], [Em], etc.
   const hasChords = useMemo(() => {
@@ -394,6 +351,7 @@ export const LiveSessionClient = ({
   };
 
   const handleOpenSearchModal = (overrideCategoryId?: string) => {
+    if (!isDirector) return;
     const targetCategory = overrideCategoryId || getCategoryForDisplayedSong();
     setModalSelectedCategory(targetCategory);
     setModalSearchQuery('');
@@ -404,15 +362,30 @@ export const LiveSessionClient = ({
 
   // Authoritative Director navigation (broadcasts to all connected choir members & synchronizes sequence)
   const handleDirectorNavigate = (songId: string | null) => {
-    if (!session || !songId) return;
+    if (!isDirector || !session || !songId) return;
     const newSong = songs.find((s) => s.id === songId) || null;
 
     // 1. Optimistic Local Update for active song
     setGlobalActiveSong(newSong);
-    setPreviewSongId(null);
+    setSession((prev) => (prev ? { ...prev, active_song_id: songId } : null));
     setIsSearchModalOpen(false);
 
-    // 2. Synchronize Sequence: If session is bound to a sequence and the song is substituted or not in sequence
+    // 2. Broadcast immediately over WebSocket to all connected devices (<30ms latency)
+    try {
+      channelRef.current?.send({
+        type: 'broadcast',
+        event: 'NAVIGATE_SONG',
+        payload: {
+          sessionId: session.id,
+          active_song_id: songId,
+          song: newSong,
+        },
+      });
+    } catch (err) {
+      console.warn('Broadcast send error:', err);
+    }
+
+    // 3. Synchronize Sequence: If session is bound to a sequence and the song is substituted or not in sequence
     if (session.sequence_id && newSong && !activeSequenceItems.some((i) => i.song_id === newSong.id)) {
       const targetItem = activeItem || (activeSongMassRole ? activeSequenceItems.find(i => i.role_in_mass === activeSongMassRole || MASS_ROLE_LABELS[i.role_in_mass] === activeSongMassRole) : null);
       const targetRoleId = targetItem?.role_in_mass || null;
@@ -444,7 +417,7 @@ export const LiveSessionClient = ({
       ).catch((err) => console.error('Error synchronizing sequence item:', err));
     }
 
-    // 3. Debounce backend update to prevent HTTP 429 Rate Limit error on rapid clicks
+    // 4. Debounce backend database update to persist state
     if (pendingNavTimerRef.current) {
       clearTimeout(pendingNavTimerRef.current);
     }
@@ -458,33 +431,7 @@ export const LiveSessionClient = ({
       } catch (err) {
         console.error('Error updating live session song:', err);
       }
-    }, 200);
-  };
-
-  // Member local preview (does not mutate global live session)
-  const handleMemberPreview = (songId: string | null) => {
-    setIsSearchModalOpen(false);
-    if (!songId) {
-      setPreviewSongId(null);
-      return;
-    }
-    if (songId === globalActiveSong?.id) {
-      setPreviewSongId(null);
-    } else {
-      setPreviewSongId(songId);
-      const s = songs.find((item) => item.id === songId);
-      if (s) {
-        addToast({
-          type: 'info',
-          title: 'Previewing Song',
-          message: `Previewing "${s.title}" (Choir live is "${globalActiveSong?.title || 'None'}")`,
-        });
-      }
-    }
-  };
-
-  const handleReturnToLiveSong = () => {
-    setPreviewSongId(null);
+    }, 150);
   };
 
   // ── Wake Lock ──────────────────────────────────────────
@@ -509,33 +456,64 @@ export const LiveSessionClient = ({
     };
   }, [acquireWakeLock]);
 
-  // ── Realtime subscription ─────────────────────────────
-  const subscribe = useCallback(() => {
+  // ── Realtime Multi-Layer Subscription (Broadcast + Postgres Changes) ──
+  useEffect(() => {
     setConnStatus('connecting');
-    const channel = supabase
-      .channel('live-session')
+
+    const channel = supabase.channel('choir-live-sync-room', {
+      config: {
+        broadcast: { self: false },
+      },
+    });
+
+    channelRef.current = channel;
+
+    // 1. Instant WebSocket Broadcast Listener (Sub-50ms sync)
+    channel
+      .on('broadcast', { event: 'NAVIGATE_SONG' }, (eventPayload: any) => {
+        const { active_song_id, song } = eventPayload.payload || {};
+        if (active_song_id) {
+          const matchingSong = songs.find((s) => s.id === active_song_id) || song || null;
+          setGlobalActiveSong(matchingSong);
+          setSession((prev) => (prev ? { ...prev, active_song_id } : null));
+        }
+      })
+      .on('broadcast', { event: 'TOGGLE_CHORDS' }, (eventPayload: any) => {
+        const { show_chords } = eventPayload.payload || {};
+        if (typeof show_chords === 'boolean') {
+          setLocalShowChords(show_chords);
+          setSession((prev) => (prev ? { ...prev, show_chords } : null));
+        }
+      })
+      .on('broadcast', { event: 'SET_SEMITONES' }, (eventPayload: any) => {
+        const { director_semitones } = eventPayload.payload || {};
+        if (typeof director_semitones === 'number') {
+          setSession((prev) => (prev ? { ...prev, director_semitones } : null));
+        }
+      })
+      // 2. Database postgres_changes listener
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'live_sessions' },
-        (payload) => {
-          reconnectDelay.current = 1000;
+        (payload: any) => {
           const row = payload.new as LiveSession;
-          setSession(row);
-          if (!row.is_active) {
-            setGlobalActiveSong(null);
-            setPreviewSongId(null);
-            return;
-          }
-          if (row.active_song_id) {
-            const song = songs.find((s) => s.id === row.active_song_id) ?? null;
-            setGlobalActiveSong(song);
+          if (row) {
+            setSession(row);
+            if (!row.is_active) {
+              setGlobalActiveSong(null);
+              return;
+            }
+            if (row.active_song_id) {
+              const matchingSong = songs.find((s) => s.id === row.active_song_id) ?? null;
+              setGlobalActiveSong(matchingSong);
+            }
           }
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'sequence_items' },
-        (payload) => {
+        (payload: any) => {
           if (payload.eventType === 'UPDATE') {
             const updated = payload.new as any;
             const song = songs.find((s) => s.id === updated.song_id) ?? null;
@@ -563,27 +541,59 @@ export const LiveSessionClient = ({
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           setConnStatus('connected');
-          reconnectDelay.current = 1000;
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           setConnStatus('reconnecting');
-          channel.unsubscribe();
-          reconnectTimerRef.current = setTimeout(() => {
-            reconnectDelay.current = Math.min(reconnectDelay.current * 2, 30000);
-            subscribe();
-          }, reconnectDelay.current);
         }
       });
 
-    return channel;
+    return () => {
+      channelRef.current = null;
+      supabase.removeChannel(channel);
+    };
   }, [songs, supabase]);
 
+  // ── Fail-Safe Periodic and Tab-Focus Polling Sync ──
   useEffect(() => {
-    const channel = subscribe();
-    return () => {
-      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-      channel.unsubscribe();
+    const syncActiveSession = async () => {
+      try {
+        const { data: latestSession } = await supabase
+          .from('live_sessions')
+          .select('id, sequence_id, active_song_id, director_semitones, scroll_speed, is_active, show_chords')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (latestSession) {
+          setSession(latestSession);
+          if (latestSession.active_song_id) {
+            const s = songs.find((item) => item.id === latestSession.active_song_id);
+            if (s) {
+              setGlobalActiveSong(s);
+            }
+          }
+        }
+      } catch (err) {
+        // silent fail on network blip
+      }
     };
-  }, [subscribe]);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        syncActiveSession();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+    const interval = setInterval(syncActiveSession, 4000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+      clearInterval(interval);
+    };
+  }, [songs, supabase]);
 
   // Entry animation
   useEffect(() => {
@@ -603,16 +613,28 @@ export const LiveSessionClient = ({
     setLocalShowChords(nextVal);
     if (isDirector && session) {
       setSession((prev) => (prev ? { ...prev, show_chords: nextVal } : null));
+      try {
+        channelRef.current?.send({
+          type: 'broadcast',
+          event: 'TOGGLE_CHORDS',
+          payload: { show_chords: nextVal },
+        });
+      } catch (e) {}
       await updateLiveSession(session.id, { show_chords: nextVal });
     }
   };
 
   const handleSemitonesChange = async (st: number) => {
-    if (!session) return;
-    if (isDirector) {
-      setSession((prev) => (prev ? { ...prev, director_semitones: st } : null));
-      await updateLiveSession(session.id, { director_semitones: st });
-    }
+    if (!session || !isDirector) return;
+    setSession((prev) => (prev ? { ...prev, director_semitones: st } : null));
+    try {
+      channelRef.current?.send({
+        type: 'broadcast',
+        event: 'SET_SEMITONES',
+        payload: { director_semitones: st },
+      });
+    } catch (e) {}
+    await updateLiveSession(session.id, { director_semitones: st });
   };
 
   // Status visual tokens
@@ -643,8 +665,9 @@ export const LiveSessionClient = ({
 
   const semitones = session?.director_semitones ?? 0;
 
-  // Filter songs in Repertoire search modal
+  // Filter songs in Repertoire search modal (Director only)
   const filteredModalSongs = useMemo(() => {
+    if (!isDirector) return [];
     const q = modalSearchQuery.toLowerCase().trim();
     const selectedCategoryDef = MASS_PART_CATEGORIES.find((c) => c.id === modalSelectedCategory) || MASS_PART_CATEGORIES[0];
 
@@ -665,7 +688,7 @@ export const LiveSessionClient = ({
 
       return titleMatch || composerMatch || lyricsMatch || categoryMatch;
     });
-  }, [songs, modalSearchQuery, modalSelectedCategory, activeSequenceItems]);
+  }, [isDirector, songs, modalSearchQuery, modalSelectedCategory, activeSequenceItems]);
 
   return (
     <div ref={containerRef} className="flex flex-col min-h-screen relative bg-[#f8f6f0]">
@@ -700,77 +723,54 @@ export const LiveSessionClient = ({
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {/* Live Connection Status & Member Preview Notice Banner */}
-            {isPreviewMode && (
-              <div className="live-anim bg-amber-50 border border-amber-300 rounded-xl p-3 sm:px-4 flex items-center justify-between gap-3 flex-wrap shadow-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">👁️</span>
-                  <div>
-                    <strong className="text-xs sm:text-sm font-bold text-amber-900 block leading-tight">
-                      Preview Mode: {displayedSong?.title}
-                    </strong>
-                    <span className="text-[11px] text-amber-800">
-                      Live for Choir: <strong>{globalActiveSong?.title || 'None'}</strong>
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleReturnToLiveSong}
-                  className="btn btn-primary !bg-amber-700 !border-amber-700 !py-1.5 !px-3 text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-none"
-                >
-                  <RotateCcw size={13} />
-                  <span>Back to Live Song</span>
-                </button>
-              </div>
-            )}
-
             {/* UNIFIED ACTIVE SONG PERFORMANCE VIEWPORT */}
             <div className="live-anim rounded-2xl bg-white border border-primary/15 shadow-sm overflow-hidden flex flex-col">
               {/* 1. Header Toolbar (Navigation, Search Repertoire Trigger & Live Status) */}
-              <div className="p-3 sm:p-4 border-b border-primary/10 bg-[#faf9f5] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 sm:gap-3">
+              <div className="p-3 sm:p-4 border-b border-primary/10 bg-[#faf9f5] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
                 {/* Setlist Navigation Control Group */}
-                <div className="flex-1 w-full md:w-auto flex items-center gap-2">
+                <div className="flex-1 min-w-0">
                   {isDirector ? (
-                    <div className="flex-1 flex items-center rounded-xl bg-white border border-primary/20 shadow-2xs p-0.5 overflow-hidden">
+                    <div className="flex items-center rounded-xl bg-white border border-primary/20 shadow-2xs p-0.5 w-full overflow-hidden">
                       <button
                         type="button"
                         onClick={() => prevItem && handleDirectorNavigate(prevItem.song_id)}
                         disabled={!prevItem}
                         aria-label="Previous song in setlist"
-                        className={`inline-flex items-center justify-center py-1.5 px-2.5 sm:px-3 text-xs sm:text-sm font-bold rounded-lg transition-colors shrink-0 ${
+                        className={`inline-flex items-center justify-center py-1.5 px-2 sm:px-3 text-xs sm:text-sm font-bold rounded-lg transition-colors shrink-0 ${
                           !prevItem
                             ? 'text-muted/30 cursor-not-allowed'
                             : 'text-primary hover:bg-primary/8 active:scale-95 cursor-pointer'
                         }`}
                       >
                         <ChevronLeft size={16} />
-                        <span className="hidden xs:inline">Prev</span>
+                        <span className="hidden xs:inline ml-0.5">Prev</span>
                       </button>
 
                       <div className="w-[1px] h-6 bg-primary/15 self-center shrink-0" />
 
-                      <select
-                        value={displayedSong?.id || ''}
-                        onChange={(e) => handleDirectorNavigate(e.target.value || null)}
-                        aria-label="Select active song in sequence"
-                        className="appearance-none bg-transparent border-none text-xs sm:text-sm font-bold text-primary py-1.5 px-2 outline-none cursor-pointer flex-1 min-w-0 text-center truncate"
-                      >
-                        <option value="" disabled>-- Select Song --</option>
-                        {displayedSong && !activeSequenceItems.some((i) => i.song_id === displayedSong.id) && (
-                          <option value={displayedSong.id}>
-                            {currentIndex !== -1 ? `${currentIndex + 1}. ` : ''}
-                            {activeSongMassRole ? `[${activeSongMassRole}] ` : ''}
-                            {displayedSong.title}
-                          </option>
-                        )}
-                        {activeSequenceItems.map((item, idx) => (
-                          <option key={item.id} value={item.song_id || ''}>
-                            {idx + 1}. {item.role_in_mass ? `[${MASS_ROLE_LABELS[item.role_in_mass] || item.role_in_mass}] ` : ''}
-                            {item.songs?.title || 'Unknown Title'}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex-1 min-w-0 px-1 overflow-hidden">
+                        <select
+                          value={displayedSong?.id || ''}
+                          onChange={(e) => handleDirectorNavigate(e.target.value || null)}
+                          aria-label="Select active song in sequence"
+                          className="w-full appearance-none bg-transparent border-none text-xs sm:text-sm font-bold text-primary py-1 px-1.5 outline-none cursor-pointer text-center truncate block"
+                        >
+                          <option value="" disabled>-- Select Song --</option>
+                          {displayedSong && !activeSequenceItems.some((i) => i.song_id === displayedSong.id) && (
+                            <option value={displayedSong.id}>
+                              {currentIndex !== -1 ? `${currentIndex + 1}. ` : ''}
+                              {activeSongMassRole ? `[${activeSongMassRole}] ` : ''}
+                              {displayedSong.title}
+                            </option>
+                          )}
+                          {activeSequenceItems.map((item, idx) => (
+                            <option key={item.id} value={item.song_id || ''}>
+                              {idx + 1}. {item.role_in_mass ? `[${MASS_ROLE_LABELS[item.role_in_mass] || item.role_in_mass}] ` : ''}
+                              {item.songs?.title || 'Unknown Title'}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
                       <div className="w-[1px] h-6 bg-primary/15 self-center shrink-0" />
 
@@ -779,61 +779,53 @@ export const LiveSessionClient = ({
                         onClick={() => nextItem && handleDirectorNavigate(nextItem.song_id)}
                         disabled={!nextItem}
                         aria-label="Next song in setlist"
-                        className={`inline-flex items-center justify-center py-1.5 px-2.5 sm:px-3 text-xs sm:text-sm font-bold rounded-lg transition-colors shrink-0 ${
+                        className={`inline-flex items-center justify-center py-1.5 px-2 sm:px-3 text-xs sm:text-sm font-bold rounded-lg transition-colors shrink-0 ${
                           !nextItem
                             ? 'text-muted/30 cursor-not-allowed'
                             : 'text-primary hover:bg-primary/8 active:scale-95 cursor-pointer'
                         }`}
                       >
-                        <span className="hidden xs:inline">Next</span>
+                        <span className="hidden xs:inline mr-0.5">Next</span>
                         <ChevronRight size={16} />
                       </button>
                     </div>
                   ) : (
-                    /* Member Navigation / Preview selector */
-                    <div className="flex-1 flex items-center rounded-xl bg-white border border-primary/20 shadow-2xs p-0.5 overflow-hidden">
-                      <select
-                        value={displayedSong?.id || ''}
-                        onChange={(e) => handleMemberPreview(e.target.value || null)}
-                        aria-label="Preview song in sequence"
-                        className="appearance-none bg-transparent border-none text-xs sm:text-sm font-bold text-primary py-1.5 px-3 outline-none cursor-pointer flex-1 min-w-0 text-center truncate"
-                      >
-                        {displayedSong && !activeSequenceItems.some((i) => i.song_id === displayedSong.id) && (
-                          <option value={displayedSong.id}>
-                            {currentIndex !== -1 ? `${currentIndex + 1}. ` : ''}
-                            {activeSongMassRole ? `[${activeSongMassRole}] ` : ''}
-                            {displayedSong.title}
-                            {displayedSong.id === globalActiveSong?.id ? ' (Live Now)' : ''}
-                          </option>
-                        )}
-                        {activeSequenceItems.map((item, idx) => (
-                          <option key={item.id} value={item.song_id || ''}>
-                            {idx + 1}. {item.role_in_mass ? `[${MASS_ROLE_LABELS[item.role_in_mass] || item.role_in_mass}] ` : ''}
-                            {item.songs?.title || 'Unknown Title'}
-                            {item.song_id === globalActiveSong?.id ? ' (Live Now)' : ''}
-                          </option>
-                        ))}
-                      </select>
+                    /* Member Live Song Indicator (Read-only, synchronized with Director) */
+                    <div className="flex items-center px-3 py-2 rounded-xl bg-white border border-primary/20 shadow-2xs gap-2 min-w-0 w-full">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-muted shrink-0">
+                        {currentIndex !== -1 ? `Song ${currentIndex + 1} of ${activeSequenceItems.length}` : 'Live Song'}
+                      </span>
+                      {activeSongMassRole && (
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-primary/8 text-primary border border-primary/20 shrink-0 hidden xs:inline">
+                          {activeSongMassRole}
+                        </span>
+                      )}
+                      <span className="text-xs sm:text-sm font-bold text-primary truncate flex-1 min-w-0">
+                        {displayedSong?.title || 'Waiting for director…'}
+                      </span>
                     </div>
                   )}
                 </div>
 
-                {/* Sub-row on mobile/tablet portrait / inline on desktop: Search & Live Connection Indicator */}
-                <div className="flex items-center justify-between md:justify-end gap-2 shrink-0">
-                  {/* Search Repertoire Button */}
-                  <button
-                    type="button"
-                    onClick={() => handleOpenSearchModal()}
-                    className="btn btn-secondary !min-h-[36px] !py-1.5 !px-3 text-xs font-bold inline-flex items-center gap-1.5 rounded-xl border border-primary/20 bg-white hover:bg-primary/6 active:scale-95 cursor-pointer shadow-2xs text-primary flex-1 md:flex-initial justify-center"
-                    title={isDirector ? 'Search and select any song from repertoire' : 'Search and preview any song from repertoire'}
-                  >
-                    <Search size={14} />
-                    <span>{isDirector ? 'Change Song' : 'Browse Repertoire'}</span>
-                  </button>
+                {/* Actions & Live Connection Indicator */}
+                <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+                  {/* Search Repertoire Button - Only available to Director and Admin */}
+                  {isDirector && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenSearchModal()}
+                      className="btn btn-secondary !min-h-[36px] !py-1.5 !px-3 text-xs font-bold inline-flex items-center gap-1.5 rounded-xl border border-primary/20 bg-white hover:bg-primary/6 active:scale-95 cursor-pointer shadow-2xs text-primary shrink-0 whitespace-nowrap"
+                      title="Search and change active song from repertoire"
+                    >
+                      <Search size={14} className="shrink-0" />
+                      <span>Change Song</span>
+                    </button>
+                  )}
 
                   {/* Live Connection Indicator */}
                   <span
-                    className="inline-flex items-center gap-1.5 rounded-full py-1 px-3 text-xs font-bold shadow-2xs shrink-0"
+                    className="inline-flex items-center gap-1.5 rounded-full py-1.5 px-3 text-xs font-bold shadow-2xs shrink-0 whitespace-nowrap"
                     style={{
                       background: `${statusColor}14`,
                       border: `1px solid ${statusColor}35`,
@@ -842,33 +834,34 @@ export const LiveSessionClient = ({
                     title={statusLabel}
                   >
                     <span
-                      className={`w-2 h-2 rounded-full ${connStatus === 'connected' ? 'animate-pulse' : ''}`}
+                      className={`w-2 h-2 rounded-full shrink-0 ${connStatus === 'connected' ? 'animate-pulse' : ''}`}
                       style={{ background: statusColor }}
                     />
-                    <span className="hidden sm:inline">{statusLabel}</span>
-                    <span className="sm:hidden">{connStatus === 'connected' ? 'Live' : statusLabel}</span>
+                    <span>{connStatus === 'connected' ? 'Live Sync Connected' : statusLabel}</span>
                   </span>
                 </div>
               </div>
 
               {/* 2. Song Identity & Metadata Header */}
               {displayedSong ? (
-                <div className="p-4 sm:p-6 border-b border-primary/10 flex flex-col gap-3.5">
+                <div className="p-4 sm:p-5 md:p-6 border-b border-primary/10 flex flex-col gap-3.5">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 sm:gap-4">
-                    <div className="flex-1 min-w-0 pr-0 md:pr-2">
+                    <div className="flex-1 min-w-0">
                       {/* Deduplicated Badges */}
                       {uniqueBadges.length > 0 && (
                         <div className="flex items-center gap-1.5 flex-wrap mb-2">
                           {uniqueBadges.map((badge) => (
                             <span
                               key={badge.id}
-                              onClick={() => handleOpenSearchModal()}
-                              className={`inline-block text-[0.68rem] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full border cursor-pointer hover:opacity-80 transition-opacity ${
+                              onClick={() => isDirector && handleOpenSearchModal()}
+                              className={`inline-block text-[0.68rem] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full border transition-opacity ${
+                                isDirector ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
+                              } ${
                                 badge.type === 'role'
                                   ? 'text-primary bg-primary/8 border-primary/25'
                                   : 'text-amber-800 bg-amber-700/8 border-amber-700/25'
                               }`}
-                              title="Click to search songs in this category"
+                              title={isDirector ? 'Click to search songs in this category' : undefined}
                             >
                               {badge.name}
                             </span>
@@ -905,7 +898,7 @@ export const LiveSessionClient = ({
                       <button
                         type="button"
                         onClick={() => setShowFormattingControls((p) => !p)}
-                        className={`btn btn-secondary !min-h-[36px] sm:!min-h-[38px] !py-1.5 !px-2.5 sm:!px-3 text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1.5 rounded-xl transition-colors shrink-0 ${
+                        className={`btn btn-secondary !min-h-[36px] sm:!min-h-[38px] !py-1.5 !px-2.5 sm:!px-3 text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1.5 rounded-xl transition-colors shrink-0 flex-1 sm:flex-initial ${
                           showFormattingControls ? '!border-primary !text-primary !bg-primary/6' : ''
                         }`}
                         title="Toggle text size, boldness, and key controls"
@@ -918,7 +911,7 @@ export const LiveSessionClient = ({
                       <button
                         type="button"
                         onClick={() => setManualScroll((p) => !p)}
-                        className={`btn btn-secondary !min-h-[36px] sm:!min-h-[38px] !py-1.5 !px-2.5 sm:!px-3 text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1.5 rounded-xl shrink-0 ${
+                        className={`btn btn-secondary !min-h-[36px] sm:!min-h-[38px] !py-1.5 !px-2.5 sm:!px-3 text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1.5 rounded-xl shrink-0 flex-1 sm:flex-initial ${
                           manualScroll ? '!border-primary !text-primary !bg-primary/6' : ''
                         }`}
                         title="Toggle auto-scroll vs manual scroll"
@@ -930,7 +923,7 @@ export const LiveSessionClient = ({
                         type="button"
                         onClick={handleToggleChords}
                         disabled={!hasChords}
-                        className={`btn !min-h-[36px] sm:!min-h-[38px] !py-1.5 !px-2.5 sm:!px-3 text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1.5 rounded-xl transition-colors shrink-0 ${
+                        className={`btn !min-h-[36px] sm:!min-h-[38px] !py-1.5 !px-2.5 sm:!px-3 text-[11px] sm:text-xs font-bold inline-flex items-center justify-center gap-1.5 rounded-xl transition-colors shrink-0 flex-1 sm:flex-initial ${
                           !hasChords
                             ? 'cursor-not-allowed bg-slate-100/90 border border-slate-200 text-slate-500'
                             : isChordsVisible
@@ -955,7 +948,7 @@ export const LiveSessionClient = ({
                   {/* 3. Streamlined Formatting Controls (Transposition + Size + Weight) - Responsive Drawer */}
                   {showFormattingControls && (
                     <div className="pt-3.5 mt-1 border-t border-primary/8 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-xs bg-[#faf9f5] -mx-4 -mb-4 sm:-mx-6 sm:-mb-6 p-4 sm:px-6 rounded-b-xl animate-in fade-in slide-in-from-top-1 duration-150">
-                      {/* Key Transposition */}
+                      {/* Key Transposition - Only editable by Director */}
                       <div className="flex items-center justify-between sm:justify-start gap-1.5 bg-white sm:bg-transparent p-2 sm:p-0 rounded-xl border border-primary/10 sm:border-0 shadow-2xs sm:shadow-none">
                         <span className="font-bold text-muted uppercase tracking-wider text-[0.72rem]">
                           Key:
@@ -963,10 +956,11 @@ export const LiveSessionClient = ({
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            disabled={!isDirector && !hasChords}
+                            disabled={!isDirector || !hasChords}
                             onClick={() => handleSemitonesChange(Math.max(-6, semitones - 1))}
                             className="py-1 px-2 rounded-md border border-primary/20 bg-white font-bold text-primary hover:bg-primary/8 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                             aria-label="Transpose down 1 semitone"
+                            title={!isDirector ? 'Key transposition is controlled by Choir Director' : undefined}
                           >
                             ♭−
                           </button>
@@ -975,10 +969,11 @@ export const LiveSessionClient = ({
                           </span>
                           <button
                             type="button"
-                            disabled={!isDirector && !hasChords}
+                            disabled={!isDirector || !hasChords}
                             onClick={() => handleSemitonesChange(Math.min(6, semitones + 1))}
                             className="py-1 px-2 rounded-md border border-primary/20 bg-white font-bold text-primary hover:bg-primary/8 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                             aria-label="Transpose up 1 semitone"
+                            title={!isDirector ? 'Key transposition is controlled by Choir Director' : undefined}
                           >
                             ♯+
                           </button>
@@ -1141,22 +1136,13 @@ export const LiveSessionClient = ({
                       <span>{showNextLyrics ? 'Hide Lyrics' : 'Preview Lyrics'}</span>
                     </button>
 
-                    {isDirector ? (
+                    {isDirector && (
                       <button
                         type="button"
                         onClick={() => handleDirectorNavigate(nextItem.song_id)}
                         className="btn btn-primary !min-h-[38px] !py-1.5 !px-3 text-xs font-bold inline-flex items-center justify-center gap-1 flex-1 md:flex-initial rounded-xl"
                       >
                         <span>Switch to Next</span>
-                        <ChevronRight size={15} />
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleMemberPreview(nextItem.song_id)}
-                        className="btn btn-primary !min-h-[38px] !py-1.5 !px-3 text-xs font-bold inline-flex items-center justify-center gap-1 flex-1 md:flex-initial rounded-xl"
-                      >
-                        <span>Preview Song</span>
                         <ChevronRight size={15} />
                       </button>
                     )}
@@ -1181,79 +1167,20 @@ export const LiveSessionClient = ({
                     )}
                   </div>
                 )}
-
-                {/* Practice Tracks Panel – shown for members when in song preview mode */}
-                {isPreviewMode && !isDirector && (
-                  <div className="border-t border-primary/10 bg-[#faf9f5] p-4 sm:p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Headphones size={15} className="text-primary" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-primary">Practice Tracks</span>
-                      {isLoadingRecordings && (
-                        <span className="text-[11px] text-muted animate-pulse ml-1">Loading…</span>
-                      )}
-                    </div>
-
-                    {!isLoadingRecordings && previewRecordings.length === 0 && (
-                      <p className="text-xs text-muted italic text-center py-3">
-                        No practice tracks uploaded for this song yet.
-                      </p>
-                    )}
-
-                    {previewRecordings.length > 0 && (
-                      <div className="flex flex-col gap-2">
-                        {previewRecordings.map((rec) => (
-                          <div
-                            key={rec.id}
-                            className={`rounded-xl border transition-all p-3 ${
-                              activeTrackId === rec.id
-                                ? 'bg-primary/6 border-primary/30'
-                                : 'bg-white border-primary/12 hover:border-primary/25'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2.5 mb-2">
-                              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                                <Volume2 size={13} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-primary m-0 truncate">
-                                  {rec.label || rec.voice_part || 'Track'}
-                                </p>
-                                {rec.uploader_name && (
-                                  <p className="text-[10px] text-muted m-0 truncate">
-                                    by {rec.uploader_name}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            <audio
-                              controls
-                              src={rec.file_url}
-                              className="w-full h-9"
-                              style={{ colorScheme: 'light' }}
-                              onPlay={() => setActiveTrackId(rec.id)}
-                              onPause={() => setActiveTrackId(null)}
-                              onEnded={() => setActiveTrackId(null)}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             )}
           </div>
         )}
       </main>
 
-      {/* ── FULL REPERTOIRE SEARCH & CHANGE SONG MODAL ── */}
-      {isSearchModalOpen && (
+      {/* ── FULL REPERTOIRE SEARCH & CHANGE SONG MODAL (Director/Admin only) ── */}
+      {isDirector && isSearchModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
           <div
             className="bg-[#f8f6f0] border border-primary/20 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
             role="dialog"
             aria-modal="true"
-            aria-label={isDirector ? 'Search and select song from repertoire' : 'Search and preview song from repertoire'}
+            aria-label="Search and select song from repertoire"
           >
             {/* Modal Header */}
             <div className="p-4 sm:p-5 bg-white border-b border-primary/12 flex items-center justify-between gap-3">
@@ -1263,12 +1190,10 @@ export const LiveSessionClient = ({
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-bold text-primary m-0 leading-tight">
-                    {isDirector ? 'Change Live Song (Repertoire)' : 'Browse Repertoire'}
+                    Change Live Song (Repertoire)
                   </h2>
                   <p className="text-muted text-xs m-0 mt-0.5">
-                    {isDirector
-                      ? 'Select any song to instantly change the live song for the entire choir.'
-                      : 'Search and preview lyrics or chords on your device.'}
+                    Select any song to instantly change the live song for the entire choir.
                   </p>
                 </div>
               </div>
@@ -1345,10 +1270,7 @@ export const LiveSessionClient = ({
                       return (
                         <div
                           key={item.id}
-                          onClick={() => {
-                            if (isDirector) handleDirectorNavigate(item.song_id);
-                            else handleMemberPreview(item.song_id);
-                          }}
+                          onClick={() => handleDirectorNavigate(item.song_id)}
                           className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
                             isLive
                               ? 'bg-emerald-50 border-emerald-300 ring-1 ring-emerald-400'
@@ -1386,7 +1308,7 @@ export const LiveSessionClient = ({
                               isLive ? 'btn-secondary !text-emerald-700' : 'btn-primary'
                             }`}
                           >
-                            {isLive ? 'Active' : isDirector ? 'Select' : 'Preview'}
+                            {isLive ? 'Active' : 'Select'}
                           </button>
                         </div>
                       );
@@ -1429,10 +1351,7 @@ export const LiveSessionClient = ({
                     return (
                       <div
                         key={s.id}
-                        onClick={() => {
-                          if (isDirector) handleDirectorNavigate(s.id);
-                          else handleMemberPreview(s.id);
-                        }}
+                        onClick={() => handleDirectorNavigate(s.id)}
                         className={`p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                           isLive
                             ? 'bg-emerald-50/80 border-emerald-300 ring-1 ring-emerald-400'
@@ -1486,7 +1405,7 @@ export const LiveSessionClient = ({
                                 : 'btn-primary'
                             }`}
                           >
-                            <span>{isLive ? 'Active' : isDirector ? 'Select for Live' : 'Preview'}</span>
+                            <span>{isLive ? 'Active' : 'Select for Live'}</span>
                             {!isLive && <ChevronRight size={13} />}
                           </button>
                         </div>

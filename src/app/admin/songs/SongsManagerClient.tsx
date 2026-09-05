@@ -95,6 +95,15 @@ export const SongsManagerClient = ({
   const { addToast } = useToast();
   const [archiveConfirmSong, setArchiveConfirmSong] = useState<Song | null>(null);
 
+  // Sync initialSongs from server props when changed
+  useEffect(() => {
+    setSongs(initialSongs);
+  }, [initialSongs]);
+
+  useEffect(() => {
+    setCategoriesList(availableCategories);
+  }, [availableCategories]);
+
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from('.anim-header', { opacity: 0, y: 15, duration: 0.4, ease: 'power2.out' });
@@ -149,9 +158,33 @@ export const SongsManagerClient = ({
   };
 
   // Fix: after save, update in-memory list so cards reflect new values without stale refresh
-  const handleFormSuccess = (savedId: string) => {
+  const handleFormSuccess = (savedId: string, updatedData?: Partial<Song>) => {
     const mode = formMode;
-    addToast({ type: 'success', title: 'Saved', message: mode === 'create' ? 'Song created!' : 'Song updated!' });
+    if (updatedData) {
+      if (mode === 'create') {
+        const newSong: Song = {
+          id: savedId,
+          title: updatedData.title || 'Untitled',
+          composer: updatedData.composer ?? null,
+          arranger: updatedData.arranger ?? null,
+          category: updatedData.category ?? null,
+          categories: updatedData.categories ?? [],
+          lyrics: updatedData.lyrics ?? null,
+          is_archived: false,
+          created_at: new Date().toISOString(),
+        };
+        setSongs((prev) => [newSong, ...prev.filter((s) => s.id !== savedId)]);
+      } else {
+        setSongs((prev) =>
+          prev.map((s) => (s.id === savedId ? { ...s, ...updatedData } : s))
+        );
+      }
+    }
+    addToast({
+      type: 'success',
+      title: 'Saved',
+      message: mode === 'create' ? 'Song created successfully!' : 'Song updated successfully!',
+    });
     setFormMode('none');
     setEditingSong(null);
     router.refresh(); // triggers Next.js RSC refresh to re-fetch updated categories/lyrics
@@ -427,25 +460,34 @@ export const SongsManagerClient = ({
               </div>
             )}
 
-            {/* ══ Song Form Panel (slide-in) ══ */}
+            {/* ══ Song Form Modal Dialog ══ */}
             {formMode !== 'none' && (
-              <div className="anim-section glass-container mb-6 p-6">
-                <SongForm
-                  song={editingSong ?? undefined}
-                  availableCategories={categoriesList}
-                  onSuccess={handleFormSuccess}
-                  onCancel={() => { setFormMode('none'); setEditingSong(null); }}
-                  onCategoryCreated={(newCat) => {
-                    const fullItem: CategoryItem = {
-                      id: newCat.id,
-                      name: newCat.name,
-                      sort_order: categoriesList.length,
-                      created_at: new Date().toISOString(),
-                      song_count: 0,
-                    };
-                    setCategoriesList((prev) => [...prev, fullItem]);
-                  }}
-                />
+              <div
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[99999] p-3 sm:p-6 overflow-y-auto"
+                onClick={() => { setFormMode('none'); setEditingSong(null); }}
+              >
+                <div
+                  className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 max-w-[880px] w-full text-foreground shadow-2xl my-auto max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <SongForm
+                    key={editingSong?.id || 'new-song-form'}
+                    song={editingSong ?? undefined}
+                    availableCategories={categoriesList}
+                    onSuccess={handleFormSuccess}
+                    onCancel={() => { setFormMode('none'); setEditingSong(null); }}
+                    onCategoryCreated={(newCat) => {
+                      const fullItem: CategoryItem = {
+                        id: newCat.id,
+                        name: newCat.name,
+                        sort_order: categoriesList.length,
+                        created_at: new Date().toISOString(),
+                        song_count: 0,
+                      };
+                      setCategoriesList((prev) => [...prev, fullItem]);
+                    }}
+                  />
+                </div>
               </div>
             )}
 
