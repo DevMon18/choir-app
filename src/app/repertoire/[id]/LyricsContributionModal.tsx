@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MassPartCoverageItem, submitSongLyrics } from './actions';
-import { ChordProRenderer } from '@/components/ChordProRenderer';
+import { ChordProEditor } from '@/components/ChordProEditor';
 import { useToast } from '@/components/Toast';
-import { X, Sparkles, Award, AlertCircle, Eye, EyeOff, Check, FileText } from 'lucide-react';
+import { X, Sparkles, Award, AlertCircle, FileText } from 'lucide-react';
 
 interface LyricsContributionModalProps {
   songId: string;
@@ -35,7 +35,6 @@ export const LyricsContributionModal = ({
 
   const [selectedMassPart, setSelectedMassPart] = useState<string>(defaultPart);
   const [lyrics, setLyrics] = useState<string>(initialLyrics);
-  const [showPreview, setShowPreview] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [draftRestored, setDraftRestored] = useState<boolean>(false);
@@ -221,46 +220,17 @@ export const LyricsContributionModal = ({
             </div>
           </div>
 
-          {/* Lyrics Content Input */}
-          <div className="input-group !mb-0">
-            <div className="flex justify-between items-center mb-1.5">
-              <label className="input-label !mb-0" htmlFor="lyricsContent">
-                ChordPro Lyrics *
-                <span className="text-xs text-muted font-normal ml-2">
-                  (wrap chords in brackets like [G], [Am])
-                </span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowPreview(!showPreview)}
-                className="text-xs text-primary bg-transparent border-0 font-semibold cursor-pointer flex items-center gap-1 hover:underline"
-              >
-                {showPreview ? <EyeOff size={13} /> : <Eye size={13} />}
-                <span>{showPreview ? 'Hide Preview' : 'Show Live Preview'}</span>
-              </button>
-            </div>
-
-            <textarea
-              id="lyricsContent"
-              value={lyrics}
-              onChange={(e) => setLyrics(e.target.value)}
-              disabled={loading}
-              placeholder={`{comment: Verse 1}\n[G]Holy, [D]Holy, [Em]Holy [C]Lord God of hosts.\n[G]Heaven and [D]earth are full of your [G]glory.`}
-              rows={10}
-              className="input-field font-mono text-xs sm:text-sm resize-y min-h-[160px]"
-              required
-            />
-          </div>
-
-          {/* Live Preview Panel */}
-          {showPreview && lyrics.trim() && (
-            <div className="p-4 rounded-xl bg-slate-50 border border-border max-h-[220px] overflow-y-auto">
-              <p className="text-[0.68rem] font-bold text-muted uppercase tracking-wider mb-2">
-                Live ChordPro Preview:
-              </p>
-              <ChordProRenderer lyrics={lyrics} fontSize={13} showChords={true} />
-            </div>
-          )}
+          {/* Lyrics / ChordPro Editor */}
+          <ChordProEditor
+            id="lyricsContent"
+            value={lyrics}
+            onChange={(val) => setLyrics(val)}
+            label="ChordPro Lyrics & Chords"
+            placeholder={`{comment: Verse 1}\n[G]Holy, [D]Holy, [Em]Holy [C]Lord God of hosts.\n[G]Heaven and [D]earth are full of your [G]glory.`}
+            required
+            disabled={loading}
+            minHeight="200px"
+          />
 
           {/* Action Buttons */}
           <div className="flex gap-3 justify-end items-center pt-3 border-t border-border/60">

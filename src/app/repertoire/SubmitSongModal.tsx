@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { submitNewSongWithLyrics } from '@/app/repertoire/[id]/actions';
+import { ChordProEditor } from '@/components/ChordProEditor';
 import { useToast } from '@/components/Toast';
-import { X, Sparkles, Music, Eye, Edit3, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react';
+import { X, Sparkles, Music, AlertCircle } from 'lucide-react';
 
 interface SubmitSongModalProps {
   isOpen: boolean;
@@ -44,7 +45,6 @@ export const SubmitSongModal = ({
   const [keyTone, setKeyTone] = useState('');
   const [selectedMassPart, setSelectedMassPart] = useState('entrance_song');
   const [lyricsContent, setLyricsContent] = useState('');
-  const [previewTab, setPreviewTab] = useState<'edit' | 'preview'>('edit');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -137,55 +137,6 @@ export const SubmitSongModal = ({
 
     onClose();
     if (onSuccess) onSuccess();
-  };
-
-  // Simple ChordPro parser for live preview
-  const renderChordProPreview = (text: string) => {
-    if (!text.trim()) {
-      return (
-        <div style={{ padding: '30px', textAlign: 'center', color: 'var(--muted)', fontSize: '0.88rem' }}>
-          No lyrics typed yet. Switch to the Edit tab to write chords and lyrics.
-        </div>
-      );
-    }
-
-    const lines = text.split('\n');
-    return (
-      <div style={{ fontFamily: 'monospace', fontSize: '0.88rem', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>
-        {lines.map((line, idx) => {
-          // Check for directive like {title: ...} or [Verse 1]
-          if (line.trim().startsWith('{') || line.trim().startsWith('[')) {
-            // Render chord line
-            const segments: Array<{ chord?: string; text: string }> = [];
-            const regex = /\[(.*?)\]([^\[]*)/g;
-            let match;
-            let lastIndex = 0;
-
-            if (line.includes('[') && line.includes(']')) {
-              while ((match = regex.exec(line)) !== null) {
-                segments.push({ chord: match[1], text: match[2] });
-                lastIndex = regex.lastIndex;
-              }
-              if (segments.length > 0) {
-                return (
-                  <div key={idx} style={{ display: 'flex', flexWrap: 'wrap', marginBottom: '6px' }}>
-                    {segments.map((seg, sIdx) => (
-                      <div key={sIdx} style={{ display: 'inline-flex', flexDirection: 'column', marginRight: '4px' }}>
-                        <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: '0.78rem' }}>
-                          {seg.chord}
-                        </span>
-                        <span>{seg.text || '\u00A0'}</span>
-                      </div>
-                    ))}
-                  </div>
-                );
-              }
-            }
-          }
-          return <div key={idx} style={{ minHeight: '1.2em' }}>{line}</div>;
-        })}
-      </div>
-    );
   };
 
   return (
@@ -402,96 +353,17 @@ export const SubmitSongModal = ({
               </div>
             </div>
 
-            {/* Lyrics / ChordPro Section */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--foreground)' }}>
-                  Lyrics &amp; Chords (ChordPro Format) <span style={{ color: 'var(--error)' }}>*</span>
-                </label>
-
-                {/* Edit / Preview Tabs */}
-                <div style={{ display: 'inline-flex', background: 'var(--border)', padding: '2px', borderRadius: '6px', gap: '2px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewTab('edit')}
-                    style={{
-                      padding: '4px 10px',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      borderRadius: '4px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: previewTab === 'edit' ? '#ffffff' : 'transparent',
-                      color: previewTab === 'edit' ? 'var(--primary)' : 'var(--muted)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
-                  >
-                    <Edit3 size={12} /> Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewTab('preview')}
-                    style={{
-                      padding: '4px 10px',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      borderRadius: '4px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: previewTab === 'preview' ? '#ffffff' : 'transparent',
-                      color: previewTab === 'preview' ? 'var(--primary)' : 'var(--muted)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
-                  >
-                    <Eye size={12} /> Live Preview
-                  </button>
-                </div>
-              </div>
-
-              {previewTab === 'edit' ? (
-                <>
-                  <textarea
-                    rows={10}
-                    placeholder={`[G]Purihin ang Pa[D]nginoon\n[C]Sa Kanyang kabu[G]tihan...\n\n[Chorus]\n[Em]Aleluya, [Bm]Aleluya\n[C]Purihin ang [D]Diyos!`}
-                    value={lyricsContent}
-                    onChange={(e) => setLyricsContent(e.target.value)}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border)',
-                      fontSize: '0.85rem',
-                      fontFamily: 'monospace',
-                      lineHeight: '1.6',
-                      outline: 'none',
-                      resize: 'vertical',
-                    }}
-                  />
-                  <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '4px' }}>
-                    Tip: Place chords in brackets inside words, e.g. <code style={{ background: '#f4f4f5', padding: '1px 4px', borderRadius: '4px' }}>[G]Grace [D]how [Em]sweet</code>. Drafts autosave automatically.
-                  </div>
-                </>
-              ) : (
-                <div
-                  style={{
-                    padding: '14px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    background: '#fafafa',
-                    minHeight: '200px',
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                  }}
-                >
-                  {renderChordProPreview(lyricsContent)}
-                </div>
-              )}
-            </div>
+            {/* Lyrics / ChordPro Section with full formatting toolbar */}
+            <ChordProEditor
+              id="newSongLyrics"
+              value={lyricsContent}
+              onChange={(val) => setLyricsContent(val)}
+              label="Lyrics & Chords (ChordPro Format)"
+              placeholder={`{comment: Verse 1}\n[G]Purihin ang Pa[D]nginoon\n[C]Sa Kanyang kabu[G]tihan...\n\n{comment: Chorus}\n[Em]Aleluya, [Bm]Aleluya\n[C]Purihin ang [D]Diyos!`}
+              required
+              minHeight="220px"
+              disabled={submitting}
+            />
           </div>
 
           {/* Footer Actions */}
