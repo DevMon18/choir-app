@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { submitNewSongWithLyrics } from '@/app/repertoire/[id]/actions';
 import { ChordProEditor } from '@/components/ChordProEditor';
 import { useToast } from '@/components/Toast';
@@ -141,267 +141,149 @@ export const SubmitSongModal = ({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.55)',
-        backdropFilter: 'blur(6px)',
-        zIndex: 2000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-      }}
+      className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-[99999] p-3 sm:p-6 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="glass-container"
-        style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          maxWidth: '680px',
-          width: '100%',
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          overflow: 'hidden',
-          border: '1px solid var(--glass-border)',
-        }}
+        className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 max-w-[800px] w-full text-foreground shadow-2xl my-auto max-h-[94vh] sm:max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-150 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div
-          style={{
-            padding: '16px 20px',
-            borderBottom: '1px solid var(--border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, rgba(11, 77, 36, 0.04), rgba(197, 160, 89, 0.08))',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
-                background: 'var(--primary)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Music size={20} />
+        <div className="flex justify-between items-start mb-4 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+              <Music size={18} />
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.15rem', color: 'var(--primary)', fontWeight: 700 }}>
+              <h2 className="text-base sm:text-lg font-bold text-primary m-0">
                 Submit New Song &amp; Lyrics
               </h2>
-              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+              <p className="text-xs text-slate-500 m-0">
                 Earn contributor points once approved by the choir director
-              </div>
+              </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
             aria-label="Close modal"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--muted)',
-              padding: '6px',
-              borderRadius: '8px',
-              display: 'inline-flex',
-            }}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors border-0 bg-transparent cursor-pointer"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
-          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {errorMsg && (
-              <div
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  color: 'var(--error)',
-                  fontSize: '0.85rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <AlertCircle size={16} style={{ flexShrink: 0 }} />
-                <span>{errorMsg}</span>
-              </div>
-            )}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 flex-1">
+          {errorMsg && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm flex items-center gap-2">
+              <AlertCircle size={16} className="flex-shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
 
-            {/* Title & Composer Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '6px' }}>
-                  Song Title <span style={{ color: 'var(--error)' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Bukas Palad, Purihin ang Panginoon..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    fontSize: '0.88rem',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '6px' }}>
-                  Composer / Artist (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Fr. Manoling Francisco, SJ"
-                  value={composer}
-                  onChange={(e) => setComposer(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    fontSize: '0.88rem',
-                    outline: 'none',
-                  }}
-                />
-              </div>
+          {/* Title & Composer Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+              <label className="input-label" htmlFor="newSongTitle">
+                Song Title <span className="text-error">*</span>
+              </label>
+              <input
+                id="newSongTitle"
+                type="text"
+                placeholder="e.g. Bukas Palad, Purihin ang Panginoon..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="input-field text-xs sm:text-sm"
+              />
             </div>
 
-            {/* Mass Part & Key Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--foreground)' }}>
-                    Mass Part / Category <span style={{ color: 'var(--error)' }}>*</span>
-                  </label>
-                  <span
-                    style={{
-                      background: 'rgba(197, 160, 89, 0.15)',
-                      color: 'var(--accent)',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      padding: '2px 7px',
-                      borderRadius: '999px',
-                      border: '1px solid rgba(197, 160, 89, 0.3)',
-                    }}
-                  >
-                    +{pointsAtStake} pts reward
-                  </span>
-                </div>
-                <select
-                  value={selectedMassPart}
-                  onChange={(e) => setSelectedMassPart(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    fontSize: '0.88rem',
-                    backgroundColor: '#ffffff',
-                    cursor: 'pointer',
-                    outline: 'none',
-                  }}
-                >
-                  {availableMassParts.map((mp) => (
-                    <option key={mp.mass_part} value={mp.mass_part}>
-                      {mp.display_name} (+{mp.points} pts)
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '6px' }}>
-                  Key / Tone (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. G major, D, F#"
-                  value={keyTone}
-                  onChange={(e) => setKeyTone(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    fontSize: '0.88rem',
-                    outline: 'none',
-                  }}
-                />
-              </div>
+            <div>
+              <label className="input-label" htmlFor="newSongComposer">
+                Composer / Artist (Optional)
+              </label>
+              <input
+                id="newSongComposer"
+                type="text"
+                placeholder="e.g. Fr. Manoling Francisco, SJ"
+                value={composer}
+                onChange={(e) => setComposer(e.target.value)}
+                className="input-field text-xs sm:text-sm"
+              />
             </div>
-
-            {/* Lyrics / ChordPro Section with full formatting toolbar */}
-            <ChordProEditor
-              id="newSongLyrics"
-              value={lyricsContent}
-              onChange={(val) => setLyricsContent(val)}
-              label="Lyrics & Chords (ChordPro Format)"
-              placeholder={`{comment: Verse 1}\n[G]Purihin ang Pa[D]nginoon\n[C]Sa Kanyang kabu[G]tihan...\n\n{comment: Chorus}\n[Em]Aleluya, [Bm]Aleluya\n[C]Purihin ang [D]Diyos!`}
-              required
-              minHeight="220px"
-              disabled={submitting}
-            />
           </div>
 
+          {/* Mass Part & Key Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-end">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="input-label !mb-0" htmlFor="newSongMassPart">
+                  Mass Part / Category <span className="text-error">*</span>
+                </label>
+                <span className="bg-amber-500/15 text-amber-900 text-[0.68rem] font-bold px-2 py-0.5 rounded-full border border-amber-500/25">
+                  +{pointsAtStake} pts reward
+                </span>
+              </div>
+              <select
+                id="newSongMassPart"
+                value={selectedMassPart}
+                onChange={(e) => setSelectedMassPart(e.target.value)}
+                className="input-field text-xs sm:text-sm font-semibold cursor-pointer"
+              >
+                {availableMassParts.map((mp) => (
+                  <option key={mp.mass_part} value={mp.mass_part}>
+                    {mp.display_name} (+{mp.points} pts)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="input-label" htmlFor="newSongKey">
+                Key / Tone (Optional)
+              </label>
+              <input
+                id="newSongKey"
+                type="text"
+                placeholder="e.g. G major, D, F#"
+                value={keyTone}
+                onChange={(e) => setKeyTone(e.target.value)}
+                className="input-field text-xs sm:text-sm font-mono"
+              />
+            </div>
+          </div>
+
+          {/* Lyrics / ChordPro Section with full formatting toolbar */}
+          <ChordProEditor
+            id="newSongLyrics"
+            value={lyricsContent}
+            onChange={(val) => setLyricsContent(val)}
+            label="Lyrics & Chords (ChordPro Format)"
+            placeholder={`{comment: Verse 1}\n[G]Purihin ang Pa[D]nginoon\n[C]Sa Kanyang kabu[G]tihan...\n\n{comment: Chorus}\n[Em]Aleluya, [Bm]Aleluya\n[C]Purihin ang [D]Diyos!`}
+            required
+            minHeight="200px"
+            disabled={submitting}
+          />
+
           {/* Footer Actions */}
-          <div
-            style={{
-              padding: '14px 20px',
-              borderTop: '1px solid var(--border)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: '10px',
-              background: '#fcfcfc',
-            }}
-          >
+          <div className="flex gap-2.5 justify-end items-center pt-3 border-t border-slate-100 mt-2">
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-secondary"
+              className="btn btn-secondary !py-2 !px-4 text-xs font-semibold"
               disabled={submitting}
-              style={{ padding: '8px 16px', fontSize: '0.85rem' }}
             >
               Cancel
             </button>
 
             <button
               type="submit"
-              className="btn btn-primary"
-              disabled={submitting}
-              style={{
-                padding: '8px 20px',
-                fontSize: '0.85rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
+              className="btn btn-primary !py-2 !px-5 text-xs font-bold inline-flex items-center gap-1.5 shadow-sm"
+              disabled={submitting || !title.trim() || !lyricsContent.trim()}
             >
-              <Sparkles size={15} />
-              <span>{submitting ? 'Submitting Song...' : `Submit Song for Review (+${pointsAtStake} pts)`}</span>
+              <Sparkles size={14} />
+              <span>{submitting ? 'Submitting Song...' : `Submit Song (+${pointsAtStake} pts)`}</span>
             </button>
           </div>
         </form>
@@ -409,3 +291,5 @@ export const SubmitSongModal = ({
     </div>
   );
 };
+
+export default SubmitSongModal;

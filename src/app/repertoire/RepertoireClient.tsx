@@ -16,13 +16,12 @@ import {
   BookOpen,
   SortAsc,
   Layers,
-  Filter,
   Sparkles,
-  CheckCircle2,
   FileText,
   SlidersHorizontal,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
-import gsap from 'gsap';
 import { useRepertoire } from '@/hooks/useRepertoire';
 import { SubmitSongModal } from '@/app/repertoire/SubmitSongModal';
 
@@ -89,7 +88,6 @@ export const RepertoireClient = ({
     initialSongs,
   });
   const router = useRouter();
-  const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const filterScrollRef = useRef<HTMLDivElement>(null);
 
@@ -105,6 +103,7 @@ export const RepertoireClient = ({
 
   // Collapsed sections state
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [hideEmptySections, setHideEmptySections] = useState<boolean>(false);
   const [showTagFilterPopover, setShowTagFilterPopover] = useState(false);
   const [selectedSeasonTags, setSelectedSeasonTags] = useState<string[]>([]);
 
@@ -150,14 +149,6 @@ export const RepertoireClient = ({
       songCatNames.some((cat) => cat === tag.toLowerCase() || cat.includes(tag.toLowerCase()) || tag.toLowerCase().includes(cat))
     );
   };
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from('.anim-header', { opacity: 0, y: 12, duration: 0.35, ease: 'power2.out' });
-      gsap.from('.anim-section', { opacity: 0, y: 12, duration: 0.35, stagger: 0.04, ease: 'power2.out' });
-    }, containerRef);
-    return () => ctx.revert();
-  }, []);
 
   // Keyboard shortcut listener ('/' or 'Cmd+K' to focus search input)
   useEffect(() => {
@@ -208,8 +199,6 @@ export const RepertoireClient = ({
     setCollapsedSections({});
   };
 
-  const isAdmin = ['super_admin', 'director', 'secretary'].includes(currentUserProfile.role);
-
   // Filter songs based on search and season tags
   const filteredSongs = songs.filter((song) => {
     if (searchValue.trim()) {
@@ -253,7 +242,6 @@ export const RepertoireClient = ({
 
   // Render clean, modern song row tile
   const renderSongRow = (song: Song, currentSectionName?: string) => {
-    // Only display extra tags that aren't repeating the current section mass part name
     const extraTags = (song.categories && song.categories.length > 0
       ? song.categories
       : song.category
@@ -270,7 +258,7 @@ export const RepertoireClient = ({
       <Link
         key={song.id}
         href={`/repertoire/${song.id}`}
-        className="group flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-white border border-black/[0.07] text-inherit no-underline transition-all hover:bg-slate-50/80 hover:border-primary/30 hover:shadow-sm gap-3 min-w-0"
+        className="group flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-white border border-slate-200/80 text-inherit no-underline transition-all hover:bg-emerald-50/40 hover:border-primary/40 hover:shadow-sm gap-3 min-w-0"
       >
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Note Icon Badge */}
@@ -281,18 +269,18 @@ export const RepertoireClient = ({
           {/* Title & Metadata */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="text-[0.92rem] sm:text-[0.96rem] font-bold text-foreground m-0 truncate group-hover:text-primary transition-colors">
+              <h4 className="text-[0.92rem] sm:text-[0.98rem] font-bold text-slate-900 m-0 truncate group-hover:text-primary transition-colors">
                 {song.title}
               </h4>
             </div>
 
-            <div className="flex items-center gap-1.5 flex-wrap mt-0.5 text-xs text-muted">
+            <div className="flex items-center gap-1.5 flex-wrap mt-0.5 text-xs text-slate-500 font-medium">
               {song.composer ? (
-                <span className="truncate max-w-[160px] sm:max-w-[220px]">
+                <span className="truncate max-w-[150px] sm:max-w-[240px]">
                   {song.composer}
                 </span>
               ) : (
-                <span className="italic opacity-75">Composer unknown</span>
+                <span className="italic text-slate-400">Composer unknown</span>
               )}
 
               {/* Chords Badge */}
@@ -303,7 +291,7 @@ export const RepertoireClient = ({
                 </span>
               )}
 
-              {/* Sub Tags (e.g. Lent, Advent, Easter, Latin) */}
+              {/* Sub Tags */}
               {extraTags.slice(0, 2).map((t) => (
                 <span
                   key={t.id}
@@ -317,7 +305,7 @@ export const RepertoireClient = ({
         </div>
 
         {/* Right Action Chevron */}
-        <div className="w-7 h-7 rounded-full bg-black/4 flex items-center justify-center text-muted group-hover:text-primary group-hover:bg-primary/10 transition-colors flex-shrink-0">
+        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-primary/10 transition-colors flex-shrink-0">
           <ChevronRight size={15} />
         </div>
       </Link>
@@ -341,13 +329,18 @@ export const RepertoireClient = ({
     ? MASS_PART_SECTIONS
     : MASS_PART_SECTIONS.filter((p) => p.id === selectedMassPartFilter || p.name.toLowerCase() === selectedMassPartFilter.toLowerCase());
 
+  // Count empty sections
+  const emptySectionsCount = displaySections.filter((part) => {
+    return filteredSongs.filter((s) => matchesMassPart(s, part.name, part.matchKeywords)).length === 0;
+  }).length;
+
   return (
-    <div ref={containerRef} className="flex flex-col min-h-screen bg-[#fbfbf9] text-foreground">
+    <div className="flex flex-col min-h-screen bg-[#f8f9fa] text-foreground">
       <Navbar profile={currentUserProfile} />
 
-      <main className="flex-1 py-5 sm:py-7 px-3 sm:px-6 pb-24 max-w-[1120px] mx-auto w-full">
+      <main className="flex-1 py-4 sm:py-7 px-3 sm:px-6 pb-24 max-w-[1120px] mx-auto w-full">
         {/* Modern Liturgical Hero Header */}
-        <div className="anim-header mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-black/[0.06]">
+        <div className="mb-4 sm:mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
             <div className="inline-flex items-center gap-1.5 py-0.5 px-2.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-1.5 border border-primary/15">
               <BookOpen size={13} />
@@ -356,13 +349,13 @@ export const RepertoireClient = ({
             <h1 className="text-2xl sm:text-3xl font-extrabold text-primary m-0 tracking-tight">
               Repertoire &amp; Songbook
             </h1>
-            <p className="text-xs sm:text-sm text-muted m-0 mt-1">
-              Browse mass parts in liturgical order or switch to the A-Z alphabetical index.
+            <p className="text-xs sm:text-sm text-slate-500 m-0 mt-1">
+              Browse mass parts in liturgical order or switch to the A-Z alphabetical hymnal index.
             </p>
           </div>
 
           {/* Top Actions: Propose Song & View Switcher */}
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
             <button
               type="button"
               onClick={() => setSubmitModalOpen(true)}
@@ -374,12 +367,12 @@ export const RepertoireClient = ({
             </button>
 
             {/* View Mode Toggle */}
-            <div className="flex bg-black/[0.05] p-1 rounded-xl border border-black/[0.05]">
+            <div className="flex bg-slate-200/70 p-1 rounded-xl border border-slate-300/60">
               <button
                 type="button"
                 onClick={() => { setViewMode('MASS_PARTS'); setSelectedMassPartFilter('ALL'); }}
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-bold border-0 cursor-pointer transition-all ${
-                  viewMode === 'MASS_PARTS' ? 'bg-white text-primary shadow-sm' : 'bg-transparent text-muted hover:text-foreground'
+                className={`flex items-center gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-lg text-xs font-bold border-0 cursor-pointer transition-all ${
+                  viewMode === 'MASS_PARTS' ? 'bg-white text-primary shadow-xs font-bold' : 'bg-transparent text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Layers size={14} />
@@ -389,8 +382,8 @@ export const RepertoireClient = ({
               <button
                 type="button"
                 onClick={() => setViewMode('AZ_INDEX')}
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-bold border-0 cursor-pointer transition-all ${
-                  viewMode === 'AZ_INDEX' ? 'bg-white text-primary shadow-sm' : 'bg-transparent text-muted hover:text-foreground'
+                className={`flex items-center gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-lg text-xs font-bold border-0 cursor-pointer transition-all ${
+                  viewMode === 'AZ_INDEX' ? 'bg-white text-primary shadow-xs font-bold' : 'bg-transparent text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <SortAsc size={14} />
@@ -402,7 +395,7 @@ export const RepertoireClient = ({
 
         {/* Quick Liturgical Mass Part Horizontal Filter Chips */}
         {viewMode === 'MASS_PARTS' && (
-          <div className="anim-header mb-4">
+          <div className="mb-4">
             <div
               ref={filterScrollRef}
               className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar text-xs font-semibold"
@@ -413,8 +406,8 @@ export const RepertoireClient = ({
                 onClick={() => setSelectedMassPartFilter('ALL')}
                 className={`py-1.5 px-3 rounded-full border whitespace-nowrap cursor-pointer transition-all ${
                   selectedMassPartFilter === 'ALL'
-                    ? 'bg-primary text-white border-primary shadow-sm font-bold'
-                    : 'bg-white text-muted border-black/10 hover:border-black/20 hover:text-foreground'
+                    ? 'bg-primary text-white border-primary shadow-xs font-bold'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900'
                 }`}
               >
                 All Mass Parts ({songs.length})
@@ -431,13 +424,13 @@ export const RepertoireClient = ({
                     onClick={() => setSelectedMassPartFilter(isActive ? 'ALL' : part.id)}
                     className={`py-1.5 px-3 rounded-full border whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
                       isActive
-                        ? 'bg-primary text-white border-primary shadow-sm font-bold'
-                        : 'bg-white text-muted border-black/10 hover:border-black/20 hover:text-foreground'
+                        ? 'bg-primary text-white border-primary shadow-xs font-bold'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900'
                     }`}
                   >
                     <span>{part.name}</span>
                     <span className={`text-[0.68rem] px-1.5 py-0.2 rounded-full font-bold ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-black/5 text-muted'
+                      isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
                     }`}>
                       {partCount}
                     </span>
@@ -449,17 +442,17 @@ export const RepertoireClient = ({
         )}
 
         {/* Search Bar & Tag Filter Controls */}
-        <div className="anim-header mb-5 flex items-center gap-2.5 flex-wrap">
+        <div className="mb-4 sm:mb-5 flex items-center gap-2.5 flex-wrap">
           {/* Search Field */}
-          <div className="relative flex-1 min-w-[240px]">
+          <div className="relative flex-1 min-w-[200px] sm:min-w-[240px]">
             <Search
               size={17}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
             />
             <input
               ref={searchInputRef}
               type="text"
-              className="w-full pl-9 pr-9 py-2.5 bg-white border border-black/10 rounded-xl text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-sm"
+              className="w-full pl-9 pr-9 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-2xs text-slate-800"
               placeholder="Search title, composer, or lyrics… (/)"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
@@ -468,7 +461,7 @@ export const RepertoireClient = ({
               <button
                 type="button"
                 onClick={() => setSearchValue('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground bg-transparent border-0 cursor-pointer p-1"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 bg-transparent border-0 cursor-pointer p-1"
                 title="Clear search"
               >
                 <X size={15} />
@@ -482,10 +475,10 @@ export const RepertoireClient = ({
               <button
                 type="button"
                 onClick={() => setShowTagFilterPopover(!showTagFilterPopover)}
-                className={`py-2.5 px-3.5 rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 border shadow-sm transition-all ${
+                className={`py-2.5 px-3 sm:px-3.5 rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 border shadow-2xs transition-all ${
                   selectedSeasonTags.length > 0
                     ? 'bg-primary/10 text-primary border-primary/30'
-                    : 'bg-white text-muted border-black/10 hover:border-black/20'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                 }`}
               >
                 <SlidersHorizontal size={14} />
@@ -499,11 +492,11 @@ export const RepertoireClient = ({
 
               {showTagFilterPopover && (
                 <div
-                  className="absolute right-0 top-full mt-2 z-50 w-64 bg-white rounded-xl border border-black/10 shadow-xl p-3 flex flex-col gap-2"
+                  className="absolute right-0 top-full mt-2 z-50 w-64 bg-white rounded-xl border border-slate-200 shadow-xl p-3 flex flex-col gap-2"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex items-center justify-between border-b border-black/6 pb-1.5">
-                    <span className="text-xs font-bold text-foreground">Liturgical Themes &amp; Tags</span>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-xs font-bold text-slate-900">Liturgical Themes &amp; Tags</span>
                     {selectedSeasonTags.length > 0 && (
                       <button
                         type="button"
@@ -522,7 +515,7 @@ export const RepertoireClient = ({
                         <label
                           key={tag}
                           className={`flex items-center gap-2 p-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
-                            isChecked ? 'bg-primary/8 text-primary font-bold' : 'hover:bg-slate-50 text-foreground'
+                            isChecked ? 'bg-primary/8 text-primary font-bold' : 'hover:bg-slate-50 text-slate-700'
                           }`}
                         >
                           <input
@@ -541,20 +534,42 @@ export const RepertoireClient = ({
             </div>
           )}
 
-          {/* Quick Collapse / Expand All (Mass Parts Mode) */}
+          {/* Quick Collapse / Expand & Hide Empty Controls (Mass Parts Mode) */}
           {viewMode === 'MASS_PARTS' && selectedMassPartFilter === 'ALL' && !isSearching && (
-            <div className="flex items-center gap-1 ml-auto">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Hide Empty Sections Toggle */}
+              {emptySectionsCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setHideEmptySections(!hideEmptySections)}
+                  className={`py-2 px-2.5 rounded-xl text-xs font-semibold cursor-pointer border flex items-center gap-1 transition-all ${
+                    hideEmptySections
+                      ? 'bg-amber-50 text-amber-900 border-amber-300 font-bold'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                  title={hideEmptySections ? 'Showing populated mass parts only' : 'Showing all mass parts'}
+                >
+                  {hideEmptySections ? <EyeOff size={13} className="text-amber-700" /> : <Eye size={13} />}
+                  <span className="hidden sm:inline">
+                    {hideEmptySections ? 'Hidden Empty Parts' : `Hide Empty (${emptySectionsCount})`}
+                  </span>
+                  <span className="sm:hidden">
+                    {hideEmptySections ? 'Populated' : `Hide (${emptySectionsCount})`}
+                  </span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={collapseAllSections}
-                className="py-2 px-2.5 rounded-lg text-xs font-semibold text-muted bg-white border border-black/10 cursor-pointer hover:bg-slate-50"
+                className="py-2 px-2.5 rounded-xl text-xs font-semibold text-slate-600 bg-white border border-slate-200 cursor-pointer hover:bg-slate-50"
               >
                 Collapse
               </button>
               <button
                 type="button"
                 onClick={expandAllSections}
-                className="py-2 px-2.5 rounded-lg text-xs font-semibold text-muted bg-white border border-black/10 cursor-pointer hover:bg-slate-50"
+                className="py-2 px-2.5 rounded-xl text-xs font-semibold text-slate-600 bg-white border border-slate-200 cursor-pointer hover:bg-slate-50"
               >
                 Expand
               </button>
@@ -575,19 +590,19 @@ export const RepertoireClient = ({
 
         {/* Search Results Count */}
         {isSearching && (
-          <div className="mb-4 text-xs sm:text-sm text-muted font-semibold">
+          <div className="mb-4 text-xs sm:text-sm text-slate-600 font-semibold">
             Found {filteredSongs.length} {filteredSongs.length === 1 ? 'song' : 'songs'} matching &quot;{searchValue.trim()}&quot;
           </div>
         )}
 
         {/* Repertoire Content: Empty State */}
         {filteredSongs.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-black/8 p-10 text-center shadow-sm anim-section my-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center shadow-xs my-6">
             <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
               <Music size={28} />
             </div>
-            <h3 className="text-base font-bold text-foreground mb-1">No Songs Found</h3>
-            <p className="text-xs sm:text-sm text-muted max-w-sm mx-auto mb-4">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1">No Songs Found</h3>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto mb-4">
               {searchValue || selectedMassPartFilter !== 'ALL' || selectedSeasonTags.length > 0
                 ? 'No songs matched your search criteria. Try clearing your filters.'
                 : 'No songs have been added to the repertoire yet.'}
@@ -619,13 +634,13 @@ export const RepertoireClient = ({
               return (
                 <div
                   key={letter}
-                  className="bg-white rounded-2xl border border-black/8 shadow-sm overflow-hidden anim-section"
+                  className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden"
                 >
-                  <div className="py-2.5 px-4 bg-slate-50/80 border-b border-black/6 flex items-center justify-between">
+                  <div className="py-2.5 px-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                     <span className="text-base font-black text-primary">
                       {letter}
                     </span>
-                    <span className="text-xs font-bold text-muted">
+                    <span className="text-xs font-bold text-slate-500">
                       {letterSongs.length} {letterSongs.length === 1 ? 'song' : 'songs'}
                     </span>
                   </div>
@@ -642,8 +657,8 @@ export const RepertoireClient = ({
             {displaySections.map((part) => {
               const partSongs = filteredSongs.filter((s) => matchesMassPart(s, part.name, part.matchKeywords));
 
-              // If searching, hide sections with 0 matches
-              if (isSearching && partSongs.length === 0) return null;
+              // If searching or hideEmptySections is ON, hide sections with 0 matches
+              if ((isSearching || hideEmptySections) && partSongs.length === 0) return null;
 
               const isCollapsed = isSearching ? false : !!collapsedSections[part.id];
 
@@ -651,12 +666,12 @@ export const RepertoireClient = ({
                 <div
                   key={part.id}
                   id={`part-${part.id}`}
-                  className="bg-white rounded-2xl border border-black/8 shadow-sm overflow-hidden transition-all anim-section"
+                  className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden transition-all"
                 >
                   {/* Mass Part Card Header */}
                   <div
                     onClick={() => toggleSection(part.id)}
-                    className="flex items-center justify-between p-3.5 sm:p-4 cursor-pointer select-none bg-white hover:bg-slate-50/75 transition-colors gap-3"
+                    className="flex items-center justify-between p-3.5 sm:p-4 cursor-pointer select-none bg-white hover:bg-slate-50 transition-colors gap-3"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       {/* Liturgical Order Number Pill */}
@@ -671,12 +686,12 @@ export const RepertoireClient = ({
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span
                         className={`text-xs font-bold py-0.5 px-2.5 rounded-full ${
-                          partSongs.length > 0 ? 'bg-primary/10 text-primary' : 'bg-black/5 text-muted'
+                          partSongs.length > 0 ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-500'
                         }`}
                       >
                         {partSongs.length} {partSongs.length === 1 ? 'song' : 'songs'}
                       </span>
-                      <div className="text-muted p-0.5">
+                      <div className="text-slate-400 p-0.5">
                         {isCollapsed ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
                       </div>
                     </div>
@@ -684,12 +699,12 @@ export const RepertoireClient = ({
 
                   {/* Mass Part Song List */}
                   {!isCollapsed && (
-                    <div className="p-3 sm:p-3.5 pt-0 border-t border-black/5 bg-[#fafaf8]/50 flex flex-col gap-2">
+                    <div className="p-3 sm:p-3.5 pt-0 border-t border-slate-100 bg-[#fbfbfb] flex flex-col gap-2">
                       {partSongs.length > 0 ? (
                         partSongs.map((song) => renderSongRow(song, part.name))
                       ) : (
-                        <div className="py-6 px-4 text-center">
-                          <p className="text-xs text-muted m-0 italic mb-2">
+                        <div className="py-5 px-4 text-center">
+                          <p className="text-xs text-slate-500 m-0 italic mb-2">
                             No songs currently assigned to this mass part.
                           </p>
                           <button
@@ -714,32 +729,32 @@ export const RepertoireClient = ({
 
               return (
                 <div
-                  className="bg-white rounded-2xl border border-black/8 shadow-sm overflow-hidden anim-section"
+                  className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden"
                 >
                   <div
                     onClick={() => toggleSection('other-songs')}
-                    className="flex items-center justify-between p-3.5 sm:p-4 cursor-pointer select-none bg-white hover:bg-slate-50/75 transition-colors gap-3"
+                    className="flex items-center justify-between p-3.5 sm:p-4 cursor-pointer select-none bg-white hover:bg-slate-50 transition-colors gap-3"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-6 h-6 rounded-md bg-black/5 text-muted flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 rounded-md bg-slate-100 text-slate-500 flex items-center justify-center flex-shrink-0">
                         <Music size={14} />
                       </div>
-                      <h2 className="text-[0.95rem] sm:text-base font-bold text-foreground m-0 truncate">
+                      <h2 className="text-[0.95rem] sm:text-base font-bold text-slate-800 m-0 truncate">
                         Additional &amp; Seasonal Songs
                       </h2>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-xs font-bold py-0.5 px-2.5 rounded-full bg-black/5 text-muted">
+                      <span className="text-xs font-bold py-0.5 px-2.5 rounded-full bg-slate-100 text-slate-600">
                         {otherSongs.length} {otherSongs.length === 1 ? 'song' : 'songs'}
                       </span>
-                      <div className="text-muted p-0.5">
+                      <div className="text-slate-400 p-0.5">
                         {isCollapsed ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
                       </div>
                     </div>
                   </div>
 
                   {!isCollapsed && (
-                    <div className="p-3 sm:p-3.5 pt-0 border-t border-black/5 bg-[#fafaf8]/50 flex flex-col gap-2">
+                    <div className="p-3 sm:p-3.5 pt-0 border-t border-slate-100 bg-[#fbfbfb] flex flex-col gap-2">
                       {otherSongs.map((song) => renderSongRow(song))}
                     </div>
                   )}
