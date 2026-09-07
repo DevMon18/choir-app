@@ -18,6 +18,10 @@
     {
       "path": "/api/cron/tasks/cleanup",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/finance/monthly-rollover",
+      "schedule": "0 16 28-31 * *"
     }
   ],
   "headers": [
