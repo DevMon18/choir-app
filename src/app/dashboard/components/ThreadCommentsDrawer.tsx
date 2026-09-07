@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import {
   X,
@@ -259,7 +260,7 @@ export const ThreadCommentsDrawer: React.FC<ThreadCommentsDrawerProps> = ({
   if (!mounted || !isOpen || !post) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex flex-col justify-end sm:justify-center sm:items-center">
+    <div className="fixed inset-0 z-[1100] flex flex-col justify-end sm:justify-center sm:items-center">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in"
@@ -345,22 +346,34 @@ export const ThreadCommentsDrawer: React.FC<ThreadCommentsDrawerProps> = ({
                         <Lock size={13} />
                       </div>
                     ) : (
-                      <div className="z-10 shrink-0">
+                      <Link
+                        href={root.author?.id === currentUserProfile.id ? '/profile' : `/directory/${root.author?.id || root.author_id}`}
+                        className="z-10 shrink-0 hover:opacity-85 transition-opacity cursor-pointer"
+                      >
                         <Avatar
                           src={root.author?.avatar_url}
                           name={root.author?.full_name || 'Member'}
                           size={32}
                         />
-                      </div>
+                      </Link>
                     )}
 
                     {/* Content & Speech Bubble */}
                     <div className="flex-1 min-w-0">
                       <div className="bg-slate-100/90 hover:bg-slate-100 rounded-2xl px-3.5 py-2 inline-block max-w-full text-slate-800 transition-colors">
                         <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                          <span className="font-bold text-slate-900 text-xs">
-                            {root.author?.full_name}
-                          </span>
+                          {root.is_anonymous && !isOfficer ? (
+                            <span className="font-bold text-slate-900 text-xs">
+                              Anonymous Member
+                            </span>
+                          ) : (
+                            <Link
+                              href={root.author?.id === currentUserProfile.id ? '/profile' : `/directory/${root.author?.id || root.author_id}`}
+                              className="font-bold text-slate-900 text-xs hover:text-primary hover:underline transition-colors cursor-pointer"
+                            >
+                              {root.author?.full_name}
+                            </Link>
+                          )}
                           {root.author?.voice_part && (
                             <span className="text-[0.6rem] font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded-full">
                               {root.author.voice_part}
@@ -444,22 +457,34 @@ export const ThreadCommentsDrawer: React.FC<ThreadCommentsDrawerProps> = ({
                                 <Lock size={10} />
                               </div>
                             ) : (
-                              <div className="z-10 shrink-0">
+                              <Link
+                                href={reply.author?.id === currentUserProfile.id ? '/profile' : `/directory/${reply.author?.id || reply.author_id}`}
+                                className="z-10 shrink-0 hover:opacity-85 transition-opacity cursor-pointer"
+                              >
                                 <Avatar
                                   src={reply.author?.avatar_url}
                                   name={reply.author?.full_name || 'Member'}
                                   size={24}
                                 />
-                              </div>
+                              </Link>
                             )}
 
                             {/* Reply Bubble */}
                             <div className="flex-1 min-w-0">
                               <div className="bg-slate-100/80 hover:bg-slate-100 rounded-2xl px-3 py-1.5 inline-block max-w-full text-slate-800 transition-colors">
                                 <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                                  <span className="font-bold text-slate-900 text-xs">
-                                    {reply.author?.full_name}
-                                  </span>
+                                  {reply.is_anonymous && !isOfficer ? (
+                                    <span className="font-bold text-slate-900 text-xs">
+                                      Anonymous Member
+                                    </span>
+                                  ) : (
+                                    <Link
+                                      href={reply.author?.id === currentUserProfile.id ? '/profile' : `/directory/${reply.author?.id || reply.author_id}`}
+                                      className="font-bold text-slate-900 text-xs hover:text-primary hover:underline transition-colors cursor-pointer"
+                                    >
+                                      {reply.author?.full_name}
+                                    </Link>
+                                  )}
                                   {reply.author?.voice_part && (
                                     <span className="text-[0.58rem] font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded-full">
                                       {reply.author.voice_part}

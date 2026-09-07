@@ -139,7 +139,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
   if (!mounted || !isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4">
+    <div className="fixed inset-0 z-[1200] flex items-center justify-center p-3 sm:p-4">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/65 backdrop-blur-xs transition-opacity animate-in fade-in"

@@ -1134,7 +1134,7 @@ input::-webkit-contacts-auto-fill-button {
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 1000;
+    z-index: 50;
     background: #ffffff !important;
     opacity: 1 !important;
     border-top: 1px solid var(--glass-border);

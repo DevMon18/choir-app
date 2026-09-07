@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   Heart,
   MessageSquare,
@@ -35,6 +36,7 @@ import {
   logAnonymousRevealAudit,
 } from '../actions';
 import { ThreadAcknowledgementModal } from './ThreadAcknowledgementModal';
+import { ThreadReactionsModal } from './ThreadReactionsModal';
 import { RichFormattedText } from './RichFormattedText';
 import { PostFormattingToolbar, FormatType } from './PostFormattingToolbar';
 import { useToast } from '@/components/Toast';
@@ -81,7 +83,25 @@ export const ThreadPostCard: React.FC<ThreadPostCardProps> = ({
   const [isAnonymousState, setIsAnonymousState] = useState(post.is_anonymous);
   const [postStatus, setPostStatus] = useState(post.status);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
+  const [reactionsModalType, setReactionsModalType] = useState<ReactionType | 'all'>('all');
   const editTextareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const longPressTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleTouchStart = (type: ReactionType) => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => {
+      setReactionsModalType(type);
+      setReactionsModalOpen(true);
+    }, 450);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
 
   const { addToast } = useToast();
   const isOfficer = ['super_admin', 'director', 'secretary', 'treasurer'].includes(currentUserProfile.role);
@@ -323,14 +343,20 @@ export const ThreadPostCard: React.FC<ThreadPostCardProps> = ({
     }
   };
 
-  // Group reactions by type
+  // Group reactions by type with reactor names
   const reactionCounts = REACTION_CONFIG.map((config) => {
     const list = reactions.filter((r) => r.reaction_type === config.type);
     const isMine = list.some((r) => r.member_id === currentUserProfile.id);
+    const reactorNames = list
+      .map((r) => (r.member_id === currentUserProfile.id ? 'You' : r.member?.full_name || 'Choir Member'))
+      .filter(Boolean);
+
     return {
       ...config,
       count: list.length,
       isMine,
+      reactors: list,
+      reactorNames,
     };
   });
 
@@ -389,19 +415,33 @@ export const ThreadPostCard: React.FC<ThreadPostCardProps> = ({
               <Lock size={18} />
             </div>
           ) : (
-            <Avatar
-              src={post.author?.avatar_url}
-              name={post.author?.full_name || 'Member'}
-              size={40}
-              className="border border-slate-200 shrink-0"
-            />
+            <Link
+              href={post.author?.id === currentUserProfile.id ? '/profile' : `/directory/${post.author?.id || post.author_id}`}
+              className="hover:opacity-85 transition-opacity shrink-0 cursor-pointer"
+            >
+              <Avatar
+                src={post.author?.avatar_url}
+                name={post.author?.full_name || 'Member'}
+                size={40}
+                className="border border-slate-200"
+              />
+            </Link>
           )}
 
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">
-                {post.author?.full_name}
-              </span>
+              {isAnonymousState && !isOfficer ? (
+                <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                  Anonymous Member
+                </span>
+              ) : (
+                <Link
+                  href={post.author?.id === currentUserProfile.id ? '/profile' : `/directory/${post.author?.id || post.author_id}`}
+                  className="font-bold text-slate-900 text-xs sm:text-sm truncate hover:text-primary hover:underline transition-colors cursor-pointer"
+                >
+                  {post.author?.full_name}
+                </Link>
+              )}
 
               {post.author?.voice_part && (
                 <span className="inline-flex items-center px-2 py-0.2 rounded-full text-[0.65rem] font-bold bg-primary/10 text-primary">
@@ -584,20 +624,62 @@ export const ThreadPostCard: React.FC<ThreadPostCardProps> = ({
         {/* Left: 5 Reaction Buttons */}
         <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
           {reactionCounts.map((r) => (
-            <button
-              key={r.type}
-              type="button"
-              onClick={() => handleReactionClick(r.type)}
-              className={`px-2 sm:px-2.5 py-1 rounded-xl text-xs font-bold border transition-all inline-flex items-center gap-1 cursor-pointer active:scale-95 ${
-                r.isMine
-                  ? r.activeColor
-                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-              title={`React with ${r.label}`}
-            >
-              <span className="text-xs">{r.icon}</span>
-              {r.count > 0 && <span className="text-[0.68rem]">{r.count}</span>}
-            </button>
+            <div className="relative group/react" key={r.type}>
+              <button
+                type="button"
+                onClick={() => handleReactionClick(r.type)}
+                onTouchStart={() => handleTouchStart(r.type)}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchEnd}
+                onContextMenu={(e) => {
+                  if (r.count > 0) {
+                    e.preventDefault();
+                    setReactionsModalType(r.type);
+                    setReactionsModalOpen(true);
+                  }
+                }}
+                className={`px-2 sm:px-2.5 py-1 rounded-xl text-xs font-bold border transition-all inline-flex items-center gap-1 cursor-pointer active:scale-95 ${
+                  r.isMine
+                    ? r.activeColor
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                }`}
+                title={
+                  r.count > 0
+                    ? `${r.label} (${r.count}) — Long press or hover to see who reacted`
+                    : `React with ${r.label}`
+                }
+              >
+                <span className="text-xs">{r.icon}</span>
+                {r.count > 0 && (
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReactionsModalType(r.type);
+                      setReactionsModalOpen(true);
+                    }}
+                    className="text-[0.68rem] hover:underline cursor-pointer"
+                  >
+                    {r.count}
+                  </span>
+                )}
+              </button>
+
+              {/* Desktop Hover Tooltip */}
+              {r.count > 0 && (
+                <div className="hidden sm:group-hover/react:flex absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 bg-slate-900/95 text-white text-[0.7rem] rounded-xl shadow-xl pointer-events-none z-30 whitespace-nowrap flex-col gap-0.5 animate-in fade-in-50 zoom-in-95">
+                  <div className="font-bold flex items-center gap-1 text-amber-300">
+                    <span>{r.icon}</span>
+                    <span>
+                      {r.label} ({r.count})
+                    </span>
+                  </div>
+                  <div className="text-slate-200 text-[0.68rem] max-w-[200px] truncate leading-tight">
+                    {r.reactorNames.slice(0, 5).join(', ')}
+                    {r.reactorNames.length > 5 ? ` +${r.reactorNames.length - 5} more` : ''}
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
 
@@ -653,6 +735,15 @@ export const ThreadPostCard: React.FC<ThreadPostCardProps> = ({
         postId={post.id}
         isOfficer={isOfficer}
         onClose={() => setShowAckModal(false)}
+      />
+
+      {/* Reactions Detail Modal (Desktop click or Mobile Long-press) */}
+      <ThreadReactionsModal
+        isOpen={reactionsModalOpen}
+        reactions={(reactions || []) as any}
+        currentUserId={currentUserProfile.id}
+        initialType={reactionsModalType}
+        onClose={() => setReactionsModalOpen(false)}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import {
   X,
@@ -129,7 +130,7 @@ export const ThreadAcknowledgementModal: React.FC<ThreadAcknowledgementModalProp
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 z-[150] animate-in fade-in duration-200"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 z-[1150] animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
@@ -237,11 +238,14 @@ export const ThreadAcknowledgementModal: React.FC<ThreadAcknowledgementModalProp
                           : 'bg-slate-50/60 border-slate-200/60'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <Link
+                        href={`/directory/${m.id}`}
+                        className="flex items-center gap-2.5 min-w-0 group hover:opacity-90 cursor-pointer"
+                      >
                         <Avatar src={m.avatar_url} name={m.full_name} size={32} />
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold text-slate-900 truncate">
+                            <span className="text-xs font-bold text-slate-900 truncate group-hover:text-primary group-hover:underline">
                               {m.full_name}
                             </span>
                             {m.role !== 'member' && (
@@ -254,7 +258,7 @@ export const ThreadAcknowledgementModal: React.FC<ThreadAcknowledgementModalProp
                             {m.voice_part || 'Choir Member'}
                           </span>
                         </div>
-                      </div>
+                      </Link>
 
                       {m.has_acknowledged ? (
                         <div className="flex items-center gap-1 text-[0.68rem] font-bold text-emerald-700 shrink-0 bg-white px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">

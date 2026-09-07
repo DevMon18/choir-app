@@ -69,6 +69,13 @@ export interface ThreadPostData {
     id: string;
     reaction_type: ReactionType;
     member_id: string;
+    member?: {
+      id: string;
+      full_name: string;
+      avatar_url: string | null;
+      role: string;
+      voice_part?: string | null;
+    } | null;
   }>;
   acknowledgements?: Array<{
     id: string;
@@ -114,7 +121,7 @@ export async function getThreadPosts(options: {
       acknowledgement_count,
       author:author_id(id, full_name, avatar_url, voice_part, role),
       media:thread_media(id, media_type, url, order_index),
-      reactions:thread_reactions(id, reaction_type, member_id),
+      reactions:thread_reactions(id, reaction_type, member_id, member:member_id(id, full_name, avatar_url, role, voice_part)),
       acknowledgements:thread_acknowledgements(id, member_id, acknowledged_at)
     `)
     .neq('status', 'deleted');
@@ -547,7 +554,7 @@ export async function getThreadComments(postId: string) {
       updated_at,
       author:author_id(id, full_name, avatar_url, voice_part, role),
       media:thread_media(id, media_type, url, order_index),
-      reactions:thread_reactions(id, reaction_type, member_id)
+      reactions:thread_reactions(id, reaction_type, member_id, member:member_id(id, full_name, avatar_url, role, voice_part))
     `)
     .eq('post_id', postId)
     .neq('status', 'deleted')
@@ -760,19 +767,19 @@ export async function getPostAcknowledgementRoster(postId: string) {
   const profile = await getProfile();
   if (!profile) return { error: 'Unauthorized' };
 
-  const supabase = await createClient();
+  const adminSupabase = createAdminClient();
 
-  // 1. Fetch all active members from profiles
-  const { data: allProfiles, error: profErr } = await supabase
+  // 1. Fetch all active members from profiles using admin client
+  const { data: allProfiles, error: profErr } = await adminSupabase
     .from('profiles')
     .select('id, full_name, avatar_url, voice_part, role')
-    .neq('role', 'pending')
+    .not('role', 'in', '("pending","rejected")')
     .order('full_name', { ascending: true });
 
   if (profErr) return { error: profErr.message };
 
   // 2. Fetch all acknowledgements for this post
-  const { data: acks, error: ackErr } = await supabase
+  const { data: acks, error: ackErr } = await adminSupabase
     .from('thread_acknowledgements')
     .select('id, member_id, acknowledged_at')
     .eq('post_id', postId);
@@ -858,10 +865,10 @@ export async function nudgePendingMembers(postId: string) {
     return { error: 'Only officers can send acknowledgement reminders.' };
   }
 
-  const supabase = await createClient();
+  const adminSupabase = createAdminClient();
 
   // Fetch post snippet
-  const { data: post } = await supabase
+  const { data: post } = await adminSupabase
     .from('thread_posts')
     .select('content, category')
     .eq('id', postId)
@@ -870,13 +877,13 @@ export async function nudgePendingMembers(postId: string) {
   if (!post) return { error: 'Post not found.' };
 
   // Fetch all active profiles
-  const { data: allProfiles } = await supabase
+  const { data: allProfiles } = await adminSupabase
     .from('profiles')
     .select('id')
-    .neq('role', 'pending');
+    .not('role', 'in', '("pending","rejected")');
 
   // Fetch who already acknowledged
-  const { data: acks } = await supabase
+  const { data: acks } = await adminSupabase
     .from('thread_acknowledgements')
     .select('member_id')
     .eq('post_id', postId);
@@ -955,17 +962,17 @@ export async function getAnnouncementAcknowledgementRoster(announcementId: strin
   const profile = await getProfile();
   if (!profile) return { error: 'Unauthorized' };
 
-  const supabase = await createClient();
+  const adminSupabase = createAdminClient();
 
-  const { data: allProfiles, error: profErr } = await supabase
+  const { data: allProfiles, error: profErr } = await adminSupabase
     .from('profiles')
     .select('id, full_name, avatar_url, voice_part, role')
-    .neq('role', 'pending')
+    .not('role', 'in', '("pending","rejected")')
     .order('full_name', { ascending: true });
 
   if (profErr) return { error: profErr.message };
 
-  const { data: acks, error: ackErr } = await supabase
+  const { data: acks, error: ackErr } = await adminSupabase
     .from('announcement_acknowledgements')
     .select('id, member_id, acknowledged_at')
     .eq('announcement_id', announcementId);
@@ -1049,9 +1056,9 @@ export async function nudgeAnnouncementPendingMembers(announcementId: string) {
     return { error: 'Only officers can send acknowledgement reminders.' };
   }
 
-  const supabase = await createClient();
+  const adminSupabase = createAdminClient();
 
-  const { data: announcement } = await supabase
+  const { data: announcement } = await adminSupabase
     .from('announcements')
     .select('title, body')
     .eq('id', announcementId)
@@ -1059,12 +1066,12 @@ export async function nudgeAnnouncementPendingMembers(announcementId: string) {
 
   if (!announcement) return { error: 'Announcement not found.' };
 
-  const { data: allProfiles } = await supabase
+  const { data: allProfiles } = await adminSupabase
     .from('profiles')
     .select('id')
-    .neq('role', 'pending');
+    .not('role', 'in', '("pending","rejected")');
 
-  const { data: acks } = await supabase
+  const { data: acks } = await adminSupabase
     .from('announcement_acknowledgements')
     .select('member_id')
     .eq('announcement_id', announcementId);
