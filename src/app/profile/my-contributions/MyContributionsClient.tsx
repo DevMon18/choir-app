@@ -54,6 +54,16 @@ export const MyContributionsClient = ({
       <Navbar profile={currentUserProfile} />
 
       <main className="flex-1 py-8 px-4 pb-20 max-w-[960px] mx-auto w-full">
+        {/* Breadcrumb */}
+        <div className="mb-3">
+          <Link
+            href="/profile"
+            className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
+          >
+            &larr; Back to Profile Overview
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
           <div>

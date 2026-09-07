@@ -34,6 +34,7 @@ import {
   Menu,
   Award,
   Layers,
+  Newspaper,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -147,7 +148,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const { addToast } = useToast();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<'more' | 'admin' | 'user' | null>(null);
   const [adminSheetOpen, setAdminSheetOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [activeTaskCount, setActiveTaskCount] = useState(0);
@@ -382,7 +383,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
+        setActiveDropdown(null);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -391,17 +392,25 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
 
   // Close on route change
   useEffect(() => {
-    setDropdownOpen(false);
+    setActiveDropdown(null);
     setAdminSheetOpen(false);
   }, [pathname]);
 
   const totalAdminPending = (canManageUsers ? pendingApprovalCount : 0) + (isLyricsReviewer ? pendingLyricsCount : 0);
-  const communityBadgeCount = (unreadCount > 0 ? unreadCount : 0) + (activeTaskCount > 0 ? activeTaskCount : 0);
 
   // Active matching helpers for top-level dropdown triggers
-  const isMusicActive = pathname.startsWith('/repertoire') || pathname === '/live' || pathname === '/leaderboard' || pathname === '/profile/my-contributions';
-  const isCommunityActive = pathname === '/calendar' || pathname.startsWith('/directory') || pathname.startsWith('/messages') || pathname.startsWith('/tasks');
-  const isRecordsActive = pathname === '/dues' || pathname.startsWith('/solicitations') || pathname === '/my-documents' || pathname.startsWith('/sign') || pathname === '/profile';
+  const isMoreActive =
+    pathname.startsWith('/tasks') ||
+    pathname === '/calendar' ||
+    pathname.startsWith('/directory') ||
+    pathname === '/leaderboard' ||
+    pathname === '/profile/my-contributions' ||
+    pathname === '/dues' ||
+    pathname.startsWith('/solicitations') ||
+    pathname === '/my-documents' ||
+    pathname.startsWith('/sign');
+
+  const isUserMenuActive = pathname === '/profile';
 
   return (
     <>
@@ -429,120 +438,23 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
 
         {/* Grouped Desktop Navigation */}
         <div className="nav-links" ref={dropdownRef}>
-          <NavLink href="/dashboard" label="Dashboard" pathname={pathname} icon={<Home size={15} />} />
+          {/* Primary Top Items: Feed, Repertoire, Live Sync, Messages */}
+          <NavLink href="/dashboard" label="Feed" pathname={pathname} icon={<Newspaper size={15} />} />
+          <NavLink href="/repertoire" label="Repertoire" pathname={pathname} icon={<Music size={15} />} matchFn={(p) => p.startsWith('/repertoire')} />
+          <NavLink href="/live" label="Live Sync" pathname={pathname} icon={<Radio size={15} />} />
+          <NavLink href="/messages" label="Messages" pathname={pathname} icon={<MessageSquare size={15} />} badge={unreadCount} matchFn={(p) => p.startsWith('/messages')} />
 
-          {/* Group 1: 🎵 Music & Liturgy */}
+          {/* Group 1: 📁 More / Choir Life & Community Dropdown */}
           <div className="nav-dropdown-wrap">
             <button
-              className={`nav-dropdown-trigger ${isMusicActive ? 'active' : ''} ${dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'music' ? 'open' : ''}`}
-              onClick={() => {
-                if (dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'music') {
-                  setDropdownOpen(false);
-                  dropdownRef.current?.removeAttribute('data-active-menu');
-                } else {
-                  setDropdownOpen(true);
-                  dropdownRef.current?.setAttribute('data-active-menu', 'music');
-                }
-              }}
+              className={`nav-dropdown-trigger ${isMoreActive ? 'active' : ''} ${activeDropdown === 'more' ? 'open' : ''}`}
+              onClick={() => setActiveDropdown(prev => prev === 'more' ? null : 'more')}
               aria-haspopup="true"
-              title="Music & Liturgy"
-            >
-              <Music size={15} />
-              <span className="nav-dropdown-text">Music &amp; Liturgy</span>
-              <ChevronDown
-                size={12}
-                style={{
-                  transition: 'transform 0.2s ease',
-                  transform: dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'music' ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
-              />
-            </button>
-
-            {dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'music' && (
-              <div className="nav-dropdown-panel" role="menu" style={{ minWidth: '260px' }}>
-                <div className="nav-dropdown-label">Music &amp; Liturgy</div>
-                <Link
-                  href="/repertoire"
-                  className={`nav-dropdown-item ${pathname.startsWith('/repertoire') ? 'active' : ''}`}
-                  role="menuitem"
-                  onClick={() => setDropdownOpen(false)}
-                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
-                >
-                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><Music size={16} /></span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Repertoire &amp; Songbook</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Mass parts, hymn catalog &amp; chords</span>
-                  </div>
-                  {pathname.startsWith('/repertoire') && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
-                </Link>
-
-                <Link
-                  href="/live"
-                  className={`nav-dropdown-item ${pathname === '/live' ? 'active' : ''}`}
-                  role="menuitem"
-                  onClick={() => setDropdownOpen(false)}
-                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
-                >
-                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><Radio size={16} /></span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Live Sync Session</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Real-time synchronized Mass flow</span>
-                  </div>
-                  {pathname === '/live' && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
-                </Link>
-
-                <Link
-                  href="/leaderboard"
-                  className={`nav-dropdown-item ${pathname === '/leaderboard' ? 'active' : ''}`}
-                  role="menuitem"
-                  onClick={() => setDropdownOpen(false)}
-                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
-                >
-                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><Trophy size={16} /></span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Contributor Leaderboard</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Points &amp; contributor rankings</span>
-                  </div>
-                  {pathname === '/leaderboard' && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
-                </Link>
-
-                <Link
-                  href="/profile/my-contributions"
-                  className={`nav-dropdown-item ${pathname === '/profile/my-contributions' ? 'active' : ''}`}
-                  role="menuitem"
-                  onClick={() => setDropdownOpen(false)}
-                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
-                >
-                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><Sparkles size={16} /></span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>My Lyrics &amp; Submissions</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Track submission status &amp; points</span>
-                  </div>
-                  {pathname === '/profile/my-contributions' && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Group 2: 👥 Community & Schedules */}
-          <div className="nav-dropdown-wrap">
-            <button
-              className={`nav-dropdown-trigger ${isCommunityActive ? 'active' : ''} ${dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'community' ? 'open' : ''}`}
-              onClick={() => {
-                if (dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'community') {
-                  setDropdownOpen(false);
-                  dropdownRef.current?.removeAttribute('data-active-menu');
-                } else {
-                  setDropdownOpen(true);
-                  dropdownRef.current?.setAttribute('data-active-menu', 'community');
-                }
-              }}
-              aria-haspopup="true"
-              title="Community & Schedules"
+              title="More Features"
             >
               <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                <Users size={15} />
-                {communityBadgeCount > 0 && (
+                <Layers size={15} />
+                {activeTaskCount > 0 && (
                   <span
                     style={{
                       position: 'absolute',
@@ -563,93 +475,29 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                       border: '1.5px solid #ffffff',
                     }}
                   >
-                    {communityBadgeCount > 9 ? '9+' : communityBadgeCount}
+                    {activeTaskCount > 9 ? '9+' : activeTaskCount}
                   </span>
                 )}
               </div>
-              <span className="nav-dropdown-text">Community</span>
+              <span className="nav-dropdown-text">More</span>
               <ChevronDown
                 size={12}
                 style={{
                   transition: 'transform 0.2s ease',
-                  transform: dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'community' ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transform: activeDropdown === 'more' ? 'rotate(180deg)' : 'rotate(0deg)',
                 }}
               />
             </button>
 
-            {dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'community' && (
-              <div className="nav-dropdown-panel" role="menu" style={{ minWidth: '260px' }}>
-                <div className="nav-dropdown-label">Community &amp; Schedules</div>
-                <Link
-                  href="/calendar"
-                  className={`nav-dropdown-item ${pathname === '/calendar' ? 'active' : ''}`}
-                  role="menuitem"
-                  onClick={() => setDropdownOpen(false)}
-                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
-                >
-                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><Calendar size={16} /></span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Calendar &amp; Schedules</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Rehearsals, Mass times &amp; calls</span>
-                  </div>
-                  {pathname === '/calendar' && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
-                </Link>
-
-                <Link
-                  href="/directory"
-                  className={`nav-dropdown-item ${pathname.startsWith('/directory') ? 'active' : ''}`}
-                  role="menuitem"
-                  onClick={() => setDropdownOpen(false)}
-                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
-                >
-                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><Users size={16} /></span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Member Directory</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Roster, voice sections &amp; contacts</span>
-                  </div>
-                  {pathname.startsWith('/directory') && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
-                </Link>
-
-                <Link
-                  href="/messages"
-                  className={`nav-dropdown-item ${pathname.startsWith('/messages') ? 'active' : ''}`}
-                  role="menuitem"
-                  onClick={() => setDropdownOpen(false)}
-                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
-                >
-                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><MessageSquare size={16} /></span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                      <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Direct Messages</span>
-                      {unreadCount > 0 && (
-                        <span
-                          style={{
-                            background: 'var(--error)',
-                            color: '#ffffff',
-                            fontSize: '0.62rem',
-                            fontWeight: 800,
-                            borderRadius: '999px',
-                            padding: '1px 6px',
-                            height: '15px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                      )}
-                    </div>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Choir group &amp; private chat</span>
-                  </div>
-                  {pathname.startsWith('/messages') && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
-                </Link>
-
+            {activeDropdown === 'more' && (
+              <div className="nav-dropdown-panel" role="menu" style={{ minWidth: '275px' }}>
+                <div className="nav-dropdown-label">Choir Life &amp; Activities</div>
+                
                 <Link
                   href="/tasks"
                   className={`nav-dropdown-item ${pathname.startsWith('/tasks') ? 'active' : ''}`}
                   role="menuitem"
-                  onClick={() => setDropdownOpen(false)}
+                  onClick={() => setActiveDropdown(null)}
                   style={{ alignItems: 'flex-start', padding: '8px 12px' }}
                 >
                   <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><ListTodo size={16} /></span>
@@ -671,53 +519,81 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                             justifyContent: 'center',
                           }}
                         >
-                          {activeTaskCount > 9 ? '9+' : activeTaskCount}
+                          {activeTaskCount} active
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Assigned responsibilities</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Assigned duties &amp; responsibilities</span>
                   </div>
                   {pathname.startsWith('/tasks') && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
                 </Link>
-              </div>
-            )}
-          </div>
 
-          {/* Group 3: 💳 Personal & Records */}
-          <div className="nav-dropdown-wrap">
-            <button
-              className={`nav-dropdown-trigger ${isRecordsActive ? 'active' : ''} ${dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'records' ? 'open' : ''}`}
-              onClick={() => {
-                if (dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'records') {
-                  setDropdownOpen(false);
-                  dropdownRef.current?.removeAttribute('data-active-menu');
-                } else {
-                  setDropdownOpen(true);
-                  dropdownRef.current?.setAttribute('data-active-menu', 'records');
-                }
-              }}
-              aria-haspopup="true"
-              title="Personal & Finances"
-            >
-              <CreditCard size={15} />
-              <span className="nav-dropdown-text">Personal &amp; Finances</span>
-              <ChevronDown
-                size={12}
-                style={{
-                  transition: 'transform 0.2s ease',
-                  transform: dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'records' ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
-              />
-            </button>
+                <Link
+                  href="/calendar"
+                  className={`nav-dropdown-item ${pathname === '/calendar' ? 'active' : ''}`}
+                  role="menuitem"
+                  onClick={() => setActiveDropdown(null)}
+                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
+                >
+                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><Calendar size={16} /></span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Calendar &amp; Schedules</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Rehearsals, Mass times &amp; calls</span>
+                  </div>
+                  {pathname === '/calendar' && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
+                </Link>
 
-            {dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'records' && (
-              <div className="nav-dropdown-panel" role="menu" style={{ minWidth: '260px' }}>
-                <div className="nav-dropdown-label">Personal &amp; Records</div>
+                <Link
+                  href="/directory"
+                  className={`nav-dropdown-item ${pathname.startsWith('/directory') ? 'active' : ''}`}
+                  role="menuitem"
+                  onClick={() => setActiveDropdown(null)}
+                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
+                >
+                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><Users size={16} /></span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Member Directory</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Roster, voice sections &amp; contacts</span>
+                  </div>
+                  {pathname.startsWith('/directory') && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
+                </Link>
+
+                <Link
+                  href="/leaderboard"
+                  className={`nav-dropdown-item ${pathname === '/leaderboard' ? 'active' : ''}`}
+                  role="menuitem"
+                  onClick={() => setActiveDropdown(null)}
+                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
+                >
+                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><Trophy size={16} /></span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Contributor Leaderboard</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Points &amp; contributor rankings</span>
+                  </div>
+                  {pathname === '/leaderboard' && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
+                </Link>
+
+                <Link
+                  href="/profile/my-contributions"
+                  className={`nav-dropdown-item ${pathname === '/profile/my-contributions' ? 'active' : ''}`}
+                  role="menuitem"
+                  onClick={() => setActiveDropdown(null)}
+                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
+                >
+                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><Sparkles size={16} /></span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>My Lyrics &amp; Submissions</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Track submission status &amp; points</span>
+                  </div>
+                  {pathname === '/profile/my-contributions' && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
+                </Link>
+
+                <div className="nav-dropdown-label" style={{ marginTop: '6px' }}>Personal &amp; Finances</div>
                 <Link
                   href="/dues"
                   className={`nav-dropdown-item ${pathname === '/dues' ? 'active' : ''}`}
                   role="menuitem"
-                  onClick={() => setDropdownOpen(false)}
+                  onClick={() => setActiveDropdown(null)}
                   style={{ alignItems: 'flex-start', padding: '8px 12px' }}
                 >
                   <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><DollarSign size={16} /></span>
@@ -732,7 +608,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                   href="/solicitations"
                   className={`nav-dropdown-item ${pathname.startsWith('/solicitations') ? 'active' : ''}`}
                   role="menuitem"
-                  onClick={() => setDropdownOpen(false)}
+                  onClick={() => setActiveDropdown(null)}
                   style={{ alignItems: 'flex-start', padding: '8px 12px' }}
                 >
                   <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><Sparkles size={16} /></span>
@@ -748,7 +624,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                     href="/my-documents"
                     className={`nav-dropdown-item ${pathname === '/my-documents' || pathname.startsWith('/sign') ? 'active' : ''}`}
                     role="menuitem"
-                    onClick={() => setDropdownOpen(false)}
+                    onClick={() => setActiveDropdown(null)}
                     style={{ alignItems: 'flex-start', padding: '8px 12px' }}
                   >
                     <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><FileText size={16} /></span>
@@ -759,39 +635,16 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                     {(pathname === '/my-documents' || pathname.startsWith('/sign')) && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
                   </Link>
                 )}
-
-                <Link
-                  href="/profile"
-                  className={`nav-dropdown-item ${pathname === '/profile' ? 'active' : ''}`}
-                  role="menuitem"
-                  onClick={() => setDropdownOpen(false)}
-                  style={{ alignItems: 'flex-start', padding: '8px 12px' }}
-                >
-                  <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}><User size={16} /></span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, minWidth: 0 }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>My Profile &amp; Settings</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>Voice section, avatar &amp; account</span>
-                  </div>
-                  {pathname === '/profile' && <span className="nav-dropdown-active-dot" style={{ marginTop: '6px' }} />}
-                </Link>
               </div>
             )}
           </div>
 
-          {/* Group 4: ⚡ Categorized Admin Dropdown */}
+          {/* Group 2: ⚡ Categorized Admin Dropdown */}
           {hasAdminAccess(profile.role) && (
             <div className="nav-dropdown-wrap">
               <button
-                className={`nav-dropdown-trigger ${isAdminPage ? 'active' : ''} ${dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'admin' ? 'open' : ''}`}
-                onClick={() => {
-                  if (dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'admin') {
-                    setDropdownOpen(false);
-                    dropdownRef.current?.removeAttribute('data-active-menu');
-                  } else {
-                    setDropdownOpen(true);
-                    dropdownRef.current?.setAttribute('data-active-menu', 'admin');
-                  }
-                }}
+                className={`nav-dropdown-trigger ${isAdminPage ? 'active' : ''} ${activeDropdown === 'admin' ? 'open' : ''}`}
+                onClick={() => setActiveDropdown(prev => prev === 'admin' ? null : 'admin')}
                 aria-haspopup="true"
                 title="Admin Panel"
               >
@@ -823,12 +676,12 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                   size={12}
                   style={{
                     transition: 'transform 0.2s ease',
-                    transform: dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'admin' ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transform: activeDropdown === 'admin' ? 'rotate(180deg)' : 'rotate(0deg)',
                   }}
                 />
               </button>
 
-              {dropdownOpen && dropdownRef.current?.getAttribute('data-active-menu') === 'admin' && (
+              {activeDropdown === 'admin' && (
                 <div
                   className="nav-dropdown-panel"
                   role="menu"
@@ -859,7 +712,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                               href={item.href}
                               className={`nav-dropdown-item ${active ? 'active' : ''}`}
                               role="menuitem"
-                              onClick={() => setDropdownOpen(false)}
+                              onClick={() => setActiveDropdown(null)}
                               style={{ alignItems: 'flex-start', padding: '8px 12px' }}
                             >
                               <span className="nav-dropdown-icon" style={{ marginTop: '2px' }}>{item.icon}</span>
@@ -919,34 +772,127 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
             </div>
           )}
 
-          <form action={logout}>
+          {/* Group 3: 👤 User Profile & Account Dropdown */}
+          <div className="nav-dropdown-wrap" style={{ marginLeft: '4px' }}>
             <button
-              type="submit"
-              className="btn btn-secondary nav-logout-btn"
-              title="Log Out"
+              className={`nav-dropdown-trigger ${isUserMenuActive ? 'active' : ''} ${activeDropdown === 'user' ? 'open' : ''}`}
+              onClick={() => setActiveDropdown(prev => prev === 'user' ? null : 'user')}
+              aria-haspopup="true"
+              title="Account & Profile"
               style={{
-                padding: '6px 10px',
-                fontSize: '0.8rem',
-                minHeight: '34px',
-                borderRadius: '8px',
-                whiteSpace: 'nowrap',
+                padding: '4px 8px 4px 6px',
+                borderRadius: '999px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '5px',
+                gap: '7px',
+                border: '1px solid rgba(11, 77, 36, 0.15)',
+                background: activeDropdown === 'user' || isUserMenuActive ? 'rgba(11, 77, 36, 0.08)' : '#fafafa',
               }}
             >
-              <LogOut size={14} />
-              <span className="nav-logout-text">Log Out</span>
+              <div
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  flexShrink: 0,
+                }}
+              >
+                {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : 'C'}
+              </div>
+              <span className="nav-link-text" style={{ fontWeight: 600, fontSize: '0.8rem', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profile.full_name ? profile.full_name.split(' ')[0] : 'Member'}
+              </span>
+              <ChevronDown
+                size={12}
+                style={{
+                  transition: 'transform 0.2s ease',
+                  transform: activeDropdown === 'user' ? 'rotate(180deg)' : 'rotate(0deg)',
+                }}
+              />
             </button>
-          </form>
+
+            {activeDropdown === 'user' && (
+              <div className="nav-dropdown-panel" role="menu" style={{ minWidth: '220px', right: 0 }}>
+                <div style={{ padding: '8px 12px 10px', borderBottom: '1px solid var(--glass-border)', marginBottom: '4px' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--foreground)' }}>
+                    {profile.full_name || 'Choir Member'}
+                  </div>
+                  <div
+                    style={{
+                      display: 'inline-block',
+                      marginTop: '4px',
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      background: 'rgba(11, 77, 36, 0.08)',
+                      color: 'var(--primary)',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    {profile.role.replace('_', ' ')}
+                  </div>
+                </div>
+
+                <Link
+                  href="/profile"
+                  className={`nav-dropdown-item ${pathname === '/profile' ? 'active' : ''}`}
+                  role="menuitem"
+                  onClick={() => setActiveDropdown(null)}
+                >
+                  <span className="nav-dropdown-icon"><User size={16} /></span>
+                  <span>My Profile &amp; Voice</span>
+                </Link>
+
+                <Link
+                  href="/profile/my-contributions"
+                  className={`nav-dropdown-item ${pathname === '/profile/my-contributions' ? 'active' : ''}`}
+                  role="menuitem"
+                  onClick={() => setActiveDropdown(null)}
+                >
+                  <span className="nav-dropdown-icon"><Sparkles size={16} /></span>
+                  <span>My Contributions</span>
+                </Link>
+
+                <div style={{ margin: '6px 0', borderTop: '1px solid var(--glass-border)' }} />
+
+                <form action={logout} style={{ width: '100%' }}>
+                  <button
+                    type="submit"
+                    className="nav-dropdown-item"
+                    style={{
+                      width: '100%',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--error)',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <span className="nav-dropdown-icon"><LogOut size={16} /></span>
+                    <span style={{ fontWeight: 600 }}>Log Out</span>
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 
       {/* ── Mobile Bottom Tab Bar ── */}
       <nav className="mobile-bottom-bar" aria-label="Main navigation">
         <Link href="/dashboard" className={`mobile-tab ${pathname === '/dashboard' ? 'active' : ''}`}>
-          <Home size={20} />
-          <span>Home</span>
+          <Newspaper size={20} />
+          <span>Feed</span>
         </Link>
 
         <Link href="/messages" className={`mobile-tab ${pathname.startsWith('/messages') ? 'active' : ''}`}>

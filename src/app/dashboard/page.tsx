@@ -3,14 +3,15 @@ import React from 'react';
 import { redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
 import { createClient } from '@/lib/supabase/server';
+import { getThreadPosts } from './actions';
 import { getActiveAnnouncements } from '@/app/admin/announcements/actions';
 import { checkAndTriggerTodayBirthdayPush } from '@/lib/birthdayPushHelper';
 
-const DashboardClient = dynamicImport(() => import('./DashboardClient'), { ssr: true });
+const FeedClient = dynamicImport(() => import('./FeedClient'), { ssr: true });
 
 export const dynamic = 'force-dynamic';
 
-const DashboardPage = async () => {
+const DashboardFeedPage = async () => {
   const profile = await getProfile();
 
   if (!profile) {
@@ -22,64 +23,46 @@ const DashboardPage = async () => {
 
   const supabase = await createClient();
 
-  // Fetch fullProfile, rawPhotos, announcements, and pendingSignatures concurrently via Promise.all
+  // Fetch initial posts, members roster for @mentions, and announcements in parallel
   const [
-    { data: fullProfile },
-    { data: rawPhotos },
+    postsRes,
+    { data: membersData },
     announcements,
-    { data: rawPendingSignatures },
+    { data: fullProfile },
   ] = await Promise.all([
+    getThreadPosts({ limit: 30 }),
+    supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url, voice_part')
+      .not('role', 'in', '("pending","rejected")')
+      .order('full_name', { ascending: true }),
+    getActiveAnnouncements(),
     supabase
       .from('profiles')
       .select('*')
       .eq('id', profile.id)
       .single(),
-    supabase
-      .from('profile_photos')
-      .select('*')
-      .eq('user_id', profile.id)
-      .order('created_at', { ascending: false }),
-    getActiveAnnouncements(),
-    supabase
-      .from('document_signatures')
-      .select('id, status, is_archived, created_at, documents:document_id(id, title, type, expires_at)')
-      .eq('primary_member_id', profile.id)
-      .eq('is_archived', false)
-      .order('created_at', { ascending: false }),
   ]);
 
-  const initialPhotos = (rawPhotos || []).map((p) => {
-    const { data: { publicUrl } } = supabase.storage
-      .from('profile_photos')
-      .getPublicUrl(p.storage_path);
-    return {
-      ...p,
-      publicUrl,
-    };
-  });
-
-  const isAdmin = ['super_admin', 'director', 'secretary'].includes(profile.role);
+  const initialPosts = postsRes.data || [];
+  const members = membersData || [];
 
   return (
-    <DashboardClient
-      profile={{
+    <FeedClient
+      initialPosts={initialPosts}
+      currentUserProfile={{
         id: profile.id,
         full_name: fullProfile?.full_name || profile.full_name || '',
         email: fullProfile?.email || profile.email || '',
         role: profile.role,
         voice_part: fullProfile?.voice_part || '',
         avatar_url: fullProfile?.avatar_url || null,
-        cover_url: fullProfile?.cover_url || null,
-        cover_position: fullProfile?.cover_position || '50%',
-        interests: Array.isArray(fullProfile?.interests) ? fullProfile.interests : [],
         created_at: profile.created_at || '',
       }}
-      initialPhotos={initialPhotos}
-      isAdmin={isAdmin}
-      announcements={announcements}
-      pendingSignatures={(rawPendingSignatures as any) || []}
+      members={members}
+      announcements={announcements || []}
     />
   );
 };
 
-export default DashboardPage;
+export default DashboardFeedPage;

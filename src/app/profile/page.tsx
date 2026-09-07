@@ -1,39 +1,50 @@
+import dynamicImport from 'next/dynamic';
 import React from 'react';
-import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { getProfile } from '@/lib/supabase/user';
-import ProfileClient from './ProfileClient';
+import { createClient } from '@/lib/supabase/server';
+import { getActiveAnnouncements } from '@/app/admin/announcements/actions';
+import { checkAndTriggerTodayBirthdayPush } from '@/lib/birthdayPushHelper';
+
+const ProfileOverviewClient = dynamicImport(() => import('./ProfileOverviewClient'), { ssr: true });
 
 export const dynamic = 'force-dynamic';
 
 const ProfilePage = async () => {
-  const currentProfile = await getProfile();
+  const profile = await getProfile();
 
-  if (!currentProfile) {
+  if (!profile) {
     redirect('/login');
   }
 
-  const isAuthorized = ['super_admin', 'director', 'secretary', 'treasurer', 'member'].includes(currentProfile.role);
-  if (!isAuthorized) {
-    redirect('/pending-approval');
-  }
+  // Trigger today's birthday push if not yet executed today (fire & forget non-blocking)
+  checkAndTriggerTodayBirthdayPush().catch(console.error);
 
   const supabase = await createClient();
 
-  // Fetch profile and profile_photos concurrently via Promise.all
+  // Fetch fullProfile, rawPhotos, announcements, and pendingSignatures concurrently via Promise.all
   const [
-    { data: profile },
+    { data: fullProfile },
     { data: rawPhotos },
+    announcements,
+    { data: rawPendingSignatures },
   ] = await Promise.all([
     supabase
       .from('profiles')
       .select('*')
-      .eq('id', currentProfile.id)
+      .eq('id', profile.id)
       .single(),
     supabase
       .from('profile_photos')
       .select('*')
-      .eq('user_id', currentProfile.id)
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false }),
+    getActiveAnnouncements(),
+    supabase
+      .from('document_signatures')
+      .select('id, status, is_archived, created_at, documents:document_id(id, title, type, expires_at)')
+      .eq('primary_member_id', profile.id)
+      .eq('is_archived', false)
       .order('created_at', { ascending: false }),
   ]);
 
@@ -47,25 +58,26 @@ const ProfilePage = async () => {
     };
   });
 
+  const isAdmin = ['super_admin', 'director', 'secretary'].includes(profile.role);
+
   return (
-    <ProfileClient
+    <ProfileOverviewClient
       profile={{
         id: profile.id,
-        full_name: profile.full_name || '',
-        email: profile.email || '',
+        full_name: fullProfile?.full_name || profile.full_name || '',
+        email: fullProfile?.email || profile.email || '',
         role: profile.role,
-        birthdate: profile.birthdate || null,
-        address: profile.address || '',
-        phone: profile.phone || '',
-        emergency_contact: profile.emergency_contact || '',
-        voice_part: profile.voice_part || '',
-        is_phone_private: profile.is_phone_private ?? true,
-        is_address_private: profile.is_address_private ?? true,
-        avatar_url: profile.avatar_url || null,
+        voice_part: fullProfile?.voice_part || '',
+        avatar_url: fullProfile?.avatar_url || null,
+        cover_url: fullProfile?.cover_url || null,
+        cover_position: fullProfile?.cover_position || '50%',
+        interests: Array.isArray(fullProfile?.interests) ? fullProfile.interests : [],
         created_at: profile.created_at || '',
       }}
       initialPhotos={initialPhotos}
-      isAdmin={['super_admin', 'director', 'secretary'].includes(profile.role)}
+      isAdmin={isAdmin}
+      announcements={announcements}
+      pendingSignatures={(rawPendingSignatures as any) || []}
     />
   );
 };

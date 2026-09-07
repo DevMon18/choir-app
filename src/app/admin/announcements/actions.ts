@@ -47,7 +47,11 @@ export async function getActiveAnnouncements() {
 
     const { data, error } = await supabase
       .from('announcements')
-      .select('*, profiles:created_by(full_name)')
+      .select(`
+        *,
+        profiles:created_by(full_name),
+        acknowledgements:announcement_acknowledgements(id, member_id, acknowledged_at)
+      `)
       .or(`ends_at.is.null,ends_at.gte.${now}`)
       .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false });
