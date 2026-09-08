@@ -159,6 +159,7 @@ export const FinancesClient: React.FC<FinancesClientProps> = ({
             {activeTab === 'sunday' && (
               <SundayCollectionTab
                 periods={periods}
+                payments={payments}
                 members={members}
                 currentUserProfile={currentUserProfile}
                 attendanceSessions={attendanceSessions}

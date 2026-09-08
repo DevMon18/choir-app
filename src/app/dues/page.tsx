@@ -320,12 +320,12 @@ const DuesPage = async () => {
                     <div
                       key={p.id}
                       className={`py-3 flex items-center justify-between gap-2 ${
-                        p.voided_at ? 'opacity-50 line-through' : ''
+                        p.voided_at ? 'opacity-60 bg-slate-50/70 p-2.5 rounded-xl border border-dashed border-slate-200' : ''
                       }`}
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-bold text-slate-800 text-xs">
+                          <span className={`font-bold text-xs ${p.voided_at ? 'line-through text-slate-500' : 'text-slate-800'}`}>
                             {formatPeriodLabel(p.period_label) || 'Dues'}
                           </span>
                           <span className="text-[0.62rem] text-slate-400 uppercase font-semibold">
@@ -336,16 +336,21 @@ const DuesPage = async () => {
                           {new Date(p.paid_at).toLocaleDateString()}
                           {p.reference && ` • Ref: ${p.reference}`}
                         </div>
+                        {p.voided_at && p.voided_reason && (
+                          <div className="text-[0.65rem] text-red-600 font-medium mt-0.5">
+                            Void Reason: &quot;{p.voided_reason}&quot;
+                          </div>
+                        )}
                       </div>
 
                       <div className="text-right shrink-0">
-                        <div className="font-mono font-bold text-emerald-600 text-xs sm:text-sm">
+                        <div className={`font-mono font-bold text-xs sm:text-sm ${p.voided_at ? 'line-through text-slate-400' : 'text-emerald-600'}`}>
                           {formatPHPFromCentavos(p.amount_centavos)}
                         </div>
                         <span
                           className={`text-[0.62rem] font-bold px-1.5 py-0.2 rounded ${
                             p.voided_at
-                              ? 'bg-slate-100 text-slate-500'
+                              ? 'bg-red-50 text-red-700 border border-red-200'
                               : 'bg-emerald-50 text-emerald-800'
                           }`}
                         >
@@ -371,20 +376,30 @@ const DuesPage = async () => {
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                       {allPayments.map((p) => (
-                        <tr key={p.id} className={p.voided_at ? 'opacity-50 line-through' : 'hover:bg-slate-50'}>
+                        <tr key={p.id} className={p.voided_at ? 'opacity-60 bg-slate-50/50' : 'hover:bg-slate-50'}>
                           <td className="py-2.5 text-slate-500">{new Date(p.paid_at).toLocaleDateString()}</td>
-                          <td className="py-2.5 font-bold text-slate-900">{formatPeriodLabel(p.period_label) || '—'}</td>
-                          <td className="py-2.5 font-mono font-bold text-emerald-600">{formatPHPFromCentavos(p.amount_centavos)}</td>
+                          <td className={`py-2.5 font-bold ${p.voided_at ? 'line-through text-slate-400' : 'text-slate-900'}`}>{formatPeriodLabel(p.period_label) || '—'}</td>
+                          <td className={`py-2.5 font-mono font-bold ${p.voided_at ? 'line-through text-slate-400' : 'text-emerald-600'}`}>{formatPHPFromCentavos(p.amount_centavos)}</td>
                           <td className="py-2.5 uppercase text-slate-500">{p.method}</td>
                           <td className="py-2.5">
                             {p.voided_at ? (
-                              <span className="badge badge-rejected !bg-slate-200 !text-slate-600">Voided</span>
+                              <span className="badge badge-rejected !bg-red-50 !text-red-700 !border-red-200" title={`Voided: ${p.voided_reason || 'Reversed'}`}>
+                                Voided
+                              </span>
                             ) : (
                               <span className="badge badge-approved">Confirmed</span>
                             )}
                           </td>
                           <td className="py-2.5 text-slate-400 font-mono max-w-[200px] truncate">
-                            {p.reference ? `Ref: ${p.reference}` : '—'}
+                            {p.voided_at && p.voided_reason ? (
+                              <span className="text-red-600 font-sans font-medium text-[0.7rem]">
+                                Reason: {p.voided_reason}
+                              </span>
+                            ) : p.reference ? (
+                              `Ref: ${p.reference}`
+                            ) : (
+                              '—'
+                            )}
                           </td>
                         </tr>
                       ))}

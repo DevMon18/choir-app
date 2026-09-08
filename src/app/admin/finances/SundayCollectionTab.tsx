@@ -14,6 +14,9 @@ import {
   HelpCircle,
   ChevronRight,
   ShieldCheck,
+  Undo2,
+  ShieldAlert,
+  RotateCcw,
 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { useToast } from '@/components/Toast';
@@ -27,7 +30,7 @@ import {
   DuesPayment,
 } from '@/lib/financeUtils';
 import { useOfflineCollectionQueue } from '@/hooks/useOfflineCollectionQueue';
-import { recordDuesPayment } from './actions';
+import { recordDuesPayment, voidDuesPayment } from './actions';
 
 export interface MemberProfile {
   id: string;
@@ -60,6 +63,8 @@ interface SundayCollectionTabProps {
   members?: MemberProfile[];
   currentPeriods?: DuesPeriod[];
   periods?: DuesPeriod[];
+  payments?: DuesPayment[];
+  allPayments?: DuesPayment[];
   currentUserProfile?: any;
   onPaymentSuccess?: () => void;
   attendanceSessions?: AttendanceSession[];
@@ -72,12 +77,15 @@ export const SundayCollectionTab = ({
   members = [],
   currentPeriods,
   periods,
+  payments,
+  allPayments,
   currentUserProfile,
   onPaymentSuccess,
   attendanceSessions = [],
   attendanceRecords = [],
 }: SundayCollectionTabProps) => {
   const effectivePeriods = currentPeriods || periods || [];
+  const effectivePayments = allPayments || payments || [];
   const { addToast } = useToast();
   const currentPeriodLabel = getCurrentPeriodLabel();
   const todayDateStr = new Date().toISOString().substring(0, 10);
@@ -99,6 +107,15 @@ export const SundayCollectionTab = ({
   const [referenceInput, setReferenceInput] = useState('');
   const [customAmountInputs, setCustomAmountInputs] = useState<Record<string, string>>({});
   const [submittingMemberId, setSubmittingMemberId] = useState<string | null>(null);
+
+  // Void / Undo Payment Modal State
+  const [undoPaymentData, setUndoPaymentData] = useState<{
+    paymentId: string;
+    memberName: string;
+    amountCentavos: number;
+  } | null>(null);
+  const [undoReason, setUndoReason] = useState('Accidental tap / Wrong member selected');
+  const [undoLoading, setUndoLoading] = useState(false);
 
   // Close-out Discrepancy Dialog
   const [showCloseOutModal, setShowCloseOutModal] = useState(false);
@@ -182,9 +199,13 @@ export const SundayCollectionTab = ({
       const attStatus = attendanceStatusMap.get(member.id) || null;
       const isPresentOrLate = attStatus === 'present' || attStatus === 'late';
 
-      const paidMonthCentavos = (period?.payments || [])
-        .filter((p) => !p.voided_at)
-        .reduce((sum, p) => sum + p.amount_centavos, 0);
+      const memberPeriodPayments = effectivePayments.filter(
+        (pmt) => pmt.dues_period_id === period?.id
+      );
+      const allMemberPmts = memberPeriodPayments.length > 0 ? memberPeriodPayments : (period?.payments || []);
+      const nonVoidedPayments = allMemberPmts.filter((p) => !p.voided_at);
+      const paidMonthCentavos = nonVoidedPayments.reduce((sum, p) => sum + p.amount_centavos, 0);
+      const latestPayment = nonVoidedPayments[nonVoidedPayments.length - 1] || null;
 
       const effectiveDueCentavos = Math.max(
         0,
@@ -203,9 +224,11 @@ export const SundayCollectionTab = ({
         effectiveDueCentavos,
         remainingMonthCentavos,
         isMonthPaid,
+        latestPayment,
+        nonVoidedPayments,
       };
     });
-  }, [members, memberPeriodMap, attendanceStatusMap]);
+  }, [members, memberPeriodMap, attendanceStatusMap, effectivePayments]);
 
   // Filter & Sort members: Present members appear first, prioritizing unpaid
   const filteredAndSortedMembers = useMemo(() => {
@@ -309,6 +332,31 @@ export const SundayCollectionTab = ({
         return copy;
       });
 
+      if (onPaymentSuccess) onPaymentSuccess();
+    }
+  };
+
+  // Handle Void / Undo Payment
+  const handleConfirmUndoPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!undoPaymentData) return;
+
+    setUndoLoading(true);
+    const res = await voidDuesPayment({
+      paymentId: undoPaymentData.paymentId,
+      reason: undoReason.trim() || 'Accidental tap during Sunday collection',
+    });
+    setUndoLoading(false);
+
+    if (res?.error) {
+      addToast({ type: 'error', title: 'Undo Failed', message: res.error });
+    } else {
+      addToast({
+        type: 'success',
+        title: 'Payment Voided & Reset',
+        message: `Payment of ${formatPHPFromCentavos(undoPaymentData.amountCentavos)} for ${undoPaymentData.memberName} has been reset to ₱0 and balance restored.`,
+      });
+      setUndoPaymentData(null);
       if (onPaymentSuccess) onPaymentSuccess();
     }
   };
@@ -541,7 +589,7 @@ export const SundayCollectionTab = ({
           </div>
         ) : (
           filteredAndSortedMembers.map((item) => {
-            const { member, isPresentOrLate, attStatus, paidMonthCentavos, effectiveDueCentavos, remainingMonthCentavos, isMonthPaid } = item;
+            const { member, isPresentOrLate, attStatus, paidMonthCentavos, effectiveDueCentavos, remainingMonthCentavos, isMonthPaid, latestPayment } = item;
             const isSubmitting = submittingMemberId === member.id;
             const customVal = customAmountInputs[member.id] || '';
 
@@ -606,12 +654,32 @@ export const SundayCollectionTab = ({
                       )}
                     </div>
                     
-                    <div className="text-[0.7rem] sm:text-[0.72rem] text-slate-500 mt-0.5">
-                      Paid this month: <strong className="text-slate-800">{formatPHPFromCentavos(paidMonthCentavos)}</strong> / {formatPHPFromCentavos(effectiveDueCentavos)}
+                    <div className="text-[0.7rem] sm:text-[0.72rem] text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      <span>
+                        Paid this month: <strong className="text-slate-800">{formatPHPFromCentavos(paidMonthCentavos)}</strong> / {formatPHPFromCentavos(effectiveDueCentavos)}
+                      </span>
                       {remainingMonthCentavos > 0 && (
-                        <span className="text-amber-800 ml-1.5 font-bold">
+                        <span className="text-amber-800 font-bold">
                           ({formatPHPFromCentavos(remainingMonthCentavos)} left)
                         </span>
+                      )}
+                      {latestPayment && paidMonthCentavos > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUndoPaymentData({
+                              paymentId: latestPayment.id,
+                              memberName: member.full_name,
+                              amountCentavos: latestPayment.amount_centavos,
+                            });
+                            setUndoReason('Accidental tap on wrong member during Sunday collection');
+                          }}
+                          className="text-[0.65rem] font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 px-1.5 py-0.2 rounded transition-colors inline-flex items-center gap-0.5 cursor-pointer ml-1 active:scale-95"
+                          title={`Undo / Void latest payment of ${formatPHPFromCentavos(latestPayment.amount_centavos)} for ${member.full_name}`}
+                        >
+                          <Undo2 size={10} />
+                          <span>Undo / Void ({formatPHPFromCentavos(latestPayment.amount_centavos)})</span>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -669,6 +737,68 @@ export const SundayCollectionTab = ({
           })
         )}
       </div>
+
+      {/* Undo / Void Modal for Sunday Collection */}
+      {undoPaymentData && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-[99999] p-4"
+          onClick={() => setUndoPaymentData(null)}
+        >
+          <div
+            className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-150 flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 text-red-700 border-b border-slate-100 pb-3">
+              <ShieldAlert size={20} />
+              <h3 className="text-base font-bold m-0">Undo / Void Sunday Payment</h3>
+            </div>
+
+            <form onSubmit={handleConfirmUndoPayment} className="flex flex-col gap-3 text-xs sm:text-sm">
+              <div className="p-3 bg-red-50/80 border border-red-200 rounded-xl text-xs text-red-900 leading-relaxed">
+                <strong>Reverting Payment:</strong> You are about to void the payment of{' '}
+                <strong className="text-red-700 font-bold font-mono">
+                  {formatPHPFromCentavos(undoPaymentData.amountCentavos)}
+                </strong>{' '}
+                recorded for <strong>{undoPaymentData.memberName}</strong>. This will deduct the amount from today&apos;s collection tally and restore their unpaid balance.
+              </div>
+
+              <div>
+                <label className="input-label" htmlFor="undoReasonInput">
+                  Reason for Voiding *
+                </label>
+                <input
+                  id="undoReasonInput"
+                  type="text"
+                  required
+                  value={undoReason}
+                  onChange={(e) => setUndoReason(e.target.value)}
+                  className="input-field text-xs sm:text-sm"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setUndoPaymentData(null)}
+                  disabled={undoLoading}
+                  className="btn btn-secondary !py-2 !px-4 text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={undoLoading || !undoReason.trim()}
+                  className="btn !bg-red-600 hover:!bg-red-700 !text-white !py-2 !px-4 text-xs font-bold inline-flex items-center gap-1.5"
+                >
+                  <Undo2 size={13} />
+                  <span>{undoLoading ? 'Voiding…' : 'Confirm Void & Revert'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Close-Out Verification Modal */}
       {showCloseOutModal && (

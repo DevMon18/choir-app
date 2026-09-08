@@ -14,6 +14,10 @@ import {
   Clock,
   Sparkles,
   ShieldAlert,
+  History,
+  RotateCcw,
+  Undo2,
+  Receipt,
 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { useToast } from '@/components/Toast';
@@ -33,6 +37,14 @@ import {
   toggleMemberDuesExemption,
   triggerMonthlyRollover,
 } from './actions';
+
+const VOID_PRESET_REASONS = [
+  'Incorrect member selected',
+  'Wrong amount encoded',
+  'Duplicate payment entry',
+  'Cash refunded to member',
+  'Correction requested by member',
+];
 
 interface MemberProfile {
   id: string;
@@ -97,6 +109,9 @@ export const DuesLedgerTab = ({
   const [payMethod, setPayMethod] = useState<PaymentMethod>('cash');
   const [payReference, setPayReference] = useState('');
   const [recordingLoading, setRecordingLoading] = useState(false);
+
+  // View Member Payments Modal State
+  const [viewingMemberPayments, setViewingMemberPayments] = useState<MemberProfile | null>(null);
 
   // Void Payment Modal State
   const [voidPaymentId, setVoidPaymentId] = useState<string | null>(null);
@@ -569,9 +584,23 @@ export const DuesLedgerTab = ({
                       <span className="text-[0.6rem] uppercase tracking-wider text-slate-400 font-bold block">
                         Paid
                       </span>
-                      <span className="text-xs font-mono font-bold text-primary">
-                        {formatPHPFromCentavos(row.totalPaidCentavos)}
-                      </span>
+                      {row.payments.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => setViewingMemberPayments(row.member)}
+                          className="text-xs font-mono font-bold text-primary hover:underline inline-flex items-center justify-center gap-0.5 cursor-pointer bg-transparent border-0 p-0 mx-auto"
+                          title="Click to view payment breakdown and void / reset to ₱0"
+                        >
+                          <span>{formatPHPFromCentavos(row.totalPaidCentavos)}</span>
+                          <span className="text-[0.6rem] font-bold bg-primary/10 text-primary px-1 rounded">
+                            ({row.payments.length})
+                          </span>
+                        </button>
+                      ) : (
+                        <span className="text-xs font-mono font-bold text-slate-400">
+                          ₱0.00
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -589,20 +618,34 @@ export const DuesLedgerTab = ({
                       )}
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActivePaymentMember(row.member);
-                        setPayAmount(
-                          row.remainingBalanceCentavos > 0
-                            ? (row.remainingBalanceCentavos / 100).toString()
-                            : '40'
-                        );
-                      }}
-                      className="py-1.5 px-3 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-hover transition-colors shadow-2xs cursor-pointer active:scale-95"
-                    >
-                      + Record Pay
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      {row.payments.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setViewingMemberPayments(row.member)}
+                          className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 inline-flex items-center gap-1 cursor-pointer active:scale-95"
+                          title="View payment history and void / reset payments"
+                        >
+                          <History size={12} className="text-slate-500" />
+                          <span>History</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActivePaymentMember(row.member);
+                          setPayAmount(
+                            row.remainingBalanceCentavos > 0
+                              ? (row.remainingBalanceCentavos / 100).toString()
+                              : '40'
+                          );
+                        }}
+                        className="py-1.5 px-3 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary-hover transition-colors shadow-2xs cursor-pointer active:scale-95"
+                      >
+                        + Record Pay
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -705,7 +748,21 @@ export const DuesLedgerTab = ({
 
                       {/* Paid */}
                       <td className="p-3 font-mono text-primary font-bold">
-                        {formatPHPFromCentavos(row.totalPaidCentavos)}
+                        {row.payments.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setViewingMemberPayments(row.member)}
+                            className="font-mono text-primary font-bold hover:underline inline-flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0 text-xs"
+                            title="Click to view payments & void / reset to ₱0"
+                          >
+                            <span>{formatPHPFromCentavos(row.totalPaidCentavos)}</span>
+                            <span className="text-[0.62rem] font-bold bg-primary/10 text-primary px-1 py-0.2 rounded">
+                              ({row.payments.length})
+                            </span>
+                          </button>
+                        ) : (
+                          <span className="text-slate-400">₱0.00</span>
+                        )}
                       </td>
 
                       {/* Remaining */}
@@ -742,20 +799,34 @@ export const DuesLedgerTab = ({
 
                       {/* Action */}
                       <td className="p-3 pr-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActivePaymentMember(row.member);
-                            setPayAmount(
-                              row.remainingBalanceCentavos > 0
-                                ? (row.remainingBalanceCentavos / 100).toString()
-                                : '40'
-                            );
-                          }}
-                          className="py-1 px-2.5 rounded-lg text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors border border-primary/20 cursor-pointer"
-                        >
-                          + Record Pay
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {row.payments.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setViewingMemberPayments(row.member)}
+                              className="py-1 px-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors border border-slate-200 cursor-pointer inline-flex items-center gap-1"
+                              title="View payments and void / reset"
+                            >
+                              <History size={11} className="text-slate-500" />
+                              <span>History</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActivePaymentMember(row.member);
+                              setPayAmount(
+                                row.remainingBalanceCentavos > 0
+                                  ? (row.remainingBalanceCentavos / 100).toString()
+                                  : '40'
+                              );
+                            }}
+                            className="py-1 px-2.5 rounded-lg text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors border border-primary/20 cursor-pointer whitespace-nowrap"
+                          >
+                            + Record Pay
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1014,6 +1085,157 @@ export const DuesLedgerTab = ({
         </div>
       )}
 
+      {/* Member Payments Breakdown & Void Modal */}
+      {viewingMemberPayments && (() => {
+        const memberPeriod = effectivePeriods.find(
+          (p) => p.member_id === viewingMemberPayments.id && p.period_label === selectedPeriodLabel
+        );
+        const memberPayments = effectivePayments.filter(
+          (pmt) => pmt.dues_period_id === memberPeriod?.id
+        );
+        const nonVoidedTotal = memberPayments
+          .filter((p) => !p.voided_at)
+          .reduce((sum, p) => sum + p.amount_centavos, 0);
+
+        return (
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-[99999] p-4"
+            onClick={() => setViewingMemberPayments(null)}
+          >
+            <div
+              className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-150 flex flex-col gap-4 max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-3">
+                  <Avatar
+                    src={viewingMemberPayments.avatar_url}
+                    name={viewingMemberPayments.full_name}
+                    size={38}
+                  />
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 m-0">
+                      Payment History & Void Ledger
+                    </h3>
+                    <p className="text-xs text-slate-500 m-0 mt-0.5">
+                      <strong className="text-slate-800">{viewingMemberPayments.full_name}</strong> •{' '}
+                      {formatPeriodLabel(selectedPeriodLabel)}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewingMemberPayments(null)}
+                  className="text-slate-400 hover:text-slate-700 bg-transparent border-0 cursor-pointer text-sm font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Status Banner */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-slate-500 font-semibold block">Total Active Payments:</span>
+                  <span className="text-base font-black text-primary font-mono">
+                    {formatPHPFromCentavos(nonVoidedTotal)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-slate-500 font-semibold block">Transactions:</span>
+                  <span className="font-bold text-slate-700">{memberPayments.length} recorded</span>
+                </div>
+              </div>
+
+              {/* Payments List */}
+              <div className="flex flex-col gap-2.5">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 m-0">
+                  Itemized Payments
+                </h4>
+
+                {memberPayments.length === 0 ? (
+                  <div className="p-6 text-center text-slate-400 text-xs bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+                    No payment records found for {formatPeriodLabel(selectedPeriodLabel)}.
+                  </div>
+                ) : (
+                  memberPayments.map((pmt) => {
+                    const isVoid = !!pmt.voided_at;
+                    return (
+                      <div
+                        key={pmt.id}
+                        className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+                          isVoid
+                            ? 'bg-slate-50/70 border-slate-200 opacity-60'
+                            : 'bg-white border-slate-200 shadow-2xs hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span
+                              className={`text-xs sm:text-sm font-mono font-bold ${
+                                isVoid ? 'line-through text-slate-400' : 'text-primary'
+                              }`}
+                            >
+                              {formatPHPFromCentavos(pmt.amount_centavos)}
+                            </span>
+                            <span className="text-[0.68rem] text-slate-500 font-semibold uppercase bg-slate-100 px-1.5 py-0.2 rounded">
+                              {formatPaymentMethod(pmt.method)}
+                            </span>
+                            {isVoid ? (
+                              <span className="text-[0.65rem] font-bold text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.2 rounded">
+                                Voided
+                              </span>
+                            ) : (
+                              <span className="text-[0.65rem] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                                Confirmed
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-[0.68rem] text-slate-400 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span>📅 {new Date(pmt.paid_at).toLocaleString('en-PH')}</span>
+                            {pmt.reference && <span>• Ref: {pmt.reference}</span>}
+                            {isVoid && pmt.voided_reason && (
+                              <span className="text-red-600 font-medium block w-full mt-0.5">
+                                Reason: &quot;{pmt.voided_reason}&quot;
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {!isVoid && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setVoidPaymentId(pmt.id);
+                              setVoidReason('');
+                            }}
+                            className="py-1.5 px-3 rounded-lg text-xs font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 transition-colors inline-flex items-center justify-center gap-1 cursor-pointer shrink-0"
+                            title="Void this payment and reset member balance to ₱0"
+                          >
+                            <Undo2 size={12} />
+                            <span>Void / Reset</span>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setViewingMemberPayments(null)}
+                  className="btn btn-secondary !py-2 !px-4 text-xs font-semibold"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Void Confirmation Modal */}
       {voidPaymentId && (
         <div
@@ -1030,19 +1252,39 @@ export const DuesLedgerTab = ({
             </div>
 
             <form onSubmit={handleConfirmVoid} className="flex flex-col gap-3 text-xs sm:text-sm">
-              <p className="text-slate-600 m-0 leading-relaxed text-xs">
-                Voiding marks this transaction as invalid in the ledger and will adjust the member&apos;s remaining dues balance. This action is permanently logged in the audit trail.
-              </p>
+              <div className="p-3 bg-red-50/70 border border-red-200 rounded-xl text-xs text-red-900 leading-relaxed">
+                <strong>Financial Reversal Notice:</strong> Voiding marks this transaction as invalid in the ledger, zeroes out the payment amount, and restores the member&apos;s remaining dues balance. For complete transparency, this action is permanently recorded in the audit log.
+              </div>
 
               <div>
+                <label className="input-label mb-1.5 block">
+                  Quick Select Reason:
+                </label>
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {VOID_PRESET_REASONS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setVoidReason(preset)}
+                      className={`text-[0.68rem] px-2.5 py-1 rounded-lg border font-semibold transition-all cursor-pointer ${
+                        voidReason === preset
+                          ? 'bg-red-600 text-white border-red-600 shadow-2xs scale-102'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+
                 <label className="input-label" htmlFor="voidReasonInput">
-                  Reason for Voiding *
+                  Specific Reason / Notes *
                 </label>
                 <textarea
                   id="voidReasonInput"
                   required
-                  rows={3}
-                  placeholder="e.g. Duplicate entry, incorrect payment amount entered"
+                  rows={2}
+                  placeholder="e.g. Incorrect member encoded by mistake"
                   value={voidReason}
                   onChange={(e) => setVoidReason(e.target.value)}
                   className="input-field text-xs sm:text-sm"
@@ -1062,9 +1304,10 @@ export const DuesLedgerTab = ({
                 <button
                   type="submit"
                   disabled={voidingLoading || !voidReason.trim()}
-                  className="btn !bg-red-600 hover:!bg-red-700 !text-white !py-2 !px-4 text-xs font-bold"
+                  className="btn !bg-red-600 hover:!bg-red-700 !text-white !py-2 !px-4 text-xs font-bold inline-flex items-center gap-1.5"
                 >
-                  {voidingLoading ? 'Voiding…' : 'Confirm Void'}
+                  <Undo2 size={13} />
+                  <span>{voidingLoading ? 'Voiding…' : 'Confirm Void & Reset'}</span>
                 </button>
               </div>
             </form>
