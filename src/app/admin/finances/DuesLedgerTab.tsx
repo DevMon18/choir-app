@@ -18,6 +18,10 @@ import {
   RotateCcw,
   Undo2,
   Receipt,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { useToast } from '@/components/Toast';
@@ -103,6 +107,10 @@ export const DuesLedgerTab = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PRESENT' | 'PAID' | 'UNPAID' | 'EXEMPT'>('ALL');
 
+  // Transaction History Pagination State
+  const [transactionPage, setTransactionPage] = useState<number>(1);
+  const [transactionPageSize, setTransactionPageSize] = useState<number>(10);
+
   // Payment Recording Modal State
   const [activePaymentMember, setActivePaymentMember] = useState<MemberProfile | null>(null);
   const [payAmount, setPayAmount] = useState('40');
@@ -135,6 +143,15 @@ export const DuesLedgerTab = ({
     );
     return effectivePayments.filter((pmt) => periodIds.has(pmt.dues_period_id));
   }, [effectivePeriods, effectivePayments, selectedPeriodLabel]);
+
+  // Transaction History Pagination Calculations
+  const totalTransactionPages = Math.max(1, Math.ceil(periodPayments.length / transactionPageSize));
+  const safeTransactionPage = Math.min(Math.max(1, transactionPage), totalTransactionPages);
+  const txStartIndex = (safeTransactionPage - 1) * transactionPageSize;
+  const txEndIndex = Math.min(txStartIndex + transactionPageSize, periodPayments.length);
+  const paginatedTransactions = useMemo(() => {
+    return periodPayments.slice(txStartIndex, txEndIndex);
+  }, [periodPayments, txStartIndex, txEndIndex]);
 
   // Auto-detect latest session or today's session
   const todayDateStr = new Date().toISOString().substring(0, 10);
@@ -403,7 +420,10 @@ export const DuesLedgerTab = ({
             <Calendar size={15} className="text-primary shrink-0" />
             <select
               value={selectedPeriodLabel}
-              onChange={(e) => setSelectedPeriodLabel(e.target.value)}
+              onChange={(e) => {
+                setSelectedPeriodLabel(e.target.value);
+                setTransactionPage(1);
+              }}
               className="bg-transparent text-xs sm:text-sm font-bold text-slate-800 outline-none cursor-pointer border-0 w-full"
             >
               {availablePeriodLabels.map((label) => (
@@ -839,24 +859,46 @@ export const DuesLedgerTab = ({
 
       {/* Transaction History & Voiding Ledger */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-3.5 sm:p-5 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs sm:text-sm font-bold text-slate-900 m-0">
-            Payment Transactions for {formatPeriodLabel(selectedPeriodLabel)}
-          </h3>
-          <span className="text-[0.68rem] text-slate-400 font-semibold">
-            {periodPayments.length} recorded
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 m-0">
+              Payment Transactions for {formatPeriodLabel(selectedPeriodLabel)}
+            </h3>
+            <p className="text-[0.68rem] text-slate-400 font-medium m-0 mt-0.5">
+              {periodPayments.length} total transaction{periodPayments.length === 1 ? '' : 's'} recorded for this month
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-center">
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
+              <span className="text-[0.68rem] text-slate-400">Rows:</span>
+              <select
+                value={transactionPageSize}
+                onChange={(e) => {
+                  setTransactionPageSize(Number(e.target.value));
+                  setTransactionPage(1);
+                }}
+                className="bg-transparent text-xs font-bold text-slate-800 outline-none cursor-pointer border-0"
+              >
+                <option value={5}>5 / page</option>
+                <option value={10}>10 / page</option>
+                <option value={20}>20 / page</option>
+                <option value={50}>50 / page</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {periodPayments.length === 0 ? (
-          <p className="text-xs text-slate-400 m-0 py-4 text-center">
+          <p className="text-xs text-slate-400 m-0 py-6 text-center">
             No payment transactions recorded for this period yet.
           </p>
         ) : (
           <>
             {/* Mobile View (<768px) for Transactions */}
             <div className="block md:hidden divide-y divide-slate-100">
-              {periodPayments.map((pmt) => {
+              {paginatedTransactions.map((pmt) => {
                 const period = effectivePeriods.find((p) => p.id === pmt.dues_period_id);
                 const member = members.find((m) => m.id === period?.member_id);
                 const isVoid = !!pmt.voided_at;
@@ -923,7 +965,7 @@ export const DuesLedgerTab = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
-                  {periodPayments.map((pmt) => {
+                  {paginatedTransactions.map((pmt) => {
                     const period = effectivePeriods.find((p) => p.id === pmt.dues_period_id);
                     const member = members.find((m) => m.id === period?.member_id);
                     const isVoid = !!pmt.voided_at;
@@ -984,6 +1026,98 @@ export const DuesLedgerTab = ({
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls Bar */}
+            {periodPayments.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+                <span className="text-slate-500 text-[0.72rem] font-medium">
+                  Showing <strong className="text-slate-800">{txStartIndex + 1}</strong> to{' '}
+                  <strong className="text-slate-800">{txEndIndex}</strong> of{' '}
+                  <strong className="text-slate-800">{periodPayments.length}</strong> transactions
+                </span>
+
+                <div className="flex items-center gap-1">
+                  {/* First Page */}
+                  <button
+                    type="button"
+                    disabled={safeTransactionPage <= 1}
+                    onClick={() => setTransactionPage(1)}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors text-slate-600 cursor-pointer"
+                    title="First Page"
+                  >
+                    <ChevronsLeft size={14} />
+                  </button>
+
+                  {/* Prev Page */}
+                  <button
+                    type="button"
+                    disabled={safeTransactionPage <= 1}
+                    onClick={() => setTransactionPage((p) => Math.max(1, p - 1))}
+                    className="p-1.5 px-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors text-slate-600 inline-flex items-center gap-0.5 cursor-pointer font-bold text-xs"
+                    title="Previous Page"
+                  >
+                    <ChevronLeft size={14} />
+                    <span className="hidden sm:inline">Prev</span>
+                  </button>
+
+                  {/* Page Number Chips */}
+                  <div className="flex items-center gap-1 px-1">
+                    {Array.from({ length: totalTransactionPages }, (_, i) => i + 1)
+                      .filter((p) => {
+                        if (totalTransactionPages <= 5) return true;
+                        if (p === 1 || p === totalTransactionPages) return true;
+                        return Math.abs(p - safeTransactionPage) <= 1;
+                      })
+                      .map((pageNum, idx, arr) => {
+                        const prev = arr[idx - 1];
+                        const showEllipsis = prev && pageNum - prev > 1;
+
+                        return (
+                          <React.Fragment key={pageNum}>
+                            {showEllipsis && (
+                              <span className="text-slate-400 px-0.5 font-bold">…</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setTransactionPage(pageNum)}
+                              className={`min-w-[28px] h-7 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                safeTransactionPage === pageNum
+                                  ? 'bg-primary text-white shadow-2xs'
+                                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          </React.Fragment>
+                        );
+                      })}
+                  </div>
+
+                  {/* Next Page */}
+                  <button
+                    type="button"
+                    disabled={safeTransactionPage >= totalTransactionPages}
+                    onClick={() => setTransactionPage((p) => Math.min(totalTransactionPages, p + 1))}
+                    className="p-1.5 px-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors text-slate-600 inline-flex items-center gap-0.5 cursor-pointer font-bold text-xs"
+                    title="Next Page"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <ChevronRight size={14} />
+                  </button>
+
+                  {/* Last Page */}
+                  <button
+                    type="button"
+                    disabled={safeTransactionPage >= totalTransactionPages}
+                    onClick={() => setTransactionPage(totalTransactionPages)}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors text-slate-600 cursor-pointer"
+                    title="Last Page"
+                  >
+                    <ChevronsRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
