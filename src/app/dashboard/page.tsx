@@ -48,20 +48,22 @@ const DashboardFeedPage = async () => {
   const members = membersData || [];
 
   return (
-    <FeedClient
-      initialPosts={initialPosts}
-      currentUserProfile={{
-        id: profile.id,
-        full_name: fullProfile?.full_name || profile.full_name || '',
-        email: fullProfile?.email || profile.email || '',
-        role: profile.role,
-        voice_part: fullProfile?.voice_part || '',
-        avatar_url: fullProfile?.avatar_url || null,
-        created_at: profile.created_at || '',
-      }}
-      members={members}
-      announcements={announcements || []}
-    />
+    <React.Suspense fallback={null}>
+      <FeedClient
+        initialPosts={initialPosts}
+        currentUserProfile={{
+          id: profile.id,
+          full_name: fullProfile?.full_name || profile.full_name || '',
+          email: fullProfile?.email || profile.email || '',
+          role: profile.role,
+          voice_part: fullProfile?.voice_part || '',
+          avatar_url: fullProfile?.avatar_url || null,
+          created_at: profile.created_at || '',
+        }}
+        members={members}
+        announcements={announcements || []}
+      />
+    </React.Suspense>
   );
 };
 

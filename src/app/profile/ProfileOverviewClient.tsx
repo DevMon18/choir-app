@@ -295,13 +295,22 @@ const ProfileOverviewClient = ({
             <div className="px-5 pb-5 relative">
               {/* Avatar Row */}
               <div className="flex justify-between items-end -mt-11 mb-3.5 flex-wrap gap-3">
-                <Avatar
-                  src={profile.avatar_url}
-                  name={profile.full_name}
-                  size={88}
-                  className="border-3 border-white shadow-md bg-white"
-                  priority
-                />
+                <div className="relative group">
+                  <Avatar
+                    src={profile.avatar_url}
+                    name={profile.full_name}
+                    size={88}
+                    className="border-3 border-white shadow-md bg-white"
+                    priority
+                  />
+                  <Link
+                    href="/profile/settings"
+                    className="absolute bottom-0 right-0 p-1.5 rounded-full bg-primary text-white hover:bg-primary-hover shadow-sm border-2 border-white transition-all cursor-pointer flex items-center justify-center"
+                    title="Change Profile Picture"
+                  >
+                    <Camera size={14} />
+                  </Link>
+                </div>
 
                 {/* Profile Quick Action Buttons */}
                 <div className="flex gap-2 flex-wrap items-center">

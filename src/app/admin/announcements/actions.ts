@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { sendPushToAll } from '@/lib/push';
+import { createBatchNotifications } from '@/lib/notifications';
 import { revalidatePath } from 'next/cache';
 import { getCache, setCache, delCache } from '@/lib/cache';
 import { invalidateCalendarCache } from '@/app/calendar/actions';
@@ -106,6 +107,29 @@ export async function createAnnouncement(input: AnnouncementInput) {
 
     if (error) {
       return { error: error.message };
+    }
+
+    // Dispatch in-app notification to all members
+    try {
+      const { data: allMembers } = await supabase
+        .from('profiles')
+        .select('id')
+        .not('role', 'in', '("pending","rejected")');
+
+      const recipientIds = (allMembers || []).map((m) => m.id);
+
+      await createBatchNotifications({
+        recipientIds,
+        actorId: user.id,
+        type: 'announcement',
+        title: input.priority === 'urgent' ? `🚨 Urgent: ${input.title}` : `📢 Announcement: ${input.title}`,
+        body: input.body.substring(0, 120),
+        linkUrl: `/dashboard?announcementId=${data.id}`,
+        metadata: { announcement_id: data.id, priority: input.priority },
+        sendPush: false, // push is already handled below
+      });
+    } catch (inAppErr) {
+      console.warn('In-app notification creation error:', inAppErr);
     }
 
     // Trigger Push Notification for all announcements

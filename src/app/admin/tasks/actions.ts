@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { sendPushToUser } from '@/lib/push';
+import { createNotification } from '@/lib/notifications';
 import type {
   TaskItem,
   TaskRequestItem,
@@ -462,11 +463,15 @@ export async function createTaskWithResponsibilities(
       });
 
       if (a.member_id !== user.id) {
-        await sendPushToUser(a.member_id, {
-          title: '📋 New Responsibility Assigned',
+        createNotification({
+          recipientId: a.member_id,
+          actorId: user.id,
+          type: 'task_assigned',
+          title: '📋 New Task Assigned',
           body: `You were assigned "${a.responsibility}" in task "${taskInput.title}"`,
-          url: '/tasks',
-        });
+          linkUrl: '/tasks',
+          metadata: { task_id: taskId, assignment_id: a.id },
+        }).catch(console.error);
       }
     }
 
@@ -541,11 +546,15 @@ export async function forwardTaskAssignees(
       });
 
       if (a.member_id !== user.id) {
-        await sendPushToUser(a.member_id, {
+        createNotification({
+          recipientId: a.member_id,
+          actorId: user.id,
+          type: 'task_assigned',
           title: '📋 Task Forwarded to You',
           body: `You were added to task "${task.title}": "${a.responsibility}"`,
-          url: '/tasks',
-        });
+          linkUrl: '/tasks',
+          metadata: { task_id: taskId, assignment_id: a.id },
+        }).catch(console.error);
       }
     }
 
@@ -721,21 +730,29 @@ export async function approveReassignment(
       note: reviewNote?.trim() || req.reason,
     });
 
-    // 4. Send push notifications
+    // 4. Send in-app and push notifications
     if (oldMemberId) {
-      await sendPushToUser(oldMemberId, {
+      createNotification({
+        recipientId: oldMemberId,
+        actorId: user.id,
+        type: 'task_assigned',
         title: '✅ Reassignment Approved',
         body: `Your reassignment request for "${assignment.responsibility}" was approved.`,
-        url: '/tasks',
-      });
+        linkUrl: '/tasks',
+        metadata: { assignment_id: assignment.id },
+      }).catch(console.error);
     }
 
     if (newMemberId && newMemberId !== user.id) {
-      await sendPushToUser(newMemberId, {
+      createNotification({
+        recipientId: newMemberId,
+        actorId: user.id,
+        type: 'task_assigned',
         title: '📋 New Responsibility Assigned',
         body: `You have been assigned "${assignment.responsibility}" in "${assignment.task?.title || 'Task'}"`,
-        url: '/tasks',
-      });
+        linkUrl: '/tasks',
+        metadata: { assignment_id: assignment.id },
+      }).catch(console.error);
     }
 
     revalidatePath('/tasks');
@@ -794,11 +811,15 @@ export async function rejectReassignment(requestId: string, reviewNote: string) 
     });
 
     if (req.requested_by) {
-      await sendPushToUser(req.requested_by, {
+      createNotification({
+        recipientId: req.requested_by,
+        actorId: user.id,
+        type: 'task_assigned',
         title: '❌ Reassignment Request Declined',
         body: `Your reassignment request for "${req.assignment?.responsibility}" was declined: ${reviewNote.trim()}`,
-        url: '/tasks',
-      });
+        linkUrl: '/tasks',
+        metadata: { request_id: req.id },
+      }).catch(console.error);
     }
 
     revalidatePath('/tasks');

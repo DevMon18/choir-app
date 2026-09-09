@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { Avatar } from '@/components/Avatar';
 import { ThreadComposeBox } from './components/ThreadComposeBox';
@@ -74,11 +74,48 @@ export const FeedClient: React.FC<FeedClientProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeCommentPost, setActiveCommentPost] = useState<ThreadPostData | null>(null);
+  const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
 
   const { addToast } = useToast();
   const isOfficer = ['super_admin', 'director', 'secretary', 'treasurer'].includes(currentUserProfile.role);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const threadIdParam = searchParams.get('threadId');
+  const commentIdParam = searchParams.get('commentId');
+
+  // Handle deep-linking to thread / comment from notifications
+  useEffect(() => {
+    if (threadIdParam && posts.length > 0) {
+      const targetPost = posts.find((p) => p.id === threadIdParam);
+      if (targetPost) {
+        setHighlightedPostId(threadIdParam);
+
+        // Smooth scroll to target post
+        const scrollTimer = setTimeout(() => {
+          const el = document.getElementById(`thread-post-${threadIdParam}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 200);
+
+        // Open comments drawer if commentId is present
+        if (commentIdParam) {
+          setActiveCommentPost(targetPost);
+        }
+
+        // Clear highlight ring after 4 seconds
+        const clearTimer = setTimeout(() => {
+          setHighlightedPostId(null);
+        }, 4000);
+
+        return () => {
+          clearTimeout(scrollTimer);
+          clearTimeout(clearTimer);
+        };
+      }
+    }
+  }, [threadIdParam, commentIdParam, posts]);
 
   // Keep announcementList in sync when props change
   useEffect(() => {
@@ -411,6 +448,7 @@ export const FeedClient: React.FC<FeedClientProps> = ({
                     currentUserProfile={currentUserProfile}
                     onOpenComments={(p) => setActiveCommentPost(p)}
                     onPostUpdated={reloadFeed}
+                    isHighlighted={highlightedPostId === post.id}
                   />
                 </div>
               ))

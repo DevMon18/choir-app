@@ -7,6 +7,7 @@ export interface Profile {
   email: string;
   role: 'super_admin' | 'director' | 'treasurer' | 'secretary' | 'member' | 'pending' | 'rejected';
   full_name: string;
+  avatar_url?: string | null;
   created_at: string;
 }
 
@@ -38,6 +39,7 @@ export const getProfile = async (): Promise<Profile | null> => {
     const email = headersList.get('x-user-email');
     const role = headersList.get('x-user-role');
     const fullName = headersList.get('x-user-name');
+    const avatarUrl = headersList.get('x-user-avatar');
 
     if (id && email && role) {
       return {
@@ -45,6 +47,7 @@ export const getProfile = async (): Promise<Profile | null> => {
         email,
         role: role as any,
         full_name: fullName || '',
+        avatar_url: avatarUrl || null,
         created_at: '',
       };
     }
@@ -63,6 +66,7 @@ export const getProfile = async (): Promise<Profile | null> => {
       email: user.email || '',
       role: user.app_metadata.role as any,
       full_name: (user.user_metadata?.full_name as string) || '',
+      avatar_url: (user.user_metadata?.avatar_url as string) || null,
       created_at: user.created_at,
     };
   }
@@ -72,7 +76,7 @@ export const getProfile = async (): Promise<Profile | null> => {
     const supabase = await createClient();
     const { data: profileRow } = await supabase
       .from('profiles')
-      .select('id, email, role, full_name, created_at')
+      .select('id, email, role, full_name, avatar_url, created_at')
       .eq('id', user.id)
       .maybeSingle();
 
@@ -82,6 +86,7 @@ export const getProfile = async (): Promise<Profile | null> => {
         email: profileRow.email || user.email || '',
         role: (profileRow.role as any) || 'pending',
         full_name: profileRow.full_name || (user.user_metadata?.full_name as string) || '',
+        avatar_url: profileRow.avatar_url || (user.user_metadata?.avatar_url as string) || null,
         created_at: profileRow.created_at || user.created_at,
       };
     }
@@ -94,6 +99,7 @@ export const getProfile = async (): Promise<Profile | null> => {
     email: user.email || '',
     role: (user.app_metadata?.role as any) || 'pending',
     full_name: (user.user_metadata?.full_name as string) || '',
+    avatar_url: (user.user_metadata?.avatar_url as string) || null,
     created_at: user.created_at,
   };
 };

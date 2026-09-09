@@ -51,6 +51,7 @@ interface ThreadPostCardProps {
   };
   onOpenComments: (post: ThreadPostData) => void;
   onPostUpdated?: () => void;
+  isHighlighted?: boolean;
 }
 
 const REACTION_CONFIG: Array<{ type: ReactionType; label: string; icon: string; activeColor: string }> = [
@@ -66,6 +67,7 @@ export const ThreadPostCard: React.FC<ThreadPostCardProps> = ({
   currentUserProfile,
   onOpenComments,
   onPostUpdated,
+  isHighlighted = false,
 }) => {
   const [reactions, setReactions] = useState(post.reactions || []);
   const [acknowledgements, setAcknowledgements] = useState(post.acknowledgements || []);
@@ -363,8 +365,11 @@ export const ThreadPostCard: React.FC<ThreadPostCardProps> = ({
 
   return (
     <div
-      className={`bg-white rounded-3xl p-4 sm:p-5 border transition-all shadow-2xs relative ${
-        isPinned
+      id={`thread-post-${post.id}`}
+      className={`bg-white rounded-3xl p-4 sm:p-5 border transition-all duration-300 shadow-2xs relative ${
+        isHighlighted
+          ? 'ring-4 ring-emerald-500/50 ring-offset-2 border-emerald-400 bg-emerald-50/30 shadow-lg scale-[1.01]'
+          : isPinned
           ? 'border-primary/40 bg-gradient-to-b from-primary/5 to-white shadow-xs'
           : isMinutes
           ? 'border-amber-200/90 bg-gradient-to-b from-amber-50/20 to-white'

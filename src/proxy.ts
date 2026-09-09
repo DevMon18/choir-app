@@ -119,6 +119,7 @@ export const proxy = async (request: NextRequest) => {
   requestHeaders.set('x-user-email', user.email || '');
   requestHeaders.set('x-user-role', role);
   requestHeaders.set('x-user-name', user.user_metadata?.full_name || '');
+  requestHeaders.set('x-user-avatar', user.user_metadata?.avatar_url || '');
 
   const originalResponse = supabaseResponse;
   supabaseResponse = NextResponse.next({

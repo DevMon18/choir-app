@@ -36,11 +36,14 @@ import {
   Layers,
   Newspaper,
 } from 'lucide-react';
+import { NotificationBell } from '@/components/NotificationBell';
+import { Avatar } from '@/components/Avatar';
 
 interface NavbarProps {
   profile: {
     role: string;
     full_name: string;
+    avatar_url?: string | null;
   };
   children?: React.ReactNode;
 }
@@ -154,6 +157,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
   const [activeTaskCount, setActiveTaskCount] = useState(0);
   const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
   const [pendingLyricsCount, setPendingLyricsCount] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const supabase = useMemo(() => createClient(), []);
 
@@ -214,6 +218,8 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user || !isMounted) return;
+
+        setCurrentUserId(user.id);
 
         // Initial task count fetch
         fetchActiveTasks(user.id);
@@ -772,7 +778,12 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
             </div>
           )}
 
-          {/* Group 3: 👤 User Profile & Account Dropdown */}
+          {/* Notification Bell (Desktop) */}
+          <div style={{ marginLeft: '4px', marginRight: '2px' }}>
+            <NotificationBell currentUserId={currentUserId || undefined} />
+          </div>
+
+            {/* Group 3: 👤 User Profile & Account Dropdown */}
           <div className="nav-dropdown-wrap" style={{ marginLeft: '4px' }}>
             <button
               className={`nav-dropdown-trigger ${isUserMenuActive ? 'active' : ''} ${activeDropdown === 'user' ? 'open' : ''}`}
@@ -780,7 +791,7 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               aria-haspopup="true"
               title="Account & Profile"
               style={{
-                padding: '4px 8px 4px 6px',
+                padding: '3px 8px 3px 4px',
                 borderRadius: '999px',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -789,23 +800,12 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
                 background: activeDropdown === 'user' || isUserMenuActive ? 'rgba(11, 77, 36, 0.08)' : '#fafafa',
               }}
             >
-              <div
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '0.75rem',
-                  flexShrink: 0,
-                }}
-              >
-                {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : 'C'}
-              </div>
+              <Avatar
+                src={profile.avatar_url}
+                name={profile.full_name}
+                size={24}
+                className="shrink-0"
+              />
               <span className="nav-link-text" style={{ fontWeight: 600, fontSize: '0.8rem', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {profile.full_name ? profile.full_name.split(' ')[0] : 'Member'}
               </span>
@@ -885,6 +885,11 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* ── Mobile / Tablet Top Header Actions ── */}
+        <div className="mobile-header-actions sm:hidden flex items-center gap-1.5 ml-auto">
+          <NotificationBell currentUserId={currentUserId || undefined} isMobile />
         </div>
       </nav>
 
@@ -1011,24 +1016,12 @@ export const Navbar = ({ profile, children }: NavbarProps) => {
               className="fb-profile-card"
               onClick={() => setAdminSheetOpen(false)}
             >
-              <div
-                style={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '1.15rem',
-                  boxShadow: '0 2px 8px rgba(11, 77, 36, 0.2)',
-                  flexShrink: 0,
-                }}
-              >
-                {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : 'C'}
-              </div>
+              <Avatar
+                src={profile.avatar_url}
+                name={profile.full_name}
+                size={44}
+                className="shrink-0 shadow-xs"
+              />
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>

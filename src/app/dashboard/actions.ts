@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getProfile } from '@/lib/supabase/user';
 import { recordAuditLog } from '@/lib/audit';
 import { sendPushToUser, sendPushToAll } from '@/lib/push';
+import { createNotification, createBatchNotifications } from '@/lib/notifications';
 import { delCache } from '@/lib/cache';
 import { revalidatePath } from 'next/cache';
 
@@ -259,7 +260,7 @@ export async function createThreadPost(params: {
     await supabase.from('thread_media').insert(mediaRows);
   }
 
-  // 3. Insert mentions and trigger push notification
+  // 3. Insert mentions and trigger in-app & push notifications
   if (params.mentions && params.mentions.length > 0) {
     const uniqueMentionIds = Array.from(new Set(params.mentions)).filter((id) => id !== profile.id);
     if (uniqueMentionIds.length > 0) {
@@ -269,19 +270,23 @@ export async function createThreadPost(params: {
       }));
       await supabase.from('thread_mentions').insert(mentionRows);
 
-      // Trigger push notifications for mentioned members
+      // Trigger notifications for mentioned members
       for (const targetId of uniqueMentionIds) {
         const title = params.is_anonymous
           ? 'Choir Feed: New Mention'
-          : `Choir Feed: ${profile.full_name} mentioned you`;
+          : `${profile.full_name} mentioned you in a thread`;
         const body = params.is_anonymous
           ? 'Someone mentioned you in an anonymous post.'
           : `${profile.full_name}: "${content.length > 80 ? content.slice(0, 77) + '...' : content}"`;
 
-        sendPushToUser(targetId, {
+        createNotification({
+          recipientId: targetId,
+          actorId: params.is_anonymous ? null : profile.id,
+          type: 'thread_mention',
           title,
           body,
-          url: '/dashboard',
+          linkUrl: `/dashboard?threadId=${post.id}`,
+          metadata: { post_id: post.id },
         }).catch(console.error);
       }
     }
@@ -289,26 +294,35 @@ export async function createThreadPost(params: {
 
   // 4. If Meeting Minutes or Official Announcement (or requires_acknowledgement), notify ALL choristers
   if (category === 'minutes' || category === 'announcement' || requiresAcknowledgement) {
-    const pushTitle = category === 'minutes'
-      ? 'Please Read and Acknowledge: Minutes of the Meeting!'
-      : 'Please Read and Acknowledge: Official Announcement!';
+    const notifTitle = category === 'minutes'
+      ? '📋 Please Read and Acknowledge: Minutes of the Meeting!'
+      : '📢 Please Read and Acknowledge: Official Announcement!';
 
     const cleanSnippet = (content || '')
       .replace(/[#*`_>~]/g, '')
       .replace(/\s+/g, ' ')
       .trim();
 
-    sendPushToAll(
-      {
-        title: pushTitle,
-        body:
-          cleanSnippet.length > 115
-            ? cleanSnippet.slice(0, 112) + '...'
-            : cleanSnippet || 'A new official update requires your acknowledgement.',
-        url: '/dashboard',
-      },
-      { excludeUserIds: [profile.id] }
-    ).catch(console.error);
+    // Fetch all active members to create in-app notifications
+    const { data: allMembers } = await supabase
+      .from('profiles')
+      .select('id')
+      .not('role', 'in', '("pending","rejected")');
+
+    const recipientIds = (allMembers || []).map((m) => m.id);
+
+    createBatchNotifications({
+      recipientIds,
+      actorId: profile.id,
+      type: category === 'minutes' ? 'thread_acknowledgement_required' : 'announcement',
+      title: notifTitle,
+      body:
+        cleanSnippet.length > 115
+          ? cleanSnippet.slice(0, 112) + '...'
+          : cleanSnippet || 'A new official update requires your acknowledgement.',
+      linkUrl: `/dashboard?threadId=${post.id}`,
+      metadata: { post_id: post.id, category },
+    }).catch(console.error);
   }
 
   revalidatePath('/dashboard');
@@ -489,6 +503,55 @@ export async function toggleThreadReaction(params: {
       });
 
     if (insErr) return { error: insErr.message };
+
+    // Trigger in-app notification to author
+    const emojiMap: Record<ReactionType, string> = {
+      like: '👍',
+      heart: '❤️',
+      pray: '🙏',
+      clap: '👏',
+      music: '🎵',
+    };
+    const emoji = emojiMap[params.reactionType] || '👍';
+
+    if (params.postId) {
+      const { data: targetPost } = await supabase
+        .from('thread_posts')
+        .select('author_id, content')
+        .eq('id', params.postId)
+        .single();
+
+      if (targetPost && targetPost.author_id && targetPost.author_id !== profile.id) {
+        createNotification({
+          recipientId: targetPost.author_id,
+          actorId: profile.id,
+          type: 'thread_reaction',
+          title: `${profile.full_name} reacted to your thread`,
+          body: `${profile.full_name} reacted with ${emoji} to your thread.`,
+          linkUrl: `/dashboard?threadId=${params.postId}`,
+          metadata: { post_id: params.postId, reaction_type: params.reactionType },
+        }).catch(console.error);
+      }
+    } else if (params.commentId) {
+      const { data: targetComment } = await supabase
+        .from('thread_comments')
+        .select('author_id, post_id, content')
+        .eq('id', params.commentId)
+        .single();
+
+      if (targetComment && targetComment.author_id && targetComment.author_id !== profile.id) {
+        createNotification({
+          recipientId: targetComment.author_id,
+          actorId: profile.id,
+          type: 'comment_reaction',
+          title: `${profile.full_name} reacted to your comment`,
+          body: `${profile.full_name} reacted with ${emoji} to your comment.`,
+          linkUrl: `/dashboard?threadId=${targetComment.post_id}&commentId=${params.commentId}`,
+          metadata: { post_id: targetComment.post_id, comment_id: params.commentId, reaction_type: params.reactionType },
+        }).catch(console.error);
+      }
+    }
+
     return { success: true, action: 'added' };
   }
 }
@@ -653,26 +716,63 @@ export async function createThreadComment(params: {
     await supabase.from('thread_media').insert(mediaRows);
   }
 
-  // Notify original post author (if not self and not anonymous)
+  // Notify original post author (if not self)
   const { data: post } = await supabase
     .from('thread_posts')
-    .select('author_id')
+    .select('author_id, content')
     .eq('id', params.postId)
     .single();
 
-  if (post && post.author_id !== profile.id) {
-    const title = params.is_anonymous
-      ? 'Choir Feed: New comment on your post'
-      : `Choir Feed: ${profile.full_name} commented on your post`;
-    const body = params.is_anonymous
-      ? 'An anonymous chorister replied to your post.'
+  if (post && post.author_id && post.author_id !== profile.id) {
+    const authorTitle = params.is_anonymous
+      ? 'New comment on your thread'
+      : `${profile.full_name} commented on your thread`;
+    const authorBody = params.is_anonymous
+      ? 'An anonymous chorister commented on your post.'
       : `${profile.full_name}: "${content.length > 80 ? content.slice(0, 77) + '...' : content}"`;
 
-    sendPushToUser(post.author_id, {
-      title,
-      body,
-      url: '/dashboard',
+    createNotification({
+      recipientId: post.author_id,
+      actorId: params.is_anonymous ? null : profile.id,
+      type: 'thread_comment',
+      title: authorTitle,
+      body: authorBody,
+      linkUrl: `/dashboard?threadId=${params.postId}&commentId=${comment.id}`,
+      metadata: { post_id: params.postId, comment_id: comment.id },
     }).catch(console.error);
+  }
+
+  // If replying to a parent comment, notify parent comment author
+  if (params.parentCommentId) {
+    const { data: parentComment } = await supabase
+      .from('thread_comments')
+      .select('author_id')
+      .eq('id', params.parentCommentId)
+      .single();
+
+    if (
+      parentComment &&
+      parentComment.author_id &&
+      parentComment.author_id !== profile.id &&
+      parentComment.author_id !== post?.author_id
+    ) {
+      const replyTitle = params.is_anonymous
+        ? 'New reply to your comment'
+        : `${profile.full_name} replied to your comment`;
+      const replyBody = params.is_anonymous
+        ? 'An anonymous chorister replied to your comment.'
+        : `${profile.full_name}: "${content.length > 80 ? content.slice(0, 77) + '...' : content}"`;
+
+      createNotification({
+        recipientId: parentComment.author_id,
+        actorId: params.is_anonymous ? null : profile.id,
+        type: 'comment_reply',
+        title: replyTitle,
+        body: replyBody,
+        linkUrl: `/dashboard?threadId=${params.postId}&commentId=${comment.id}`,
+        metadata: { post_id: params.postId, comment_id: comment.id, parent_comment_id: params.parentCommentId },
+      }).catch(console.error);
+    }
   }
 
   return { success: true, comment };
