@@ -39,6 +39,7 @@ import { ThreadAcknowledgementModal } from './ThreadAcknowledgementModal';
 import { ThreadReactionsModal } from './ThreadReactionsModal';
 import { RichFormattedText } from './RichFormattedText';
 import { PostFormattingToolbar, FormatType } from './PostFormattingToolbar';
+import { ImageLightboxModal, LightboxImage } from '@/components/ImageLightboxModal';
 import { useToast } from '@/components/Toast';
 
 interface ThreadPostCardProps {
@@ -87,6 +88,20 @@ export const ThreadPostCard: React.FC<ThreadPostCardProps> = ({
   const [savingEdit, setSavingEdit] = useState(false);
   const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
   const [reactionsModalType, setReactionsModalType] = useState<ReactionType | 'all'>('all');
+  
+  // Fullscreen Lightbox state
+  const [lightboxImages, setLightboxImages] = useState<LightboxImage[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const handleOpenPostLightbox = (index: number) => {
+    if (!post.media || post.media.length === 0) return;
+    const formatted = post.media.map((m) => ({ url: m.url, alt: 'Post media' }));
+    setLightboxImages(formatted);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
   const editTextareaRef = React.useRef<HTMLTextAreaElement>(null);
   const longPressTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -606,7 +621,9 @@ export const ThreadPostCard: React.FC<ThreadPostCardProps> = ({
           {post.media.map((m, idx) => (
             <div
               key={idx}
-              className="relative aspect-video sm:aspect-square bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-2xs group"
+              onClick={() => handleOpenPostLightbox(idx)}
+              title="Click to view full screen"
+              className="relative aspect-video sm:aspect-square bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-2xs group cursor-zoom-in active:scale-98 transition-transform"
             >
               <img
                 src={m.url}
@@ -749,6 +766,14 @@ export const ThreadPostCard: React.FC<ThreadPostCardProps> = ({
         currentUserId={currentUserProfile.id}
         initialType={reactionsModalType}
         onClose={() => setReactionsModalOpen(false)}
+      />
+
+      {/* Fullscreen Image Lightbox Modal */}
+      <ImageLightboxModal
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        images={lightboxImages}
+        initialIndex={lightboxIndex}
       />
     </div>
   );

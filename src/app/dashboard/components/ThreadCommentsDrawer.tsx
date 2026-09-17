@@ -18,6 +18,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
+import { ImageLightboxModal, LightboxImage } from '@/components/ImageLightboxModal';
 import {
   ThreadPostData,
   ThreadCommentData,
@@ -61,6 +62,18 @@ export const ThreadCommentsDrawer: React.FC<ThreadCommentsDrawerProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [showGifModal, setShowGifModal] = useState(false);
   const [replyingToComment, setReplyingToComment] = useState<ThreadCommentData | null>(null);
+
+  // Fullscreen Lightbox state
+  const [lightboxImages, setLightboxImages] = useState<LightboxImage[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const handleOpenLightbox = (media: ThreadMediaItem[], index: number = 0) => {
+    const formatted = media.map((m) => ({ url: m.url, alt: 'Comment media' }));
+    setLightboxImages(formatted);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -404,14 +417,21 @@ export const ThreadCommentsDrawer: React.FC<ThreadCommentsDrawerProps> = ({
                             {root.media.map((m, idx) => (
                               <div
                                 key={idx}
-                                className="rounded-xl overflow-hidden max-w-[200px] max-h-[160px] bg-slate-200 border border-slate-200 shrink-0"
+                                onClick={() => handleOpenLightbox(root.media || [], idx)}
+                                title="Click to view full screen"
+                                className="rounded-xl overflow-hidden max-w-[200px] max-h-[160px] bg-slate-200 border border-slate-200 shrink-0 cursor-zoom-in group relative shadow-2xs transition-transform active:scale-98"
                               >
                                 <img
                                   src={m.url}
                                   alt="media"
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200"
                                   loading="lazy"
                                 />
+                                {m.media_type === 'gif' && (
+                                  <span className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-xs text-white text-[0.55rem] font-black px-1.5 py-0.2 rounded-md uppercase">
+                                    GIF
+                                  </span>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -513,14 +533,21 @@ export const ThreadCommentsDrawer: React.FC<ThreadCommentsDrawerProps> = ({
                                     {reply.media.map((m, idx) => (
                                       <div
                                         key={idx}
-                                        className="rounded-xl overflow-hidden max-w-[160px] max-h-[120px] bg-slate-200 border border-slate-200 shrink-0"
+                                        onClick={() => handleOpenLightbox(reply.media || [], idx)}
+                                        title="Click to view full screen"
+                                        className="rounded-xl overflow-hidden max-w-[160px] max-h-[120px] bg-slate-200 border border-slate-200 shrink-0 cursor-zoom-in group relative shadow-2xs transition-transform active:scale-98"
                                       >
                                         <img
                                           src={m.url}
                                           alt="media"
-                                          className="w-full h-full object-cover"
+                                          className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200"
                                           loading="lazy"
                                         />
+                                        {m.media_type === 'gif' && (
+                                          <span className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-xs text-white text-[0.55rem] font-black px-1.5 py-0.2 rounded-md uppercase">
+                                            GIF
+                                          </span>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
@@ -680,6 +707,13 @@ export const ThreadCommentsDrawer: React.FC<ThreadCommentsDrawerProps> = ({
         isOpen={showGifModal}
         onClose={() => setShowGifModal(false)}
         onSelectGif={(url) => setMediaList((prev) => [...prev, { media_type: 'gif', url }])}
+      />
+
+      <ImageLightboxModal
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        images={lightboxImages}
+        initialIndex={lightboxIndex}
       />
     </div>,
     document.body
