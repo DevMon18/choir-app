@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { createAttendanceSession, recordAttendance, getOrCreateSessionForDate } from './actions';
+import { AttendanceCalendarTab } from './AttendanceCalendarTab';
 import { useToast } from '@/components/Toast';
 import gsap from 'gsap';
 
@@ -96,8 +97,8 @@ export const AttendanceClient = ({
   const [loadingSession, setLoadingSession] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Legacy form state (for "View All Sessions" mode)
-  const [viewMode, setViewMode] = useState<'tally' | 'history'>('tally');
+  // 3 View Modes: 'calendar' (Interactive Heatmap & Absences), 'tally' (Live Roll Call), 'history' (Log)
+  const [viewMode, setViewMode] = useState<'calendar' | 'tally' | 'history'>('calendar');
   const [selectedSessionId, setSelectedSessionId] = useState(
     initialSessions.length > 0 ? initialSessions[0].id : ''
   );
@@ -240,6 +241,23 @@ export const AttendanceClient = ({
     );
   }, [roster, searchQuery]);
 
+  const handleSelectSessionForTally = (session: AttendanceSession) => {
+    setActiveSession(session);
+    setSelectedDate(session.date);
+    setSelectedType(session.type);
+    setViewMode('tally');
+  };
+
+  const handleCreateSessionForDate = async (
+    date: string,
+    type: 'rehearsal' | 'performance' | 'mass' | 'special_event'
+  ) => {
+    setSelectedDate(date);
+    setSelectedType(type);
+    await loadOrCreateSession(date, type);
+    setViewMode('tally');
+  };
+
   const presentCount = Object.values(attendance).filter((s) => s === 'present').length;
   const absentCount  = Object.values(attendance).filter((s) => s === 'absent').length;
   const lateCount    = Object.values(attendance).filter((s) => s === 'late').length;
@@ -255,28 +273,63 @@ export const AttendanceClient = ({
       <main className="admin-content-full">
         <div className="flex flex-col gap-6">
           {/* Header */}
-          <div className="content-anim-item flex justify-between items-end flex-wrap gap-3">
+          <div className="content-anim-item flex justify-between items-end flex-wrap gap-4">
             <div>
-              <h2 className="text-2xl sm:text-[1.75rem] font-bold mb-1.5 text-primary">Attendance Tally</h2>
-              <p className="text-muted text-sm sm:text-base">Tap a member card to cycle their status. Save when done.</p>
+              <h2 className="text-2xl sm:text-[1.75rem] font-black tracking-tight mb-1 text-primary">
+                {viewMode === 'calendar'
+                  ? 'Attendance Calendar & Absences'
+                  : viewMode === 'tally'
+                  ? 'Live Roll Call Tally'
+                  : 'Attendance Session History'}
+              </h2>
+              <p className="text-muted text-xs sm:text-sm m-0">
+                {viewMode === 'calendar'
+                  ? 'Monthly attendance calendar with instant absentee breakdown, voice-section tallies, and group chat exports.'
+                  : viewMode === 'tally'
+                  ? 'Tap a member card to cycle status (Present, Absent, Late, Excused) and save.'
+                  : 'Historical audit log and member attendance matrix.'}
+              </p>
             </div>
-            <div className="flex gap-2.5">
+            <div className="flex gap-2 flex-wrap">
               <button
-                onClick={() => setViewMode('tally')}
-                className={`btn !py-2 !px-4 text-xs sm:text-sm ${viewMode === 'tally' ? 'btn-primary' : 'btn-secondary'}`}
+                type="button"
+                onClick={() => setViewMode('calendar')}
+                className={`btn !py-2 !px-4 text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                  viewMode === 'calendar' ? 'btn-primary shadow-sm' : 'btn-secondary'
+                }`}
               >
-                📋 Quick Tally
+                <span>📅 Calendar & Absences</span>
               </button>
               <button
-                onClick={() => setViewMode('history')}
-                className={`btn !py-2 !px-4 text-xs sm:text-sm ${viewMode === 'history' ? 'btn-primary' : 'btn-secondary'}`}
+                type="button"
+                onClick={() => setViewMode('tally')}
+                className={`btn !py-2 !px-4 text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                  viewMode === 'tally' ? 'btn-primary shadow-sm' : 'btn-secondary'
+                }`}
               >
-                📅 All Sessions
+                <span>📋 Quick Tally</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('history')}
+                className={`btn !py-2 !px-4 text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                  viewMode === 'history' ? 'btn-primary shadow-sm' : 'btn-secondary'
+                }`}
+              >
+                <span>📊 Session Log</span>
               </button>
             </div>
           </div>
 
-          {viewMode === 'tally' ? (
+          {viewMode === 'calendar' ? (
+            <AttendanceCalendarTab
+              roster={roster}
+              sessions={uniqueSessions}
+              records={records}
+              onSelectSessionForTally={handleSelectSessionForTally}
+              onCreateSessionForDate={handleCreateSessionForDate}
+            />
+          ) : viewMode === 'tally' ? (
             <>
               {/* Date + Type Picker */}
               <div className="glass-container content-anim-item p-6">
