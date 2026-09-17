@@ -2,10 +2,10 @@
 
 import React, { useState, useTransition } from 'react';
 import { Navbar } from '@/components/Navbar';
-import { LeaderboardEntry, LeaderboardPeriod, LeaderboardResponse, getLeaderboardData } from './actions';
+import { LeaderboardCategory, LeaderboardEntry, LeaderboardPeriod, LeaderboardResponse, getLeaderboardData } from './actions';
 import {
   Trophy, Medal, Award, Flame, Calendar, Clock,
-  ChevronDown, ChevronUp, User, Sparkles, Filter, Music, Plus
+  ChevronDown, ChevronUp, User, Sparkles, Filter, Music, Mic, FileText, Plus
 } from 'lucide-react';
 import Image from 'next/image';
 import { SubmitSongModal } from '@/app/repertoire/SubmitSongModal';
@@ -27,6 +27,7 @@ export const LeaderboardClient = ({
 }: LeaderboardClientProps) => {
   const [data, setData] = useState<LeaderboardResponse>(initialData);
   const [period, setPeriod] = useState<LeaderboardPeriod>(initialData.period);
+  const [category, setCategory] = useState<LeaderboardCategory>(initialData.category || 'all');
   const [activeOnly, setActiveOnly] = useState<boolean>(initialData.activeOnly);
   const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
   const [submitSongModalOpen, setSubmitSongModalOpen] = useState(false);
@@ -35,7 +36,15 @@ export const LeaderboardClient = ({
   const handlePeriodChange = (newPeriod: LeaderboardPeriod) => {
     setPeriod(newPeriod);
     startTransition(async () => {
-      const res = await getLeaderboardData(newPeriod, activeOnly);
+      const res = await getLeaderboardData(newPeriod, activeOnly, category);
+      setData(res);
+    });
+  };
+
+  const handleCategoryChange = (newCategory: LeaderboardCategory) => {
+    setCategory(newCategory);
+    startTransition(async () => {
+      const res = await getLeaderboardData(period, activeOnly, newCategory);
       setData(res);
     });
   };
@@ -43,7 +52,7 @@ export const LeaderboardClient = ({
   const handleActiveToggle = (newActiveOnly: boolean) => {
     setActiveOnly(newActiveOnly);
     startTransition(async () => {
-      const res = await getLeaderboardData(period, newActiveOnly);
+      const res = await getLeaderboardData(period, newActiveOnly, category);
       setData(res);
     });
   };
@@ -95,10 +104,14 @@ export const LeaderboardClient = ({
             <span>Choir Member Contribution Rewards</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-primary m-0 tracking-tight">
-            Lyrics Leaderboard
+            {category === 'recordings' ? 'Audio Recordings Leaderboard' : category === 'lyrics' ? 'Lyrics Leaderboard' : 'Contributor Leaderboard'}
           </h1>
           <p className="text-sm text-muted max-w-md mx-auto mt-1.5 mb-4">
-            Earn contribution points by submitting accurate ChordPro lyrics for Mass Parts or proposing new repertoire songs.
+            {category === 'recordings'
+              ? 'Earn contributor points by recording vocal guide tracks (SATB +5 pts, Sectional parts +2 pts, Solo +1 pt).'
+              : category === 'lyrics'
+              ? 'Earn contribution points by submitting accurate ChordPro lyrics for Mass Parts or proposing new songs.'
+              : 'Earn contribution points by contributing ChordPro lyrics and practice audio recordings for choir repertoire.'}
           </p>
 
           <button
@@ -110,6 +123,34 @@ export const LeaderboardClient = ({
             <Sparkles size={14} />
             <span>+ Submit New Song</span>
           </button>
+        </div>
+
+        {/* Category Filter Tabs */}
+        <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
+          {(
+            [
+              { id: 'all', label: '🌟 All Contributions', icon: Sparkles },
+              { id: 'lyrics', label: '📜 Lyrics Submissions', icon: FileText },
+              { id: 'recordings', label: '🎵 Audio Recordings', icon: Mic },
+            ] as const
+          ).map((cat) => {
+            const active = category === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => handleCategoryChange(cat.id)}
+                disabled={isPending}
+                className={`py-2 px-4 rounded-full text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                  active
+                    ? 'bg-primary text-white border-primary shadow-sm'
+                    : 'bg-white/80 hover:bg-white text-muted border-border/70 hover:text-foreground'
+                }`}
+              >
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Filters & Time Period Bar */}
@@ -305,11 +346,11 @@ export const LeaderboardClient = ({
                         </div>
                       </div>
 
-                      {/* Tap-to-expand Mass Part breakdown drawer */}
+                      {/* Tap-to-expand breakdown drawer */}
                       {isExpanded && (
                         <div className="px-5 pb-4 pt-1 bg-white/40 border-t border-border/40">
                           <p className="text-[0.7rem] font-bold text-muted uppercase tracking-wider mb-2">
-                            Approved Mass Part Contributions:
+                            Approved Contributions & Guides:
                           </p>
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                             {entry.breakdown.map((part) => (

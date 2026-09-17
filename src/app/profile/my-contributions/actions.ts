@@ -20,6 +20,11 @@ export interface MySubmissionItem {
   submitted_at: string;
   reviewed_at: string | null;
   rejection_reason: string | null;
+  recording_id?: string | null;
+  recording_file_url?: string | null;
+  recording_label?: string | null;
+  is_verified_master?: boolean;
+  is_audio?: boolean;
 }
 
 export async function getMyLyricsSubmissions(): Promise<{
@@ -40,9 +45,10 @@ export async function getMyLyricsSubmissions(): Promise<{
       .select(`
         id, song_id, mass_part, lyrics_content, status, points_awarded,
         is_new_song, proposed_title, proposed_composer, proposed_key,
-        submitted_at, reviewed_at, rejection_reason,
+        recording_id, submitted_at, reviewed_at, rejection_reason,
         song:song_id ( id, title, composer ),
-        point_ref:mass_part ( display_name )
+        point_ref:mass_part ( display_name ),
+        recording:recording_id ( id, voice_part, file_url, label, is_verified_master )
       `)
       .eq('submitted_by', profile.id)
       .order('submitted_at', { ascending: false });
@@ -57,6 +63,23 @@ export async function getMyLyricsSubmissions(): Promise<{
       const pts = r.points_awarded || 0;
       if (r.status === 'approved') totalPoints += pts;
 
+      const isAudio =
+        r.mass_part === 'audio_recording' ||
+        r.mass_part === 'audio_recording_master' ||
+        Boolean(r.recording_id) ||
+        (r.lyrics_content && r.lyrics_content.startsWith('Audio Guide Track:'));
+
+      let partName = r.point_ref?.display_name;
+      if (!partName) {
+        if (r.mass_part === 'audio_recording') {
+          partName = '🎵 Audio Recording';
+        } else if (r.mass_part === 'audio_recording_master') {
+          partName = '⭐ Master Track Bonus';
+        } else {
+          partName = r.mass_part;
+        }
+      }
+
       return {
         id: r.id,
         song_id: r.song_id,
@@ -67,13 +90,18 @@ export async function getMyLyricsSubmissions(): Promise<{
         proposed_composer: r.proposed_composer,
         proposed_key: r.proposed_key,
         mass_part: r.mass_part,
-        mass_part_name: r.point_ref?.display_name || r.mass_part,
+        mass_part_name: partName,
         lyrics_content: r.lyrics_content,
         status: r.status,
         points_awarded: r.points_awarded,
         submitted_at: r.submitted_at,
         reviewed_at: r.reviewed_at,
         rejection_reason: r.rejection_reason,
+        recording_id: r.recording_id,
+        recording_file_url: r.recording?.file_url || null,
+        recording_label: r.recording?.label || null,
+        is_verified_master: Boolean(r.recording?.is_verified_master || r.mass_part === 'audio_recording_master'),
+        is_audio: isAudio,
       };
     });
 

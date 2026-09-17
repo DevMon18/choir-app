@@ -9,9 +9,11 @@ import {
   deletePracticeRecording,
   getPracticeTrackHistory,
   clearPracticeTrackHistory,
+  toggleVerifyMasterTrack,
   PracticeRecordingItem,
   PracticeTrackHistoryItem,
 } from './recordings-actions';
+import { getVoicingPoints } from '@/lib/voicing-points';
 
 interface Profile {
   id: string;
@@ -26,12 +28,13 @@ interface PracticeRecordingsProps {
   initialRecordings: PracticeRecordingItem[];
 }
 
-const PRESET_VOICING_LABELS = [
-  'SOPRANO VOICING',
-  'ALTO VOICING',
-  'TENOR VOICING',
-  'BASS VOICING',
-  'MELODY',
+const PRESET_VOICING_OPTIONS = [
+  { label: 'SOPRANO VOICING', points: 2, color: '#6366f1' },
+  { label: 'ALTO VOICING', points: 2, color: '#7c3aed' },
+  { label: 'TENOR VOICING', points: 2, color: '#0ea5e9' },
+  { label: 'BASS VOICING', points: 2, color: '#0b4d24' },
+  { label: 'MELODY', points: 1, color: '#d97706' },
+  { label: 'FULL SATB GUIDE', points: 5, color: '#b45309' },
 ] as const;
 
 const VOICE_COLORS: Record<string, string> = {
@@ -47,6 +50,7 @@ const VOICING_LABEL_COLORS: Record<string, string> = {
   'TENOR VOICING': '#0ea5e9',
   'BASS VOICING': '#0b4d24',
   'MELODY': '#d97706',
+  'FULL SATB GUIDE': '#b45309',
 };
 
 export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
@@ -72,6 +76,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isConfirmingClearHistory, setIsConfirmingClearHistory] = useState(false);
   const [isClearingHistory, setIsClearingHistory] = useState(false);
+  const [verifyingTrackId, setVerifyingTrackId] = useState<string | null>(null);
 
   // MediaRecorder states
   const [isRecording, setIsRecording] = useState(false);
@@ -89,6 +94,9 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const isSuperAdminOrDirector = ['super_admin', 'director'].includes(currentUserProfile.role);
+  const isAdminRole = ['super_admin', 'director', 'secretary'].includes(currentUserProfile.role);
 
   // SSR hydration flag
   useEffect(() => {
@@ -115,54 +123,61 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
   // Derived effective label
   const activeLabel = isCustomMode ? customLabel.trim() : selectedPreset;
 
-  // Check if activeLabel will overwrite an existing recording
-  const willOverwrite = Boolean(
-    activeLabel && recordings.some((r) => r.label && r.label.toUpperCase() === activeLabel.toUpperCase())
+  // Check if activeLabel matches an existing recording
+  const matchedExistingTrack = activeLabel
+    ? recordings.find((r) => r.label && r.label.toUpperCase() === activeLabel.toUpperCase())
+    : null;
+  const willOverwrite = Boolean(matchedExistingTrack);
+  const isTargetMasterProtected = Boolean(
+    matchedExistingTrack?.is_verified_master &&
+      !isSuperAdminOrDirector &&
+      matchedExistingTrack.uploaded_by !== currentUserProfile.id
   );
 
-  // Timer helper
-  const formatTime = (totalSeconds: number) => {
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  const expectedPoints = getVoicingPoints(activeLabel, currentUserProfile.voice_part);
+
+  // Format seconds -> mm:ss
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   };
 
-  // Close Add Modal
+  // Open add modal
+  const openAddModal = () => {
+    discardRecording();
+    setMicError(null);
+    setIsAddModalOpen(true);
+  };
+
+  // Close add modal
   const closeAddModal = () => {
     if (isRecording) {
       stopRecording();
     }
-    if (recordedAudioUrl) {
-      URL.revokeObjectURL(recordedAudioUrl);
-    }
-    setRecordedBlob(null);
-    setRecordedAudioUrl(null);
-    setRecordingSeconds(0);
-    setMicError(null);
-    setCustomLabel('');
-    setIsCustomMode(false);
+    discardRecording();
     setIsAddModalOpen(false);
   };
 
-  // Open History Modal
+  // Open edit history modal
   const handleOpenHistory = async () => {
     setIsHistoryModalOpen(true);
     setIsLoadingHistory(true);
     try {
       const res = await getPracticeTrackHistory(songId);
       if (res.error) {
-        addToast({ title: 'History Notice', type: 'info', message: res.error });
+        addToast({ title: 'Error', type: 'error', message: res.error });
       } else {
-        setHistoryItems(res.history || []);
+        setHistoryItems(res.history);
       }
     } catch (err: any) {
-      console.error('Failed to load history:', err);
+      console.error('Error fetching history:', err);
     } finally {
       setIsLoadingHistory(false);
     }
   };
 
-  // Clear History handler (Only super_admin and director)
+  // Clear history action
   const handleClearHistory = async () => {
     setIsClearingHistory(true);
     try {
@@ -170,56 +185,99 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
       if (res.error) {
         addToast({ title: 'Clear History Failed', type: 'error', message: res.error });
       } else {
-        addToast({ title: 'History Cleared', type: 'success', message: 'Edit history audit log cleared.' });
+        addToast({ title: 'History Cleared', type: 'success', message: 'Edit history logs have been cleared.' });
         setHistoryItems([]);
+        setIsConfirmingClearHistory(false);
       }
     } catch (err: any) {
-      addToast({ title: 'Clear History Error', type: 'error', message: err.message });
+      console.error('Error clearing history:', err);
+      addToast({ title: 'Error', type: 'error', message: err.message || 'Failed to clear history.' });
     } finally {
       setIsClearingHistory(false);
-      setIsConfirmingClearHistory(false);
+    }
+  };
+
+  // Toggle Director Master Track Verification
+  const handleToggleVerifyMaster = async (trackId: string) => {
+    if (verifyingTrackId) return;
+    setVerifyingTrackId(trackId);
+
+    try {
+      const res = await toggleVerifyMasterTrack(trackId, songId);
+      if (res.error) {
+        addToast({ title: 'Verification Error', type: 'error', message: res.error });
+      } else {
+        const isNowMaster = res.is_verified_master;
+        addToast({
+          title: isNowMaster ? '⭐ Verified Master Track' : 'Master Track Removed',
+          type: 'success',
+          message: isNowMaster
+            ? 'Track marked as Official Choir Master Track (+3 bonus points awarded).'
+            : 'Track unmarked from master status.',
+        });
+
+        setRecordings((prev) =>
+          prev.map((t) =>
+            t.id === trackId
+              ? {
+                  ...t,
+                  is_verified_master: isNowMaster,
+                  verified_by: isNowMaster ? currentUserProfile.id : null,
+                  verifier_name: isNowMaster ? currentUserProfile.full_name : undefined,
+                  verified_at: isNowMaster ? new Date().toISOString() : null,
+                }
+              : t
+          )
+        );
+      }
+    } catch (err: any) {
+      console.error('Toggle verify master error:', err);
+      addToast({ title: 'Error', type: 'error', message: err.message || 'Failed to update track.' });
+    } finally {
+      setVerifyingTrackId(null);
     }
   };
 
   // Start browser mic recording
   const startRecording = async () => {
     setMicError(null);
-    audioChunksRef.current = [];
-    setRecordedBlob(null);
-    if (recordedAudioUrl) {
-      URL.revokeObjectURL(recordedAudioUrl);
-      setRecordedAudioUrl(null);
+    discardRecording();
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setMicError('Audio recording is not supported in this browser environment.');
+      return;
     }
 
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        const msg = 'Audio recording is not supported in this browser environment.';
-        setMicError(msg);
-        addToast({ title: 'Recording Unsupported', type: 'error', message: msg });
-        return;
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
 
       let mimeType = 'audio/webm';
       if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
         mimeType = 'audio/webm;codecs=opus';
       } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
         mimeType = 'audio/mp4';
-      } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
-        mimeType = 'audio/ogg';
+      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+        mimeType = 'audio/ogg;codecs=opus';
       }
 
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
-      mediaRecorderRef.current = mediaRecorder;
+      const recorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = recorder;
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
         }
       };
 
-      mediaRecorder.onstop = () => {
+      recorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         const url = URL.createObjectURL(audioBlob);
         setRecordedBlob(audioBlob);
@@ -228,7 +286,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
         stream.getTracks().forEach((track) => track.stop());
       };
 
-      mediaRecorder.start(200);
+      recorder.start(250);
       setIsRecording(true);
       setRecordingSeconds(0);
 
@@ -236,15 +294,12 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
         setRecordingSeconds((prev) => prev + 1);
       }, 1000);
     } catch (err: any) {
-      console.error('Microphone permission or recording error:', err);
-      let errMsg = 'Failed to access microphone. Please check permissions.';
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        errMsg = 'Microphone permission was denied by your browser or Android system settings.';
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        errMsg = 'No microphone device found on this system.';
-      }
-      setMicError(errMsg);
-      addToast({ title: 'Microphone Permission', type: 'error', message: errMsg });
+      console.error('Microphone access denied:', err);
+      setMicError(
+        err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'
+          ? 'Microphone permission was denied. Please grant microphone access in your browser or phone app settings.'
+          : err.message || 'Could not access your microphone.'
+      );
     }
   };
 
@@ -273,6 +328,14 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
   // Save recorded take
   const handleSaveRecording = async () => {
     if (!recordedBlob) return;
+    if (isTargetMasterProtected) {
+      addToast({
+        title: 'Master Track Protected',
+        type: 'warning',
+        message: 'This track is an Official Master Guide. Please enter a custom note to save as a practice take.',
+      });
+      return;
+    }
 
     setIsUploading(true);
     try {
@@ -292,10 +355,11 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
       if (res.error || !res.recording) {
         addToast({ title: 'Save Failed', type: 'error', message: res.error || 'Failed to save recording.' });
       } else {
+        const pts = res.pointsAwarded || 2;
         const msg = res.overwritten
-          ? `Overwrote existing track for "${activeLabel}". (+2 points awarded)`
-          : 'Practice recording saved successfully! (+2 points awarded)';
-        addToast({ title: '🎉 +2 Points Awarded!', type: 'success', message: msg });
+          ? `Overwrote existing track for "${activeLabel}". (+${pts} pts awarded)`
+          : `Practice recording saved successfully! (+${pts} pts awarded)`;
+        addToast({ title: `🎉 +${pts} Points Awarded!`, type: 'success', message: msg });
 
         if (res.overwritten) {
           setRecordings((prev) => [
@@ -321,6 +385,16 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    if (isTargetMasterProtected) {
+      addToast({
+        title: 'Master Track Protected',
+        type: 'warning',
+        message: 'This track is an Official Master Guide. Please enter a custom note to save as a practice take.',
+      });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     const file = files[0];
 
     if (file.size > 15 * 1024 * 1024) {
@@ -342,10 +416,11 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
       if (res.error || !res.recording) {
         addToast({ title: 'Upload Failed', type: 'error', message: res.error || 'Failed to upload audio file.' });
       } else {
+        const pts = res.pointsAwarded || 2;
         const msg = res.overwritten
-          ? `Overwrote existing track for "${activeLabel}". (+2 points awarded)`
-          : 'Practice recording uploaded successfully! (+2 points awarded)';
-        addToast({ title: '🎉 +2 Points Awarded!', type: 'success', message: msg });
+          ? `Overwrote existing track for "${activeLabel}". (+${pts} pts awarded)`
+          : `Practice recording uploaded successfully! (+${pts} pts awarded)`;
+        addToast({ title: `🎉 +${pts} Points Awarded!`, type: 'success', message: msg });
 
         if (res.overwritten) {
           setRecordings((prev) => [
@@ -389,9 +464,6 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
     }
   };
 
-  const isSuperAdminOrDirector = ['super_admin', 'director'].includes(currentUserProfile.role);
-  const isAdminRole = ['super_admin', 'director', 'secretary'].includes(currentUserProfile.role);
-
   return (
     <div className="glass-container !py-5 !px-6 mb-6">
       {/* Top Bar Header */}
@@ -410,7 +482,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
               Practice Audio Recordings
             </h2>
             <p className="text-xs text-muted mt-0.5 m-0">
-              Reference tracks for your song voicing.
+              Reference tracks for your song voicing &amp; earn contributor points.
             </p>
           </div>
 
@@ -433,15 +505,16 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
           </button>
 
           <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="btn btn-primary inline-flex items-center gap-1.5 !py-2 !px-3.5 text-sm font-semibold !rounded-xl"
+            onClick={openAddModal}
+            className="btn btn-primary inline-flex items-center gap-1.5 !py-2 !px-3.5 text-sm font-semibold !rounded-xl shadow-sm"
             style={{ background: 'linear-gradient(135deg, var(--accent), var(--primary))' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            Add Recording (+2 pts)
+            <span>Add Recording</span>
+            <span className="text-[0.7rem] bg-white/20 px-1.5 py-0.2 rounded-md font-extrabold">+1 to +5 pts</span>
           </button>
 
           {/* Minimize / Maximize Toggle Button */}
@@ -472,10 +545,16 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
       {!isCollapsed && (
         <div className="mt-4 animate-fade-in">
           {recordings.length === 0 ? (
-            <div className="text-center py-5 px-4 bg-white/30 rounded-xl border border-dashed border-black/15">
-              <p className="text-sm text-muted m-0">
-                No practice recordings yet. Click <strong>&quot;+ Add Recording&quot;</strong> above to record or upload a reference track for your voice part!
+            <div className="text-center py-6 px-4 bg-white/30 rounded-2xl border border-dashed border-black/15">
+              <p className="text-sm text-muted m-0 mb-2">
+                No practice recordings yet. Record or upload a reference track to help your choir section!
               </p>
+              <button
+                onClick={openAddModal}
+                className="btn btn-primary !py-1.5 !px-3 text-xs font-bold inline-flex items-center gap-1.5"
+              >
+                + Record Voicing Track
+              </button>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -485,21 +564,33 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
 
                 const badgeLabel = recording.label || voicePartName;
                 const badgeBgColor = VOICING_LABEL_COLORS[badgeLabel.toUpperCase()] || VOICE_COLORS[voicePartName] || 'var(--primary)';
+                const isMaster = Boolean(recording.is_verified_master);
 
                 return (
                   <div
                     key={recording.id}
-                    className="bg-glass-bg border border-glass-border rounded-xl py-3.5 px-4.5 shadow-sm"
+                    className={`rounded-2xl py-3.5 px-4.5 transition-all ${
+                      isMaster
+                        ? 'bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-white border-2 border-amber-400/80 shadow-md'
+                        : 'bg-glass-bg border border-glass-border shadow-xs'
+                    }`}
                   >
                     <div className="flex justify-between items-center gap-3 mb-2.5 flex-wrap">
-                      <div className="flex items-center gap-2.5 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {/* Prominent Voicing / Label Badge */}
                         <span
-                          className="text-xs font-extrabold uppercase tracking-wider text-white py-1 px-2.5 rounded-full shadow-sm"
+                          className="text-xs font-extrabold uppercase tracking-wider text-white py-1 px-2.5 rounded-full shadow-xs"
                           style={{ backgroundColor: badgeBgColor }}
                         >
                           {badgeLabel}
                         </span>
+
+                        {/* Verified Master Track Golden Badge */}
+                        {isMaster && (
+                          <span className="inline-flex items-center gap-1 text-[0.68rem] font-extrabold bg-amber-400 text-amber-950 py-0.5 px-2.5 rounded-full shadow-xs border border-amber-300">
+                            ⭐ Official Master Guide
+                          </span>
+                        )}
 
                         {/* Uploader Name */}
                         <span className="font-bold text-sm text-foreground">
@@ -511,27 +602,48 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                           ({new Date(recording.created_at).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
                           })})
                         </span>
                       </div>
 
-                      {/* Delete Button */}
-                      {canDelete && (
-                        <button
-                          onClick={() => setDeletingId(recording.id)}
-                          title="Delete recording"
-                          className="bg-transparent border-0 text-muted cursor-pointer p-1 rounded-md transition-colors hover:text-error"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6l-1 14H6L5 6" />
-                            <path d="M10 11v6M14 11v6" />
-                            <path d="M9 6V4h6v2" />
-                          </svg>
-                        </button>
-                      )}
+                      {/* Right Action Tools: Director Master Verification & Delete Button */}
+                      <div className="flex items-center gap-1.5">
+                        {/* Director / Super Admin Master Toggle */}
+                        {isSuperAdminOrDirector && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleVerifyMaster(recording.id)}
+                            disabled={verifyingTrackId === recording.id}
+                            className={`text-xs font-bold py-1 px-2.5 rounded-xl border transition-all inline-flex items-center gap-1 cursor-pointer ${
+                              isMaster
+                                ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
+                                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-amber-50 hover:text-amber-800'
+                            }`}
+                            title={isMaster ? 'Remove Master Track status' : 'Verify as Official Master Guide Track (+3 bonus pts)'}
+                          >
+                            <span>⭐</span>
+                            <span className="hidden sm:inline">
+                              {isMaster ? 'Verified Master' : 'Mark as Master'}
+                            </span>
+                          </button>
+                        )}
+
+                        {/* Delete Button */}
+                        {canDelete && (
+                          <button
+                            onClick={() => setDeletingId(recording.id)}
+                            title="Delete recording"
+                            className="bg-transparent border-0 text-muted cursor-pointer p-1.5 rounded-lg transition-colors hover:text-red-600 hover:bg-red-50"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6M14 11v6" />
+                              <path d="M9 6V4h6v2" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Native HTML5 Audio Controls */}
@@ -555,24 +667,24 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
           onClick={closeAddModal}
         >
           <div
-            className="bg-white border border-slate-300 rounded-2xl p-7 max-w-[520px] w-full max-h-[90vh] overflow-y-auto text-slate-900 shadow-2xl animate-modal-scale"
+            className="bg-white border border-slate-300 rounded-3xl p-6 sm:p-7 max-w-[540px] w-full max-h-[90vh] overflow-y-auto text-slate-900 shadow-2xl animate-modal-scale"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex justify-between items-center mb-5">
+            <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="text-xl font-bold text-slate-900 m-0">
-                  Add Practice Recording
+                  Add Practice Audio Recording
                 </h3>
-                <p className="text-sm text-slate-600 mt-1 m-0">
-                  Auto-tagged as <strong>{currentUserProfile.voice_part || 'Member'}</strong>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1 m-0">
+                  Earn contributor points for recording voice reference tracks for choir rehearsal.
                 </p>
               </div>
 
               <button
                 onClick={closeAddModal}
                 disabled={isUploading}
-                className="bg-transparent border-0 text-2xl text-slate-500 cursor-pointer p-1 leading-none hover:text-slate-900"
+                className="bg-transparent border-0 text-2xl text-slate-400 cursor-pointer p-1 leading-none hover:text-slate-900"
               >
                 &times;
               </button>
@@ -580,7 +692,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
 
             {/* Enhanced Mobile Microphone Permission Guidance Banner */}
             {micError && (
-              <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 mb-4.5 text-rose-800 text-sm leading-relaxed">
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 mb-4 text-rose-800 text-sm leading-relaxed">
                 <div className="flex items-start gap-2.5">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2" className="flex-shrink-0 mt-0.5">
                     <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -610,29 +722,39 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
 
             {/* Presets & Custom Label Selector */}
             <div className="mb-5">
-              <label className="block text-sm font-bold text-slate-800 mb-2">
-                Select Voicing / Label
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                  Select Voicing Category
+                </label>
+                <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  +{expectedPoints} {expectedPoints === 1 ? 'Point' : 'Points'} Reward
+                </span>
+              </div>
 
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {PRESET_VOICING_LABELS.map((labelPreset) => {
-                  const isSelected = !isCustomMode && selectedPreset === labelPreset;
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                {PRESET_VOICING_OPTIONS.map((opt) => {
+                  const isSelected = !isCustomMode && selectedPreset === opt.label;
                   return (
                     <button
-                      key={labelPreset}
+                      key={opt.label}
                       type="button"
                       onClick={() => {
-                        setSelectedPreset(labelPreset);
+                        setSelectedPreset(opt.label);
                         setIsCustomMode(false);
                       }}
                       disabled={isRecording || isUploading}
-                      className={`py-1.5 px-3 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                      className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer flex flex-col justify-between gap-1 ${
                         isSelected
-                          ? 'border-2 border-primary bg-primary text-white'
-                          : 'border border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                          ? 'border-2 border-primary bg-primary/10 text-primary shadow-xs'
+                          : 'border-slate-200 bg-slate-50/80 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
-                      {labelPreset}
+                      <span className="font-bold text-xs">{opt.label}</span>
+                      <span className={`text-[0.68rem] font-extrabold px-1.5 py-0.2 rounded-md self-start ${
+                        isSelected ? 'bg-primary text-white' : 'bg-slate-200 text-slate-700'
+                      }`}>
+                        +{opt.points} pts
+                      </span>
                     </button>
                   );
                 })}
@@ -641,20 +763,25 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                   type="button"
                   onClick={() => setIsCustomMode(true)}
                   disabled={isRecording || isUploading}
-                  className={`py-1.5 px-3 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                  className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer flex flex-col justify-between gap-1 ${
                     isCustomMode
-                      ? 'border-2 border-primary bg-primary text-white'
-                      : 'border border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                      ? 'border-2 border-primary bg-primary/10 text-primary shadow-xs'
+                      : 'border-slate-200 bg-slate-50/80 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  Custom Note...
+                  <span className="font-bold text-xs">Custom Voicing...</span>
+                  <span className={`text-[0.68rem] font-extrabold px-1.5 py-0.2 rounded-md self-start ${
+                    isCustomMode ? 'bg-primary text-white' : 'bg-slate-200 text-slate-700'
+                  }`}>
+                    +1 pt
+                  </span>
                 </button>
               </div>
 
               {isCustomMode && (
                 <input
                   type="text"
-                  placeholder="Enter custom voicing label (e.g., Verse 1 Harmony)"
+                  placeholder="Enter custom voicing label (e.g., Alto Verse 2 Harmony)"
                   value={customLabel}
                   onChange={(e) => setCustomLabel(e.target.value)}
                   disabled={isRecording || isUploading}
@@ -662,22 +789,29 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                 />
               )}
 
-              {/* Overwrite Warning Banner if voicing already exists */}
-              {willOverwrite && (
-                <div className="mt-2 py-2 px-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center gap-1.5">
+              {/* Master Protected Notice */}
+              {isTargetMasterProtected ? (
+                <div className="mt-2.5 py-2 px-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium flex items-center gap-2">
+                  <span className="text-base">🔒</span>
+                  <span>
+                    <strong>Official Master Guide:</strong> &quot;{activeLabel}&quot; is verified by the Director and locked against replacements. Please select <strong>Custom Voicing</strong> to upload your rehearsal take.
+                  </span>
+                </div>
+              ) : willOverwrite ? (
+                <div className="mt-2.5 py-2 px-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center gap-1.5">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
-                  Note: Uploading will overwrite the existing track for &quot;{activeLabel}&quot;.
+                  Note: Uploading will update and replace the existing take for &quot;{activeLabel}&quot;.
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* Live Recording State Controls */}
             {isRecording ? (
-              <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl py-3.5 px-4.5">
+              <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl py-3.5 px-4.5">
                 <div className="flex items-center gap-2.5">
                   <div className="w-3 h-3 rounded-full bg-red-600 animate-pulse" />
                   <span className="font-bold text-red-800 text-sm">
@@ -687,7 +821,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
 
                 <button
                   onClick={stopRecording}
-                  className="bg-red-600 text-white font-bold py-2 px-4 rounded-full border-0 cursor-pointer flex items-center gap-1.5 text-sm hover:bg-red-700"
+                  className="bg-red-600 text-white font-bold py-2 px-4 rounded-full border-0 cursor-pointer flex items-center gap-1.5 text-sm hover:bg-red-700 shadow-sm"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="6" y="6" width="12" height="12" rx="2" />
@@ -697,7 +831,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
               </div>
             ) : recordedAudioUrl ? (
               /* Recorded Take Preview State */
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-3">
                 <p className="text-sm font-bold text-emerald-800 mb-2.5">
                   Preview Take ({formatTime(recordingSeconds)})
                 </p>
@@ -708,57 +842,57 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                   <button
                     onClick={discardRecording}
                     disabled={isUploading}
-                    className="bg-white border border-slate-300 text-slate-900 font-bold py-2.5 px-4.5 rounded-lg text-sm cursor-pointer hover:bg-slate-50"
+                    className="bg-white border border-slate-300 text-slate-900 font-bold py-2 px-4 rounded-xl text-xs sm:text-sm cursor-pointer hover:bg-slate-50"
                   >
                     Discard
                   </button>
 
                   <button
                     onClick={handleSaveRecording}
-                    disabled={isUploading}
-                    className="bg-primary border-0 text-white font-bold py-2.5 px-5 rounded-lg text-sm cursor-pointer shadow-[0_4px_12px_rgba(11,77,36,0.3)] hover:bg-primary-hover"
+                    disabled={isUploading || isTargetMasterProtected}
+                    className="bg-primary border-0 text-white font-bold py-2 px-5 rounded-xl text-xs sm:text-sm cursor-pointer shadow-sm hover:bg-primary-hover disabled:opacity-50"
                   >
-                    {isUploading ? 'Saving...' : 'Save & Upload'}
+                    {isUploading ? 'Saving...' : `Save & Claim +${expectedPoints} Pts`}
                   </button>
                 </div>
               </div>
             ) : (
               /* Idle Action Buttons inside Modal: Record Mic OR Upload File */
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2.5">
                 <button
                   onClick={startRecording}
-                  disabled={isUploading}
-                  className="w-full inline-flex items-center justify-center gap-2 p-3.5 text-sm font-bold text-white bg-primary border-0 rounded-xl cursor-pointer shadow-[0_4px_12px_rgba(11,77,36,0.25)] hover:bg-primary-hover"
+                  disabled={isUploading || isTargetMasterProtected}
+                  className="w-full inline-flex items-center justify-center gap-2 p-3.5 text-sm font-bold text-white bg-primary border-0 rounded-2xl cursor-pointer shadow-sm hover:bg-primary-hover disabled:opacity-50"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
                     <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                     <line x1="12" y1="19" x2="12" y2="22" />
                   </svg>
-                  Record Microphone Audio
+                  <span>Record Microphone Audio (+{expectedPoints} pts)</span>
                 </button>
 
-                <div className="text-center text-xs font-semibold text-slate-500 my-0.5">
-                  &mdash; or upload an existing audio file &mdash;
+                <div className="text-center text-xs font-semibold text-slate-400 my-0.5">
+                  &mdash; or upload audio file &mdash;
                 </div>
 
                 <label
-                  className={`w-full inline-flex items-center justify-center gap-2 p-3.5 text-sm font-bold text-slate-900 bg-white border-2 border-slate-900 rounded-xl ${
-                    isUploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-slate-50'
+                  className={`w-full inline-flex items-center justify-center gap-2 p-3 text-sm font-bold text-slate-800 bg-white border border-slate-300 rounded-2xl ${
+                    isUploading || isTargetMasterProtected ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-slate-50'
                   }`}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
-                  {isUploading ? 'Uploading Audio File...' : 'Upload Audio File'}
+                  <span>{isUploading ? 'Uploading Audio File...' : `Upload Audio File (+${expectedPoints} pts)`}</span>
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="audio/*"
                     onChange={handleFileSelect}
-                    disabled={isUploading}
+                    disabled={isUploading || isTargetMasterProtected}
                     className="hidden"
                   />
                 </label>
@@ -776,7 +910,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
           onClick={() => setIsHistoryModalOpen(false)}
         >
           <div
-            className="bg-white border border-slate-300 rounded-2xl p-7 max-w-[560px] w-full max-h-[85vh] flex flex-col text-slate-900 shadow-2xl animate-modal-scale"
+            className="bg-white border border-slate-300 rounded-3xl p-6 sm:p-7 max-w-[560px] w-full max-h-[85vh] flex flex-col text-slate-900 shadow-2xl animate-modal-scale"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -786,13 +920,13 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                   Practice Tracks Edit History
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 m-0">
-                  Audit log of practice recording uploads and overwrites.
+                  Audit log of practice recording uploads, master verifications, and overwrites.
                 </p>
               </div>
 
               <button
                 onClick={() => setIsHistoryModalOpen(false)}
-                className="bg-transparent border-0 text-2xl text-slate-500 cursor-pointer p-1 leading-none hover:text-slate-900"
+                className="bg-transparent border-0 text-2xl text-slate-400 cursor-pointer p-1 leading-none hover:text-slate-900"
               >
                 &times;
               </button>
@@ -813,13 +947,14 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                   {historyItems.map((item) => {
                     const isOverwrite = item.action_type === 'OVERWROTE';
                     const isDelete = item.action_type === 'DELETED';
-                    const badgeBg = isOverwrite ? '#fef3c7' : isDelete ? '#fee2e2' : '#dcfce7';
-                    const badgeText = isOverwrite ? '#92400e' : isDelete ? '#991b1b' : '#166534';
+                    const isVerify = item.action_type.includes('VERIF');
+                    const badgeBg = isVerify ? '#fef3c7' : isOverwrite ? '#eff6ff' : isDelete ? '#fee2e2' : '#dcfce7';
+                    const badgeText = isVerify ? '#92400e' : isOverwrite ? '#1d4ed8' : isDelete ? '#991b1b' : '#166534';
 
                     return (
                       <div
                         key={item.id}
-                        className="bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 flex justify-between items-center gap-3"
+                        className="bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 flex justify-between items-center gap-3"
                       >
                         <div>
                           <div className="flex items-center gap-2 mb-1">
@@ -831,7 +966,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                               className="text-[0.68rem] font-extrabold py-0.5 px-2 rounded-full uppercase"
                               style={{ background: badgeBg, color: badgeText }}
                             >
-                              {item.action_type}
+                              {item.action_type.replace('_', ' ')}
                             </span>
                           </div>
 
@@ -842,7 +977,7 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
                           )}
                         </div>
 
-                        <span className="text-xs text-slate-500 whitespace-nowrap">
+                        <span className="text-xs text-slate-400 whitespace-nowrap">
                           {new Date(item.created_at).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',
@@ -861,14 +996,14 @@ export const PracticeRecordings: React.FC<PracticeRecordingsProps> = ({
             <div className="mt-5 pt-3 border-t border-slate-200 flex justify-between items-center">
               <span className="text-xs text-slate-500">
                 {isSuperAdminOrDirector
-                  ? 'As a Director or Super Admin, you can clear this log.'
+                  ? 'Directors and Admins can clear audit history.'
                   : 'Only Directors and Super Admins can clear edit history.'}
               </span>
 
               {isSuperAdminOrDirector && historyItems.length > 0 && (
                 <button
                   onClick={() => setIsConfirmingClearHistory(true)}
-                  className="bg-red-500 text-white border-0 py-2 px-3.5 rounded-lg font-bold text-xs cursor-pointer hover:bg-red-600"
+                  className="bg-red-500 text-white border-0 py-1.5 px-3.5 rounded-xl font-bold text-xs cursor-pointer hover:bg-red-600"
                 >
                   Clear History
                 </button>

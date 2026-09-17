@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getProfile } from '@/lib/supabase/user';
 
 export type LeaderboardPeriod = 'weekly' | 'monthly' | 'all_time';
+export type LeaderboardCategory = 'all' | 'lyrics' | 'recordings';
 
 export interface LeaderboardMemberPartBreakdown {
   mass_part: string;
@@ -29,6 +30,7 @@ export interface LeaderboardResponse {
   currentUserEntry?: LeaderboardEntry | null;
   currentUserRank?: number | null;
   period: LeaderboardPeriod;
+  category: LeaderboardCategory;
   activeOnly: boolean;
   totalContributors: number;
   totalPointsAwarded: number;
@@ -63,11 +65,12 @@ function getPeriodStartDate(period: LeaderboardPeriod): string | null {
 }
 
 /**
- * Fetch member leaderboard with period and active-only filters.
+ * Fetch member leaderboard with period, category, and active-only filters.
  */
 export async function getLeaderboardData(
   period: LeaderboardPeriod = 'all_time',
-  activeOnly: boolean = true
+  activeOnly: boolean = true,
+  category: LeaderboardCategory = 'all'
 ): Promise<LeaderboardResponse> {
   try {
     const currentProfile = await getProfile();
@@ -96,11 +99,28 @@ export async function getLeaderboardData(
       return {
         entries: [],
         period,
+        category,
         activeOnly,
         totalContributors: 0,
         totalPointsAwarded: 0,
         error: dbErr.message,
       };
+    }
+
+    // Filter by Category
+    let filteredRows = rows || [];
+    if (category === 'recordings') {
+      filteredRows = filteredRows.filter((r: any) =>
+        r.mass_part === 'audio_recording' ||
+        r.mass_part === 'audio_recording_master' ||
+        r.mass_part?.startsWith('audio_')
+      );
+    } else if (category === 'lyrics') {
+      filteredRows = filteredRows.filter((r: any) =>
+        r.mass_part !== 'audio_recording' &&
+        r.mass_part !== 'audio_recording_master' &&
+        !r.mass_part?.startsWith('audio_')
+      );
     }
 
     // 2. Aggregate points by member
@@ -117,7 +137,7 @@ export async function getLeaderboardData(
 
     let totalPoints = 0;
 
-    (rows || []).forEach((r: any) => {
+    filteredRows.forEach((r: any) => {
       const member = r.submitter;
       if (!member) return;
 
@@ -151,7 +171,12 @@ export async function getLeaderboardData(
       }
 
       const partKey = r.mass_part;
-      const partName = r.point_ref?.display_name || r.mass_part;
+      let partName = r.point_ref?.display_name;
+      if (!partName) {
+        if (partKey === 'audio_recording') partName = '🎵 Audio Practice Track';
+        else if (partKey === 'audio_recording_master') partName = '⭐ Official Master Guide';
+        else partName = r.mass_part;
+      }
 
       if (!entry.partsMap.has(partKey)) {
         entry.partsMap.set(partKey, {
@@ -210,6 +235,7 @@ export async function getLeaderboardData(
       currentUserEntry,
       currentUserRank: currentUserEntry?.rank || null,
       period,
+      category,
       activeOnly,
       totalContributors: entries.length,
       totalPointsAwarded: totalPoints,
@@ -219,6 +245,7 @@ export async function getLeaderboardData(
     return {
       entries: [],
       period,
+      category,
       activeOnly,
       totalContributors: 0,
       totalPointsAwarded: 0,

@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createNotification } from '@/lib/notifications';
+import { getVoicingPoints } from '@/lib/voicing-points';
 
 export interface PracticeRecordingItem {
   id: string;
@@ -13,6 +15,11 @@ export interface PracticeRecordingItem {
   uploaded_by: string | null;
   label: string | null;
   uploader_name?: string;
+  is_verified_master?: boolean;
+  verified_by?: string | null;
+  verified_at?: string | null;
+  verifier_name?: string;
+  points_awarded?: number;
 }
 
 export interface PracticeTrackHistoryItem {
@@ -77,6 +84,7 @@ export async function listPracticeRecordings(songId: string): Promise<{ recordin
       .from('practice_tracks')
       .select('*')
       .eq('song_id', songId)
+      .order('is_verified_master', { ascending: false })
       .order('created_at', { ascending: false });
 
     if (tracksErr) {
@@ -88,20 +96,25 @@ export async function listPracticeRecordings(songId: string): Promise<{ recordin
       return { recordings: [] };
     }
 
-    const uploaderIds = Array.from(
-      new Set(rawTracks.map((t: any) => t.uploaded_by).filter(Boolean))
+    const relevantUserIds = Array.from(
+      new Set(
+        [
+          ...rawTracks.map((t: any) => t.uploaded_by),
+          ...rawTracks.map((t: any) => t.verified_by),
+        ].filter(Boolean)
+      )
     ) as string[];
 
     const profilesMap: Record<string, { full_name: string; voice_part?: string | null }> = {};
 
-    if (uploaderIds.length > 0) {
-      const { data: uploaderProfiles } = await adminSupabase
+    if (relevantUserIds.length > 0) {
+      const { data: userProfiles } = await adminSupabase
         .from('profiles')
         .select('id, full_name, voice_part')
-        .in('id', uploaderIds);
+        .in('id', relevantUserIds);
 
-      if (uploaderProfiles) {
-        uploaderProfiles.forEach((p: any) => {
+      if (userProfiles) {
+        userProfiles.forEach((p: any) => {
           profilesMap[p.id] = {
             full_name: p.full_name,
             voice_part: p.voice_part,
@@ -113,6 +126,8 @@ export async function listPracticeRecordings(songId: string): Promise<{ recordin
     const recordings: PracticeRecordingItem[] = rawTracks.map((t: any) => {
       const uploader = t.uploaded_by ? profilesMap[t.uploaded_by] : null;
       const uploaderName = uploader?.full_name || 'Choir Member';
+      const verifier = t.verified_by ? profilesMap[t.verified_by] : null;
+      const verifierName = verifier?.full_name || 'Choir Director';
       const voicePart = t.voice_part || uploader?.voice_part || null;
 
       return {
@@ -124,6 +139,11 @@ export async function listPracticeRecordings(songId: string): Promise<{ recordin
         uploaded_by: t.uploaded_by || null,
         label: t.label || null,
         uploader_name: uploaderName,
+        is_verified_master: Boolean(t.is_verified_master),
+        verified_by: t.verified_by || null,
+        verified_at: t.verified_at || null,
+        verifier_name: verifierName,
+        points_awarded: t.points_awarded || getVoicingPoints(t.label, voicePart),
       };
     });
 
@@ -136,12 +156,15 @@ export async function listPracticeRecordings(songId: string): Promise<{ recordin
 
 /**
  * Upload a practice recording (recorded audio blob or selected audio file).
- * If a recording for the specific voicing/label already exists, overwrites it and logs the history event.
+ * If a recording for the specific voicing/label already exists:
+ * - Overwrites it if authorized.
+ * - Protects verified master tracks against non-director overwrites.
+ * - Awards voicing-specific points and logs the history event.
  */
 export async function uploadPracticeRecording(
   songId: string,
   formData: FormData
-): Promise<{ success?: boolean; recording?: PracticeRecordingItem; overwritten?: boolean; error?: string }> {
+): Promise<{ success?: boolean; recording?: PracticeRecordingItem; overwritten?: boolean; pointsAwarded?: number; error?: string }> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -208,6 +231,14 @@ export async function uploadPracticeRecording(
       }
     }
 
+    // Safeguard: Protect verified master tracks from regular member overwrites
+    const isDirectorOrAdmin = ['super_admin', 'director'].includes(userProfile.role);
+    if (existingTrack && existingTrack.is_verified_master && !isDirectorOrAdmin && existingTrack.uploaded_by !== user.id) {
+      return {
+        error: `"${label}" is verified as an Official Master Track. To save your take without replacing the master track, please choose a custom note or title (e.g. "${label} - Practice Take").`,
+      };
+    }
+
     const filePath = `${songId}/${user.id}_${Date.now()}.${fileExt}`;
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -221,7 +252,6 @@ export async function uploadPracticeRecording(
       });
 
     if (uploadErr && (uploadErr.message?.toLowerCase().includes('bucket not found') || (uploadErr as any).statusCode === '404' || (uploadErr as any).error === 'Bucket not found')) {
-      console.log('Bucket practice_tracks not found, auto-creating bucket...');
       const { error: createBucketErr } = await adminSupabase.storage.createBucket('practice_tracks', {
         public: true,
       });
@@ -260,6 +290,7 @@ export async function uploadPracticeRecording(
     }
 
     const userVoicePart = userProfile.voice_part || 'Member';
+    const pointsAwarded = getVoicingPoints(label, userVoicePart);
 
     const insertData: any = {
       song_id: songId,
@@ -267,6 +298,8 @@ export async function uploadPracticeRecording(
       file_url: publicUrl,
       uploaded_by: user.id,
       label: label || null,
+      points_awarded: pointsAwarded,
+      is_verified_master: false,
     };
 
     let inserted: any = null;
@@ -282,6 +315,8 @@ export async function uploadPracticeRecording(
         song_id: songId,
         voice_part: userVoicePart,
         file_url: publicUrl,
+        uploaded_by: user.id,
+        label: label || null,
       };
 
       const { data: fallbackRow, error: fallbackErr } = await adminSupabase
@@ -299,24 +334,62 @@ export async function uploadPracticeRecording(
       inserted = insertedRow;
     }
 
-    // Award +2 Contributor points on Leaderboard for recording guide tracks
-    const pointsAwarded = 2;
+    // Anti-point farming & points recording:
+    // Update existing submission if user is re-recording their take, or insert new approved submission
     try {
-      await adminSupabase
+      const { data: existingSub } = await adminSupabase
         .from('song_submissions')
-        .insert({
-          song_id: songId,
-          submitted_by: user.id,
-          mass_part: 'audio_recording',
-          lyrics_content: `Audio Guide Track: ${label || userVoicePart}`,
-          status: 'approved',
-          points_awarded: pointsAwarded,
-          recording_id: inserted.id,
-          reviewed_at: new Date().toISOString(),
-        });
+        .select('id')
+        .eq('song_id', songId)
+        .eq('submitted_by', user.id)
+        .eq('mass_part', 'audio_recording')
+        .eq('lyrics_content', `Audio Guide Track: ${label || userVoicePart}`)
+        .maybeSingle();
+
+      if (existingSub) {
+        await adminSupabase
+          .from('song_submissions')
+          .update({
+            points_awarded: pointsAwarded,
+            recording_id: inserted.id,
+            reviewed_at: new Date().toISOString(),
+          })
+          .eq('id', existingSub.id);
+      } else {
+        await adminSupabase
+          .from('song_submissions')
+          .insert({
+            song_id: songId,
+            submitted_by: user.id,
+            mass_part: 'audio_recording',
+            lyrics_content: `Audio Guide Track: ${label || userVoicePart}`,
+            status: 'approved',
+            points_awarded: pointsAwarded,
+            recording_id: inserted.id,
+            reviewed_at: new Date().toISOString(),
+          });
+      }
     } catch (ptsErr) {
       console.warn('Could not record submission points for audio track:', ptsErr);
     }
+
+    // Fetch song title for notification
+    const { data: songData } = await adminSupabase
+      .from('songs')
+      .select('title')
+      .eq('id', songId)
+      .maybeSingle();
+    const songTitle = songData?.title || 'Repertoire Song';
+
+    // Send points reward in-app and push notification to the user
+    createNotification({
+      recipientId: user.id,
+      actorId: null,
+      type: 'task_assigned',
+      title: `🎉 +${pointsAwarded} Contributor Points Awarded!`,
+      body: `You earned ${pointsAwarded} points for recording the ${label || userVoicePart} practice track for "${songTitle}".`,
+      linkUrl: `/repertoire/${songId}`,
+    }).catch(console.error);
 
     // Log history audit record
     const actionType = isOverwritten ? 'OVERWROTE' : 'CREATED';
@@ -335,12 +408,135 @@ export async function uploadPracticeRecording(
       uploaded_by: inserted.uploaded_by || user.id,
       label: inserted.label || label || null,
       uploader_name: userProfile.full_name,
+      is_verified_master: false,
+      points_awarded: pointsAwarded,
     };
 
-    return { success: true, recording: recordingItem, overwritten: isOverwritten };
+    return { success: true, recording: recordingItem, overwritten: isOverwritten, pointsAwarded };
   } catch (err: any) {
     console.error('uploadPracticeRecording failed:', err);
     return { error: err.message || 'Server error while uploading recording.' };
+  }
+}
+
+/**
+ * Toggle Director verification status for a master practice track.
+ * Awards +3 Bonus Points to the recording creator when marked as verified master.
+ */
+export async function toggleVerifyMasterTrack(
+  recordingId: string,
+  songId: string
+): Promise<{ success?: boolean; is_verified_master?: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: 'Unauthorized' };
+
+    const adminSupabase = createAdminClient();
+
+    const { data: callerProfile } = await adminSupabase
+      .from('profiles')
+      .select('full_name, role')
+      .eq('id', user.id)
+      .single();
+
+    if (!callerProfile) return { error: 'Profile not found.' };
+
+    const isDirector = ['super_admin', 'director'].includes(callerProfile.role);
+    if (!isDirector) {
+      return { error: 'Permission denied: Only Choir Directors and Super Admins can verify master tracks.' };
+    }
+
+    const { data: track, error: fetchErr } = await adminSupabase
+      .from('practice_tracks')
+      .select('*')
+      .eq('id', recordingId)
+      .single();
+
+    if (fetchErr || !track) {
+      return { error: 'Recording not found.' };
+    }
+
+    const newVerifiedState = !track.is_verified_master;
+
+    // 1. Update practice_tracks record
+    const { error: updateErr } = await adminSupabase
+      .from('practice_tracks')
+      .update({
+        is_verified_master: newVerifiedState,
+        verified_by: newVerifiedState ? user.id : null,
+        verified_at: newVerifiedState ? new Date().toISOString() : null,
+      })
+      .eq('id', recordingId);
+
+    if (updateErr) {
+      return { error: updateErr.message || 'Failed to update master track status.' };
+    }
+
+    // 2. Fetch song title
+    const { data: songData } = await adminSupabase
+      .from('songs')
+      .select('title')
+      .eq('id', songId)
+      .maybeSingle();
+    const songTitle = songData?.title || 'Song';
+
+    // 3. Handle bonus points in song_submissions
+    if (newVerifiedState && track.uploaded_by) {
+      // Award +3 Bonus Points for Verified Master Track
+      const bonusSubmissionContent = `⭐ Official Master Guide Bonus: ${track.label || track.voice_part || 'Practice Track'}`;
+
+      await adminSupabase
+        .from('song_submissions')
+        .insert({
+          song_id: songId,
+          submitted_by: track.uploaded_by,
+          mass_part: 'audio_recording_master',
+          lyrics_content: bonusSubmissionContent,
+          status: 'approved',
+          points_awarded: 3,
+          recording_id: recordingId,
+          reviewed_by: user.id,
+          reviewed_at: new Date().toISOString(),
+        });
+
+      // Send congratulatory in-app and push notification to the track creator
+      createNotification({
+        recipientId: track.uploaded_by,
+        actorId: user.id,
+        type: 'task_assigned',
+        title: '🌟 Master Track Verified! (+3 Bonus Points)',
+        body: `Your ${track.label || 'voice'} recording for "${songTitle}" was verified by ${callerProfile.full_name} as an Official Master Track!`,
+        linkUrl: `/repertoire/${songId}`,
+      }).catch(console.error);
+    } else if (!newVerifiedState) {
+      // Remove bonus points if unverified
+      await adminSupabase
+        .from('song_submissions')
+        .delete()
+        .eq('recording_id', recordingId)
+        .eq('mass_part', 'audio_recording_master');
+    }
+
+    // Log history audit
+    await logTrackHistory(
+      adminSupabase,
+      songId,
+      newVerifiedState ? 'VERIFIED_MASTER' : 'UNVERIFIED_MASTER',
+      track.label || null,
+      user.id,
+      callerProfile.full_name
+    );
+
+    revalidatePath(`/repertoire/${songId}`);
+    revalidatePath('/leaderboard');
+    revalidatePath('/profile/my-contributions');
+
+    return { success: true, is_verified_master: newVerifiedState };
+  } catch (err: any) {
+    console.error('toggleVerifyMasterTrack error:', err);
+    return { error: err.message || 'Server error while updating master track status.' };
   }
 }
 
